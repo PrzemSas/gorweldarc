@@ -1,0 +1,14 @@
+{
+  "id": "ARC-MMA-A-2026-08",
+  "seed": 1296914737,
+  "W": 1280,
+  "H": 720,
+  "proc": "MMA",
+  "joint": "butt",
+  "pos": "PA",
+  "thick": 3,
+  "bead": "steel",
+  "minScore": 90,
+  "pin": ["proc"],
+  "note": "Konkurs MMA: pin TYLKO proc. Grubosc dowolna, domyslnie 3 mm (1 pass, bez wymiany elektrody). Ocena A (>=90) = 1 000 000 GORWELD. PULA 10 000 000 = DOKLADNIE 10 OSOB po 1M. 11. nie dostaje. Wyplata reczna PrzemSas. Seed 1296914737 na prod przy ogloszeniu."
+}
