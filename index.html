@@ -6,7 +6,7 @@
   i publikowanie pod inną domeną — bez pisemnej zgody autora ZABRONIONE. Pełne warunki: /LICENSE
   Proprietary software. GORWELD is a registered trademark (PL R.396313). All rights reserved.
 -->
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <script>/* ARC mieszka na gorweldarc.com — stare gorweld.com/arc przekierowuje (z ?challenge itd.) */(function(){var h=location.hostname.replace(/^www\./,"");if(h==="gorweld.com"||h==="gorweld.fun")location.replace("https://gorweldarc.com/"+location.search+location.hash);})();</script>
@@ -20,6 +20,16 @@
 <link rel="canonical" href="https://gorweldarc.com/">
 <meta property="og:title" content="GORWELD® ARC WELDER — MIG · TIG · MMA Simulator"><meta property="og:description" content="Free browser welding simulator — MIG, TIG, MMA. Real ISO 6947 positions, ISO 5817 inspection. No sign-up required."><meta property="og:image" content="https://gorweldarc.com/arc-live.jpg"><meta property="og:url" content="https://gorweldarc.com/"><meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@GorWeld">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"GORWELD ARC","alternateName":"GORWELD ARC WELDER",
+ "url":"https://gorweldarc.com/","image":"https://gorweldarc.com/arc-live.jpg",
+ "description":"Free browser welding trainer for MMA 111, MIG/MAG 135 and TIG 141, with ISO 6947 welding positions and visual inspection graded to ISO 5817. Built by a working welder.",
+ "applicationCategory":"EducationalApplication","applicationSubCategory":"Welding simulator","operatingSystem":"Any (web browser)",
+ "browserRequirements":"Requires JavaScript and HTML5 canvas","inLanguage":["pl","en","ru"],"isAccessibleForFree":true,
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+ "creator":{"@type":"Person","name":"Przemysław Sąsiadek","jobTitle":"Welder"},
+ "educationalUse":"Practice","learningResourceType":"Simulation","audience":{"@type":"EducationalAudience","educationalRole":"student"}}
+</script>
 <style>
   /* --mob to JEDYNA definicja „to jest telefon". JS czyta ja przez getComputedStyle w syncMobileLayout(),
      zeby CSS i skrypt nie mogly sie rozjechac — bo wlasnie to sie stalo: CSS mial tylko max-width:680px,
@@ -139,6 +149,13 @@
   .card .act { display:flex; gap:8px; margin-top:16px; }
   .card .act button { flex:1; padding:11px; }
 
+  /* O ARC / FAQ — statyczny HTML w DOM od początku (czyta go Google bez JS). Widać wersję wg <html lang>, RU → EN */
+  .about-lang { display:none; font-size:13.5px; line-height:1.55; color:#b9c4cb; }
+  html[lang="pl"] .about-lang[lang="pl"], html:not([lang="pl"]) .about-lang[lang="en"] { display:block; }
+  .about-lang h3 { font-size:13px; letter-spacing:1.2px; text-transform:uppercase; color:var(--cyan); margin:16px 0 6px; }
+  .about-lang p, .about-lang ul { margin-bottom:8px; } .about-lang ul { padding-left:18px; } .about-lang li { margin:3px 0; }
+  .about-lang b { color:#e9eef2; } .about-lang details { border-top:1px solid #1b2227; padding:7px 0; }
+  .about-lang summary { cursor:pointer; color:#e9eef2; font-weight:600; } .about-lang details p { margin:6px 0 2px; }
   .cgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; width:min(620px,86vw); }
   .coupon { text-align:left; border:1px solid #242c32; border-radius:12px; padding:11px 12px; background:linear-gradient(145deg,#12181d,#0e1317); cursor:pointer; transition:border-color .15s,box-shadow .15s,transform .12s; position:relative; }
   .coupon:hover { border-color:var(--cyan); box-shadow:0 0 16px rgba(31,214,227,.12); transform:translateY(-1px); }
@@ -275,7 +292,7 @@
 <link rel="apple-touch-icon" href="/favicon.png">
 </head>
 <body>
-  <div id="splash"><div class="splash-logo"><b>GORWELD</b>® ARC</div><div class="splash-sub">DEMO · ŁADOWANIE</div><div class="splash-bar"><div></div></div></div>
+  <div id="splash"><div class="splash-logo"><b>GORWELD</b>® ARC</div><div class="splash-sub">DEMO · LOADING</div><div class="splash-bar"><div></div></div></div>
   <video id="pagebg" autoplay muted loop playsinline preload="auto" src="page-bg.mp4"></video>
   <div id="vignette"></div>
   <div id="grain"></div>
@@ -291,21 +308,21 @@
   <div class="panel top">
     <div class="brand"><img src="/favicon.png" alt="GORWELD" style="height:30px;width:30px;border-radius:50%"><span><b>GORWELD</b>® ARC</span><span class="demo-badge">DEMO</span></div>
     <div class="wal" id="wal" hidden></div>
-    <button id="setupBtn" class="mob-only on" type="button" title="Ustawienia">⚙️</button>
-    <button id="mobInspect" class="mob-only" type="button" title="Inspekcja">🔎</button>
-    <div class="group"><span class="lbl" data-i18n="method">Metoda</span>
+    <button id="setupBtn" class="mob-only on" type="button" title="Settings">⚙️</button>
+    <button id="mobInspect" class="mob-only" type="button" title="Inspect">🔎</button>
+    <div class="group"><span class="lbl" data-i18n="method">Method</span>
       <button class="proc on" data-proc="MMA">MMA 111</button>
       <button class="proc" data-proc="MIG">MIG/MAG 135</button>
       <button class="proc" data-proc="TIG">TIG 141</button>
       <button class="proc" data-proc="CUT">🔥 TLEN 81</button>
       <button class="proc" data-proc="PLASMA">⚡ PLAZMA 83</button>
     </div>
-    <div class="group"><span class="lbl" data-i18n="joint">Złącze</span>
-      <button class="joint on" data-joint="butt" data-i18n="jt_butt">Doczołowe V</button>
-      <button class="joint" data-joint="fillet" data-i18n="jt_fillet">Pachwinowe T</button>
-      <button class="joint" data-joint="pipe" data-i18n="jt_pipe">Rura</button>
+    <div class="group"><span class="lbl" data-i18n="joint">Joint</span>
+      <button class="joint on" data-joint="butt" data-i18n="jt_butt">Butt V</button>
+      <button class="joint" data-joint="fillet" data-i18n="jt_fillet">Fillet T</button>
+      <button class="joint" data-joint="pipe" data-i18n="jt_pipe">Pipe</button>
     </div>
-    <div class="group" id="posWrap"><span class="lbl" data-i18n="position">Pozycja</span></div>
+    <div class="group" id="posWrap"><span class="lbl" data-i18n="position">Position</span></div>
     <div class="group"><span class="lbl">🌐</span>
       <button class="lng on" data-lng="pl">PL</button>
       <button class="lng" data-lng="en">EN</button>
@@ -315,21 +332,21 @@
 
   <div class="rankbar" id="rankbar"></div>
   <div class="panel info-card" id="info"></div>
-  <div class="grav"><span class="arrow" id="gArrow">↓</span><span data-i18n="grav">grawitacja<br>jeziorka</span></div>
+  <div class="grav"><span class="arrow" id="gArrow">↓</span><span data-i18n="grav">puddle<br>gravity</span></div>
   <div class="toolhud" id="toolhud"></div>
   <div class="covbar" id="covbar"><div class="covfill" id="covfill"></div><div class="covmark"></div><span class="covtxt" id="covtxt"></span></div>
 
   <div class="panel bottom">
-    <div class="group"><span class="lbl" data-i18n="thickness">Grubość</span>
+    <div class="group"><span class="lbl" data-i18n="thickness">Thickness</span>
       <button class="thk" data-t="2">2</button>
       <button class="thk on" data-t="3">3</button>
       <button class="thk" data-t="5">5</button>
       <button class="thk" data-t="8">8</button>
       <button class="thk" data-t="12">12</button>
     </div>
-    <div class="group"><span class="lbl" data-i18n="amperage">Prąd (A)</span>
+    <div class="group"><span class="lbl" data-i18n="amperage">Current (A)</span>
       <button class="ampmode on" data-m="auto" data-i18n="amp_auto">AUTO</button>
-      <button class="ampmode" data-m="man" data-i18n="amp_man">RĘCZNIE</button>
+      <button class="ampmode" data-m="man" data-i18n="amp_man">MANUAL</button>
       <span id="ampAuto" class="ampwrap">
         <button class="amp" data-a="0.7">—</button>
         <button class="amp" data-a="0.85">—</button>
@@ -343,28 +360,29 @@
         <span id="ampWps" class="ampwps"></span>
       </span>
     </div>
-    <div class="group"><span class="lbl" data-i18n="material">Materiał</span>
-      <button class="bead on" data-bead="steel" data-i18n="mat_steel">Stal</button>
-      <button class="bead" data-bead="ss" data-i18n="mat_ss">Nierdz.</button>
+    <div class="group"><span class="lbl" data-i18n="material">Material</span>
+      <button class="bead on" data-bead="steel" data-i18n="mat_steel">Steel</button>
+      <button class="bead" data-bead="ss" data-i18n="mat_ss">Stainless</button>
       <button class="bead" data-bead="alu" data-i18n="mat_alu">Alu</button>
     </div>
-    <button id="helmet" class="on" data-i18n="btn_helmet">🥽 HEŁM</button>
-    <button id="snd">🔊 ŁUK</button>
-    <button id="inspect" data-i18n="btn_inspect">🔎 INSPEKCJA</button>
-    <button id="career" data-i18n="btn_career">🎓 KARIERA</button>
-    <button id="help" data-i18n="btn_help">❔ JAK GRAĆ</button>
-    <button id="methods" data-i18n="btn_methods">📖 METODY</button>
-    <button id="clear" data-i18n="btn_clear">✕ ZETRZYJ</button>
-    <button id="mobHelmet" class="mob-actions on" type="button" title="Hełm">🥽</button>
-    <button id="mobSnd" class="mob-actions" type="button" title="Dźwięk">🔊</button>
-    <button id="mobClear" class="mob-actions" type="button" title="Zetrzyj">✕</button>
-    <button id="mobHelp" class="mob-actions" type="button" title="Pomoc">❔</button>
-    <button id="mobSetup2" class="mob-actions" type="button" title="Ustawienia">⚙️</button>
+    <button id="helmet" class="on" data-i18n="btn_helmet">🥽 HELMET</button>
+    <button id="snd">🔊 ARC</button>
+    <button id="inspect" data-i18n="btn_inspect">🔎 INSPECT</button>
+    <button id="career" data-i18n="btn_career">🎓 CAREER</button>
+    <button id="help" data-i18n="btn_help">❔ HOW TO</button>
+    <button id="methods" data-i18n="btn_methods">📖 METHODS</button>
+    <button id="about" data-i18n="btn_about">ℹ️ ABOUT</button>
+    <button id="clear" data-i18n="btn_clear">✕ CLEAR</button>
+    <button id="mobHelmet" class="mob-actions on" type="button" title="Helmet">🥽</button>
+    <button id="mobSnd" class="mob-actions" type="button" title="Sound">🔊</button>
+    <button id="mobClear" class="mob-actions" type="button" title="Clear">✕</button>
+    <button id="mobHelp" class="mob-actions" type="button" title="Help">❔</button>
+    <button id="mobSetup2" class="mob-actions" type="button" title="Settings">⚙️</button>
   </div>
 
   <!-- INSPECTION REPORT -->
   <div id="repModal" class="modal"><div class="card" style="width:min(460px,90vw)">
-    <h2 data-i18n="rep_title">Inspekcja wizualna VT</h2>
+    <h2 data-i18n="rep_title">Visual inspection (VT)</h2>
     <div class="rep-head">
       <div class="letter" id="rLetter">A</div>
       <div>
@@ -375,63 +393,116 @@
     <div class="reward" id="rReward"></div>
     <canvas id="zoom" width="380" height="120"></canvas>
     <ul class="defects" id="rDefects"></ul>
-    <div class="row"><span data-i18n="row_cov">Pokrycie grani</span><b id="rCov">—</b></div>
-    <div class="row"><span data-i18n="row_spd">Trzymanie tempa</span><b id="rSpd">—</b></div>
-    <div class="row"><span data-i18n="row_hi">Wkład ciepła (HI)</span><b id="rHi">—</b></div>
-    <div class="row"><span data-i18n="row_even">Równość lica</span><b id="rEven">—</b></div>
+    <div class="row"><span data-i18n="row_cov">Groove coverage</span><b id="rCov">—</b></div>
+    <div class="row"><span data-i18n="row_spd">Travel speed</span><b id="rSpd">—</b></div>
+    <div class="row"><span data-i18n="row_hi">Heat input (HI)</span><b id="rHi">—</b></div>
+    <div class="row"><span data-i18n="row_even">Bead evenness</span><b id="rEven">—</b></div>
     <div class="act">
-      <button id="rCard" data-i18n="btn_cardx">📤 KARTA NA X</button>
-      <button id="rClose" class="on" data-i18n="btn_weldon">SPAWAJ DALEJ</button>
+      <button id="rCard" data-i18n="btn_cardx">📤 X CARD</button>
+      <button id="rClose" class="on" data-i18n="btn_weldon">KEEP WELDING</button>
     </div>
   </div></div>
 
   <!-- CAREER -->
   <div id="carModal" class="modal"><div class="card">
-    <h2 data-i18n="car_title">Kariera spawacza · WPQR</h2>
+    <h2 data-i18n="car_title">Welder career · WPQR</h2>
     <div class="xpwrap" id="xpwrap"></div>
     <div class="cgrid" id="cgrid"></div>
-    <div class="act"><button id="carReset" data-i18n="car_reset">RESET POSTĘPU</button><button id="carClose" class="on" data-i18n="car_close">ZAMKNIJ</button></div>
+    <div class="act"><button id="carReset" data-i18n="car_reset">RESET PROGRESS</button><button id="carClose" class="on" data-i18n="car_close">CLOSE</button></div>
   </div></div>
 
   <!-- SHARE CARD -->
   <div id="cardModal" class="modal"><div class="card" style="text-align:center">
-    <h2 data-i18n="card_title">Karta wyniku</h2>
+    <h2 data-i18n="card_title">Score card</h2>
     <canvas id="shareCanvas" width="600" height="338" style="width:min(560px,86vw); border-radius:12px; border:1px solid #232b31"></canvas>
     <div class="act">
-      <button id="cardDl" class="on" data-i18n="card_dl">💾 POBIERZ PNG</button>
-      <button id="cardTxt" data-i18n="card_copy">📋 KOPIUJ TEKST</button>
+      <button id="cardDl" class="on" data-i18n="card_dl">💾 SAVE PNG</button>
+      <button id="cardTxt" data-i18n="card_copy">📋 COPY TEXT</button>
       <button id="cardProof" style="display:none">🔒 KOPIUJ PROOF</button>
-      <button id="cardClose" data-i18n="card_close">ZAMKNIJ</button>
+      <button id="cardClose" data-i18n="card_close">CLOSE</button>
     </div>
   </div></div>
 
   <!-- TUTORIAL -->
   <div id="tutModal" class="modal"><div class="card" style="width:min(440px,92vw)">
-    <h2 data-i18n="tut_title">Jak spawać — 30 sekund</h2>
+    <h2 data-i18n="tut_title">How to weld — 30 seconds</h2>
     <div class="tutsteps" id="tutSteps"></div>
-    <div class="act"><button id="tutSkip" data-i18n="tut_skip">POMIŃ</button><button id="tutStart" class="on" data-i18n="tut_start">DO ROBOTY ⚡</button></div>
+    <div class="act"><button id="tutSkip" data-i18n="tut_skip">SKIP</button><button id="tutStart" class="on" data-i18n="tut_start">LET'S WELD ⚡</button></div>
   </div></div>
 
 
   <!-- QUICK START — pierwsza wizyta: wybierz metodę, reszta z WPS -->
   <div id="qsModal" class="modal"><div class="card qs-card">
-    <h2 data-i18n="qs_title">Wybierz pierwszy spaw</h2>
-    <div class="qs-sub" data-i18n="qs_sub">Stal 3 mm · doczołowe · PA · prąd z WPS</div>
+    <h2 data-i18n="qs_title">Choose your first weld</h2>
+    <div class="qs-sub" data-i18n="qs_sub">3 mm steel · butt joint · PA flat · current from WPS</div>
     <div class="qs-opts">
-      <button class="qs-opt on" data-qs="MMA"><b>MMA 111</b><span data-i18n="qs_mma">Elektroda otulona. Najlepszy start.</span></button>
-      <button class="qs-opt" data-qs="MIG"><b>MIG/MAG 135</b><span data-i18n="qs_mig">Drut w osłonie gazu. Równa ręka, równe tempo.</span></button>
-      <button class="qs-opt" data-qs="TIG"><b>TIG 141</b><span data-i18n="qs_tig">Dwie ręce: łuk i pręt. Najtrudniejsza.</span></button>
+      <button class="qs-opt on" data-qs="MMA"><b>MMA 111</b><span data-i18n="qs_mma">Stick electrode. The best place to start.</span></button>
+      <button class="qs-opt" data-qs="MIG"><b>MIG/MAG 135</b><span data-i18n="qs_mig">Wire under shielding gas. Steady hand, steady pace.</span></button>
+      <button class="qs-opt" data-qs="TIG"><b>TIG 141</b><span data-i18n="qs_tig">Two hands: arc and filler rod. The hardest.</span></button>
     </div>
     <div class="qs-how" id="qsHow"></div>
-    <div class="act"><button id="qsGo" class="on" data-i18n="qs_go">START TRENINGU ▶</button></div>
-    <div class="qs-links"><button id="qsGuide" type="button" data-i18n="qs_guide">Pełna instrukcja</button> · <button id="qsSkip" type="button" data-i18n="qs_skip">Ustawię sam</button></div>
+    <div class="act"><button id="qsGo" class="on" data-i18n="qs_go">START TRAINING ▶</button></div>
+    <div class="qs-links"><button id="qsGuide" type="button" data-i18n="qs_guide">Full guide</button> · <button id="qsSkip" type="button" data-i18n="qs_skip">I'll set it up myself</button></div>
   </div></div>
 
   <!-- METODY / GLOSSARY -->
   <div id="methodsModal" class="modal"><div class="card" style="width:min(580px,94vw);max-height:88vh;overflow:auto;text-align:left">
-    <h2 data-i18n="methods_title">Metody — opis fachu</h2>
+    <h2 data-i18n="methods_title">Methods — the trade</h2>
     <div id="methodsBody"></div>
-    <div class="act"><button class="on" onclick="closeModal('methodsModal')" data-i18n="btn_close">ZAMKNIJ</button></div>
+    <div class="act"><button class="on" onclick="closeModal('methodsModal')" data-i18n="btn_close">CLOSE</button></div>
+  </div></div>
+
+  <!-- O ARC / FAQ — statyczna treść dla ludzi i dla Google (bez JS). EN widzi też RU. -->
+  <div id="aboutModal" class="modal"><div class="card" style="width:min(640px,94vw);max-height:88vh;overflow:auto;text-align:left">
+    <article class="about-lang" lang="en">
+      <h2>GORWELD ARC — free browser welding trainer</h2>
+      <p><b>GORWELD ARC</b> is a free welding simulator that runs in the browser, with no install and no sign-up. It was built by a working welder, to practise what actually decides a weld: arc length, torch angle, travel speed and heat, and then to check the result the way an inspector would.</p>
+      <h3>Welding processes</h3>
+      <ul>
+        <li><b>MMA 111 (stick, SMAW)</b> — covered electrode. Strike the arc without sticking, keep a short arc while the electrode burns down, and chip the slag between passes.</li>
+        <li><b>MIG/MAG 135 (GMAW)</b> — solid wire in shielding gas. One hand and constant wire feed, so steady travel speed and stick-out do the work.</li>
+        <li><b>TIG 141 (GTAW)</b> — tungsten arc plus a separate filler rod. Two-handed and the hardest of the three.</li>
+        <li><b>Oxy-fuel cutting 81</b> — cut through the plate cleanly: too fast leaves dross, too slow melts the edges.</li>
+        <li><b>Plasma cutting 83</b> — a narrow, fast plasma cut through the same plates.</li>
+      </ul>
+      <h3>Joints, positions and materials</h3>
+      <p>Butt joints (V-groove), fillet (T) joints and pipe. Welding positions follow <b>ISO 6947</b>: PA flat, PB horizontal fillet, PC horizontal, PD overhead fillet, PE overhead, PF vertical up and PG vertical down, plus pipe 1G, 2G, 5G and 6G (H-L045). Plate thickness from 2 to 12 mm, in carbon steel, stainless steel and aluminium. Gravity pulls the weld pool differently in each position, and thicker plate needs several passes: root, fill and cap.</p>
+      <h3>Inspection to ISO 5817</h3>
+      <p>After the weld, ARC runs a visual inspection (VT) and grades the joint to the <b>ISO 5817</b> quality levels B, C and D. It measures groove coverage, travel speed, heat input (kJ/mm) and bead consistency, and lists the defects it found: lack of fusion, burn-through, undercut, porosity from a long arc or an uneven bead. A rejected weld does not count towards career progress, the same as in a real bend or macro test.</p>
+      <h3>For schools and training centres</h3>
+      <p>ARC works as a warm-up before the booth. Students learn the settings, the positions and the inspection terms before they burn real electrodes and plate. It runs on a school computer or a phone, with a mouse or a finger, and all you share is a link. It does not replace hands-on training with a real machine. It makes that training cheaper and faster.</p>
+      <h3>FAQ</h3>
+      <details><summary>Is the welding simulator really free?</summary><p>Yes. ARC runs in the browser, with no account, no download and no payment.</p></details>
+      <details><summary>Can you learn to weld with a simulator?</summary><p>You can learn the theory and the hand habits: arc length, angles, travel speed, the order of passes and reading defects. The feel of a real arc, heat and fumes only comes in the booth. A simulator shortens the road there.</p></details>
+      <details><summary>Which process should a beginner start with?</summary><p>MMA 111 on 3 mm steel in the PA (flat) position. That is the classic first exam coupon. After that, MIG/MAG 135, and TIG 141 last.</p></details>
+      <details><summary>What do ISO 6947 and ISO 5817 mean?</summary><p>ISO 6947 names the welding positions (PA, PB, PC, PD, PE, PF, PG, PH and so on). ISO 5817 sets the quality levels for imperfections in welds: B is the strictest, D the most lenient.</p></details>
+      <details><summary>Does it work on a phone?</summary><p>Yes. On a phone you weld with your finger and the view zooms in on the plate. A computer with a mouse gives more precision.</p></details>
+    </article>
+    <article class="about-lang" lang="pl">
+      <h2>GORWELD ARC — darmowy trener spawania w przeglądarce</h2>
+      <p><b>GORWELD ARC</b> to darmowy symulator spawania, który działa w przeglądarce, bez instalacji i bez zakładania konta. Zbudował go czynny spawacz, żeby ćwiczyć to, co naprawdę decyduje o spoinie: długość łuku, kąt uchwytu, prędkość spawania i ciepło, a potem sprawdzić wynik tak, jak sprawdza go kontroler.</p>
+      <h3>Metody spawania</h3>
+      <ul>
+        <li><b>MMA 111 (elektroda otulona)</b>: zajarzenie bez przywierania, krótki łuk przy topiącej się elektrodzie, żużel do skucia między warstwami.</li>
+        <li><b>MIG/MAG 135</b>: drut lity w osłonie gazu. Jedna ręka i ciągłe podawanie drutu, więc liczy się równe tempo i wolny wylot drutu.</li>
+        <li><b>TIG 141</b>: łuk z elektrody wolframowej plus osobny pręt spoiwa. Obie ręce pracują, to najtrudniejsza z trzech metod.</li>
+        <li><b>Cięcie tlenowe 81</b>: czysty rzaz na wylot. Za szybko zostaje grat, za wolno nadtapiają się krawędzie.</li>
+        <li><b>Cięcie plazmowe 83</b>: wąski, szybki rzaz plazmą na tych samych blachach.</li>
+      </ul>
+      <h3>Złącza, pozycje i materiały</h3>
+      <p>Złącza doczołowe (na V), pachwinowe (teowe) i rury. Pozycje spawania według <b>ISO 6947</b>: PA podolna, PB naboczna, PC naścienna, PD okapowa, PE pułapowa, PF pionowa z dołu i PG pionowa z góry oraz rury 1G, 2G, 5G i 6G (H-L045). Grubość blachy od 2 do 12 mm; do wyboru stal, stal nierdzewna i aluminium. W każdej pozycji grawitacja inaczej ciągnie jeziorko, a grube blachy spawa się w kilku warstwach: przetop, wypełnienie, lico.</p>
+      <h3>Ocena według ISO 5817</h3>
+      <p>Po spawaniu ARC robi badanie wizualne (VT) i ocenia złącze według poziomów jakości <b>ISO 5817</b>: B, C i D. Mierzy pokrycie grani, trzymanie tempa, wkład ciepła (kJ/mm) i równość lica oraz wypisuje znalezione niezgodności: brak wtopienia, przepalenie, podtopienia, pęcherze od długiego łuku albo nierówne lico. Spoina odrzucona nie zalicza się do kariery, tak jak na prawdziwej próbie zginania czy zgładzie.</p>
+      <h3>Dla szkół i ośrodków szkolenia</h3>
+      <p>ARC to rozgrzewka przed kabiną. Uczeń poznaje ustawienia, pozycje i język inspekcji, zanim zacznie palić prawdziwe elektrody i blachę. Działa na szkolnym komputerze i na telefonie, obsługuje się go myszką albo palcem, a szkoła udostępnia tylko link. Nie zastępuje praktyki przy spawarce, ale sprawia, że jest tańsza i szybsza.</p>
+      <h3>Najczęstsze pytania</h3>
+      <details><summary>Czy symulator spawania jest naprawdę darmowy?</summary><p>Tak. ARC działa w przeglądarce, bez konta, bez pobierania i bez płatności.</p></details>
+      <details><summary>Czy da się nauczyć spawać na symulatorze?</summary><p>Da się nauczyć teorii i nawyków ręki: długości łuku, kątów, tempa, kolejności warstw i czytania niezgodności. Czucie prawdziwego łuku, ciepła i dymu przychodzi dopiero w kabinie. Symulator skraca drogę do niej.</p></details>
+      <details><summary>Od której metody zacząć naukę spawania?</summary><p>Od MMA 111 na stali 3 mm w pozycji PA (podolnej). To klasyczna pierwsza próbka egzaminacyjna. Potem MIG/MAG 135, a TIG 141 na końcu.</p></details>
+      <details><summary>Co oznaczają ISO 6947 i ISO 5817?</summary><p>ISO 6947 nazywa pozycje spawania (PA, PB, PC, PD, PE, PF, PG, PH itd.). ISO 5817 określa poziomy jakości dla niezgodności spawalniczych: B jest najostrzejszy, D najłagodniejszy.</p></details>
+      <details><summary>Czy działa na telefonie?</summary><p>Tak. Na telefonie spawasz palcem, a widok przybliża się do blachy. Komputer z myszką daje większą precyzję.</p></details>
+    </article>
+    <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
 <script src="sim.js"></script>
@@ -535,7 +606,7 @@ const I18N={
   pass_root:"przetop", pass_fill:"wypełnienie", pass_cap:"lico",
   t_passdone:"✅ WARSTWA %1 → teraz: %2", t_passlast:"⚡ OSTATNIA WARSTWA — lico",
   def_crater:"Krater / niewypełniony koniec ściegu", def_rootlack:"Słaby przetop w grani (warstwa przetopowa %1%)",
-  btn_help:"❔ JAK GRAĆ", btn_methods:"📖 METODY", methods_title:"Metody — opis fachu", btn_close:"ZAMKNIJ",
+  btn_help:"❔ JAK GRAĆ", btn_methods:"📖 METODY", btn_about:"ℹ️ O ARC", methods_title:"Metody — opis fachu", btn_close:"ZAMKNIJ",
   t_cut_steelonly:"🔥 Palnik tlenowy tnie TYLKO stal — nie nierdzewkę ani alu", t_cut_preheat:"🔥 Podgrzewaj przy starcie — trzymaj wolno aż przebije", t_cut_pierced:"✅ Przebite! Prowadź rzaz po linii", cut_word:"cięcie",
   cd_incomplete:"Niedocięcie — rzaz nie przeszedł na wylot (%1%)", cd_wide:"Szeroki rzaz / nadtopienie krawędzi (za wolno)", cd_dross:"Żużel i grat na dole (za szybko)", cd_dev:"Odchył od linii — krzywy rzaz", cd_clean:"Czysty rzaz — gładkie, prostopadłe krawędzie",
   tut_title:"Jak spawać — 30 sekund", tut_skip:"POMIŃ", tut_start:"DO ROBOTY ⚡",
@@ -572,7 +643,7 @@ const I18N={
   pass_root:"root", pass_fill:"fill", pass_cap:"cap",
   t_passdone:"✅ LAYER %1 → now: %2", t_passlast:"⚡ LAST LAYER — cap",
   def_crater:"Crater / unfilled bead end", def_rootlack:"Poor root penetration (root pass %1%)",
-  btn_help:"❔ HOW TO", btn_methods:"📖 METHODS", methods_title:"Methods — the trade", btn_close:"CLOSE",
+  btn_help:"❔ HOW TO", btn_methods:"📖 METHODS", btn_about:"ℹ️ ABOUT", methods_title:"Methods — the trade", btn_close:"CLOSE",
   t_cut_steelonly:"🔥 Oxy torch cuts STEEL only — not stainless or aluminium", t_cut_preheat:"🔥 Preheat at the start — hold slow until it pierces", t_cut_pierced:"✅ Pierced! Run the cut along the line", cut_word:"cut",
   cd_incomplete:"Incomplete cut — didn't sever through (%1%)", cd_wide:"Wide kerf / edge melt (too slow)", cd_dross:"Dross on the underside (too fast)", cd_dev:"Off the cut line — crooked kerf", cd_clean:"Clean cut — smooth, square edges",
   tut_title:"How to weld — 30 seconds", tut_skip:"SKIP", tut_start:"LET'S WELD ⚡",
@@ -609,7 +680,7 @@ const I18N={
   pass_root:"корень", pass_fill:"заполнение", pass_cap:"облицовка",
   t_passdone:"✅ СЛОЙ %1 → теперь: %2", t_passlast:"⚡ ПОСЛЕДНИЙ СЛОЙ — облицовка",
   def_crater:"Кратер / незаваренный конец шва", def_rootlack:"Слабый провар корня (корневой слой %1%)",
-  btn_help:"❔ КАК ИГРАТЬ", btn_methods:"📖 МЕТОДЫ", methods_title:"Методы — ремесло", btn_close:"ЗАКРЫТЬ",
+  btn_help:"❔ КАК ИГРАТЬ", btn_methods:"📖 МЕТОДЫ", btn_about:"ℹ️ ОБ ARC", methods_title:"Методы — ремесло", btn_close:"ЗАКРЫТЬ",
   t_cut_steelonly:"🔥 Кислородный резак режет ТОЛЬКО сталь — не нержавейку и не алюминий", t_cut_preheat:"🔥 Прогрев у старта — держи медленно до прожига", t_cut_pierced:"✅ Прожиг! Веди рез по линии", cut_word:"рез",
   cd_incomplete:"Недорез — не прошло насквозь (%1%)", cd_wide:"Широкий рез / оплавление кромки (медленно)", cd_dross:"Грат снизу (слишком быстро)", cd_dev:"Уход от линии — кривой рез", cd_clean:"Чистый рез — гладкие, прямые кромки",
   tut_title:"Как варить — 30 секунд", tut_skip:"ПРОПУСТИТЬ", tut_start:"ЗА РАБОТУ ⚡",
@@ -1931,6 +2002,7 @@ function loadCoupon(c){
 }
 function updateRank(){ const r=rankFor(progress.xp); document.getElementById("rankbar").innerHTML='<b>'+t(r[1])+'</b><br>'+progress.xp+' XP'; }
 function applyI18N(){
+  document.documentElement.lang=lang;
   document.querySelectorAll("[data-i18n]").forEach(el=>{ el.innerHTML=t(el.dataset.i18n); });
   document.getElementById("snd").textContent = soundOn? t("btn_arc") : t("btn_mute");
   updateInfo(); updateToolHud(); updateRank(); fillTut(); fillQs(); updateWallet(); updateMobHud();
@@ -2233,10 +2305,11 @@ function syncMobileLayout(){
       top.querySelectorAll(".group").forEach(g=>{ setupSlots.top.push(g); sheet.appendChild(g); });
       bottom.querySelectorAll(".group").forEach(g=>{ setupSlots.bottom.push(g); sheet.appendChild(g); });
       const ex=document.createElement("div"); ex.className="group setup-extras";
-      ex.innerHTML='<button type="button" id="mobCareer">🎓</button><button type="button" id="mobMethods">📖</button>';
+      ex.innerHTML='<button type="button" id="mobCareer">🎓</button><button type="button" id="mobMethods">📖</button><button type="button" id="mobAbout">ℹ️</button>';
       sheet.appendChild(ex);
       document.getElementById("mobCareer").onclick=()=>{ toggleSetup(false); openCareer(); };
       document.getElementById("mobMethods").onclick=()=>{ toggleSetup(false); fillMethods(); openModal("methodsModal"); };
+      document.getElementById("mobAbout").onclick=()=>{ toggleSetup(false); openModal("aboutModal"); };
       sheet.dataset.ready="1";
     }
   } else if(sheet.dataset.ready){
@@ -2298,6 +2371,7 @@ function fillMethods(){
       +'<div class="method-body">'+g.b[lang]+'</div></div>'); });
 }
 document.getElementById("methods").onclick=()=>{ fillMethods(); openModal("methodsModal"); };
+document.getElementById("about").onclick=()=>openModal("aboutModal");
 
 // ════════ TRYB CIĘCIA — oxy-fuel (TLEN) + PLAZMA ════════
 let cutHeat=0, pierced=false, cutDevSum=0, cutDevN=0;
