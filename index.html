@@ -4116,8 +4116,9 @@ function buildBattleCard(){
       const code=view.verdict,st=slot=>code==="P1_WINS"?(slot==="P1"?"win":"lose"):code==="P2_WINS"?(slot==="P2"?"win":"lose"):"";
       battleCardVs(x);
       // 05.10 (zgloszenie z live): gracz bez proby = null — wczesniej .nickname wywracalo rysowanie (pusta prawa strona, brak werdyktu)
-      battlePlayerCard(x,view.player1,(view.player1&&view.player1.nickname)||bt("p1"),false,avatar1,st("P1"));
-      battlePlayerCard(x,view.player2,(view.player2&&view.player2.nickname)||bt("p2"),true,avatar2,st("P2"));
+      const reg=slot=>{const b=battleState.serverBattle,pl=b&&b.players&&b.players[slot];return pl&&pl.nickname||"";}; // nick z zapisu do pojedynku, gdy brak proby
+      battlePlayerCard(x,view.player1,(view.player1&&view.player1.nickname)||reg("P1")||bt("p1"),false,avatar1,st("P1"));
+      battlePlayerCard(x,view.player2,(view.player2&&view.player2.nickname)||reg("P2")||bt("p2"),true,avatar2,st("P2"));
       x.textAlign="center";x.fillStyle=code==="P1_WINS"?"#ffd08a":code==="P2_WINS"?"#ffae3c":
         code==="DRAW"?"#9fd3ff":"#ff8a80";x.font=battleCanvasFont("display",800,44);
       x.save();x.shadowColor="rgba(0,0,0,.8)";x.shadowBlur=12;x.fillText(battleLabelVerdict(code,view),600,590);x.restore();
