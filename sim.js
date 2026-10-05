@@ -217,7 +217,14 @@
     // ── helpery geometrii (1:1) ──
     function nearestSeam(x, y) { let d = 1e18, px = x, py = y; for (const p of seamPts) { const dd = (p.x - x) ** 2 + (p.y - y) ** 2; if (dd < d) { d = dd; px = p.x; py = p.y; } } return { d: Math.sqrt(d), x: px, y: py }; }
     function plateHalf() { return grooveHalf + bevelW + 75; }
-    function onPlate(x, y) { return nearestSeam(x, y).d <= plateHalf(); }
+    // 3.5.0: blacha konczy sie tam, gdzie szew (rysowana z plaskim koncem). Wczesniej strefa "na blasze"
+    // byla polkolem ~90 px za kazdym koncem szwu prostego — luk palil sie i kladl spoine w powietrzu.
+    // Tolerancja 1,5 px: nagrania zaokraglaja wspolrzedne do 0,01, a start bywa dokladnie na krawedzi.
+    function pastSeamEnd(x, y) { if (P.pipe || seamPts.length < 2) return false;
+      const a = seamPts[0], b = seamPts[seamPts.length - 1], dx = b.x - a.x, dy = b.y - a.y, L2 = dx * dx + dy * dy;
+      if (!L2) return false; const t = ((x - a.x) * dx + (y - a.y) * dy) / L2, tol = 1.5 / Math.sqrt(L2);
+      return t < -tol || t > 1 + tol; }
+    function onPlate(x, y) { return nearestSeam(x, y).d <= plateHalf() && !pastSeamEnd(x, y); }
 
     // ── stan rundy (jak globalne w grze) ──
     let baked = [], speedSum = 0, speedN = 0, vVarSum = 0, spatterCount = 0, distAcc = 0;
@@ -473,7 +480,8 @@
   //         ten sam ruch dawał od 0 do 98 pkt zależnie od sprzętu.
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, VERSION: "3.4.0" };
+  // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, VERSION: "3.5.0", SCORING_VERSION: "1.0.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);

@@ -1,0 +1,230 @@
+/* Battle Weld skin. Every design token and selector is local to Battle UI. */
+@font-face{font-family:BWDisplay;src:url("fonts/big-shoulders-display-latin.woff2") format("woff2");font-style:normal;font-weight:800; font-display:swap}
+@font-face{font-family:BWDisplay;src:url("fonts/big-shoulders-display-latin-ext.woff2") format("woff2");font-style:normal;font-weight:800;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:BWArchivo;src:url("fonts/archivo-latin.woff2") format("woff2");font-style:normal;font-weight:400 600;font-display:swap}
+@font-face{font-family:BWArchivo;src:url("fonts/archivo-latin-ext.woff2") format("woff2");font-style:normal;font-weight:400 600;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:BWMono;src:url("fonts/chivo-mono-latin.woff2") format("woff2");font-style:normal;font-weight:400 500;font-display:swap}
+@font-face{font-family:BWMono;src:url("fonts/chivo-mono-latin-ext.woff2") format("woff2");font-style:normal;font-weight:400 500;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+#battleModal{
+  --bw-coal:#0e0f10;--bw-steel1:#2c3034;--bw-steel2:#191b1d;--bw-edge:#3d4246;
+  --bw-silver:#c3c9ce;--bw-dim:#7b838a;--bw-white:#f3f5f6;
+  --bw-ember:#ff6a10;--bw-ember-hot:#ffb347;--bw-arc:#9fd3ff;
+  --bw-amber:#e8b44a;--bw-reject:#b3302a;--bw-reject-text:#ff8a80;
+  --bw-display:BWDisplay,"Arial Narrow",Impact,sans-serif;--bw-body:BWArchivo,"Helvetica Neue",Arial,sans-serif;
+  --bw-mono:BWMono,ui-monospace,Menlo,monospace;
+  color-scheme:dark;background:rgba(3,4,5,.90);backdrop-filter:blur(9px) saturate(.72);
+  padding:clamp(8px,2vw,24px);overflow:auto;overscroll-behavior:contain;touch-action:pan-y
+}
+#battleModal,#battleModal *{box-sizing:border-box}
+/* Niski ekran (np. monitor dotykowy 1024x600): sekcje nie kurcza sie do zera — przewija sie cale okno */
+#battleModal .bw-shell>*,#battleModal .bw-content>*{flex-shrink:0}
+#battleModal .bw-shell>.bw-content{flex:1 1 auto;min-height:0;overflow:auto}
+#battleModal[hidden]{display:none!important}
+#battleModal .bw-shell{position:relative;display:flex;flex-direction:column;gap:clamp(10px,1.8vh,18px);width:min(1100px,100%);min-height:min(740px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);padding:clamp(14px,2.4vw,30px);overflow:auto;border:1px solid #555b60;border-top:3px solid var(--bw-ember);border-radius:5px;
+  background:radial-gradient(ellipse 60% 24% at 50% 100%,rgba(255,106,16,.13),transparent 70%),repeating-linear-gradient(0deg,transparent 0 52px,rgba(255,255,255,.012) 53px),linear-gradient(150deg,#232629 0%,#111315 45%,#08090a 100%);
+  box-shadow:0 32px 100px #000, inset 0 1px 0 rgba(255,255,255,.11);font-family:var(--bw-body);color:var(--bw-silver)}
+#battleModal>.bw-shell{transform:translateY(12px) scale(.99);transition:transform .28s cubic-bezier(.2,1.5,.35,1)}
+#battleModal.open>.bw-shell{transform:none}
+#battleModal .bw-shell::before{content:"";position:absolute;inset:8px;pointer-events:none;border:1px solid rgba(255,255,255,.045)}
+#battleModal .bw-header,#battleModal .bw-footer{position:relative;display:flex;justify-content:space-between;align-items:center;gap:12px}
+#battleModal .bw-wordmark{display:block;font-family:var(--bw-display);font-size:clamp(30px,5.8vw,58px);font-weight:800;line-height:.8;letter-spacing:.035em;color:#e2e5e7;text-shadow:0 2px 0 #34383b,0 5px 14px #000}
+#battleModal .bw-wordmark b{color:var(--bw-ember-hot);font-weight:800}
+#battleModal .bw-slogan{display:block;margin-top:8px;font-family:var(--bw-mono);font-size:clamp(8px,1.2vw,11px);letter-spacing:.11em;color:#92989c}
+#battleModal .bw-mode{flex:0 0 auto;padding:7px 10px;border:1px solid #805120;background:#20170c;color:#ffd391;font-family:var(--bw-mono);font-size:clamp(9px,1.1vw,11px);font-weight:500;letter-spacing:.06em;text-align:center}
+#battleModal .bw-mode[hidden]{display:none}
+#battleModal .bw-match{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:clamp(8px,2vw,22px);isolation:isolate}
+#battleModal .bw-match::before{content:"";position:absolute;z-index:-1;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(transparent,var(--bw-ember),#ffe0ad,var(--bw-arc),transparent);box-shadow:0 0 22px rgba(255,106,16,.5)}
+#battleModal .bw-player{display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:clamp(78px,12vh,116px);padding:12px 18px;border:1px solid #44484b;border-top:2px solid var(--bw-ember);background:linear-gradient(115deg,#292c2f,#161819 72%);clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
+#battleModal .bw-p2{align-items:flex-end;text-align:right;border-top-color:var(--bw-arc);background:linear-gradient(245deg,#292c2f,#161819 72%);clip-path:polygon(0 0,100% 0,100% 100%,8% 100%)}
+#battleModal .bw-player span{font-family:var(--bw-display);font-size:14px;font-weight:800;letter-spacing:.15em;color:#aeb5b9}
+#battleModal .bw-player strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--bw-display);font-size:clamp(18px,3.5vw,34px);line-height:1.03;color:var(--bw-white)}
+#battleModal .bw-player small{margin-top:5px;font-family:var(--bw-mono);font-size:9px;letter-spacing:.04em;color:var(--bw-dim)}
+#battleModal .bw-p1 strong{color:#ffbd7a}#battleModal .bw-p2 strong{color:#c5e5ff}
+#battleModal .bw-vs{align-self:center;padding:0 5px;font-family:var(--bw-display);font-size:clamp(29px,7vw,72px);font-weight:800;line-height:.8;color:var(--bw-ember-hot);text-shadow:0 0 20px #ff6a1066;transform:skew(-8deg)}
+#battleModal .bw-taskline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 14px;padding:8px 10px;border-block:1px solid #363a3d;background:rgba(5,6,7,.55);font-family:var(--bw-mono);font-size:clamp(9px,1.3vw,12px);letter-spacing:.035em;color:#dadcdd}
+#battleModal #bwTaskValue{font-weight:600;color:#ffd08a}#battleModal #bwVersionValue{color:#8d969c}
+#battleModal .bw-stamps{display:flex;flex-wrap:wrap;gap:4px 9px}
+#battleModal .bw-stamps i+i::before{content:"·";margin-right:9px;color:#7b838a}
+#battleModal .bw-stamps i{font-style:normal;color:#90999e;white-space:nowrap}
+#battleModal .bw-stamps i.ok{color:#e8b44a}#battleModal .bw-stamps i.bad{color:#ff8a80}
+#battleModal .bw-content{position:relative;display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;min-height:170px;padding:clamp(13px,2.4vh,25px);border:1px solid #393d40;background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(255,150,50,.07),transparent 70%),linear-gradient(155deg,rgba(41,44,47,.92),rgba(15,17,18,.96) 50%,rgba(12,13,14,.95));text-align:center;box-shadow:inset 0 1px rgba(255,255,255,.05)}
+#battleModal .bw-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;width:min(620px,100%);margin-bottom:10px;font-family:var(--bw-mono);font-size:9px;letter-spacing:.1em;color:#737c81}
+#battleModal .bw-intro b{font-family:var(--bw-display);font-size:24px;color:#a6adb1}
+#battleModal #battleTitle{margin:0 0 8px;color:var(--bw-white);font-family:var(--bw-display);font-size:clamp(24px,4vw,42px);font-weight:800;letter-spacing:.05em;line-height:.95;text-wrap:balance}
+#battleModal .battle-note{max-width:72ch;margin:5px auto 12px;color:#c1c5c7;font-family:var(--bw-body);font-size:clamp(13px,1.45vw,16px);line-height:1.5;white-space:pre-line;overflow-wrap:anywhere}
+#battleModal #battleTaskChoices{width:min(680px,100%);max-height:min(26vh,230px);overflow:auto}
+#battleModal .battle-choice{min-height:42px;padding:10px 14px;border:1px solid #555b5e;border-radius:2px;background:linear-gradient(180deg,#373b3e,#202325);color:#ebedef;font-family:var(--bw-display);font-size:16px;font-weight:800;letter-spacing:.035em;overflow-wrap:anywhere}
+#battleModal .battle-choice:hover,#battleModal .battle-choice:focus-visible{border-color:var(--bw-ember-hot);box-shadow:0 0 14px #ff6a1033}
+#battleModal .battle-fields{width:min(660px,100%);margin:10px auto;gap:12px}
+#battleModal .battle-fields label{color:#b6bdc1;font-family:var(--bw-mono);font-size:11px;text-align:left}
+#battleModal .battle-fields input,#battleModal .battle-fields select{min-height:44px;border:1px solid #53595d;border-radius:2px;background:#101213;color:#f3f5f6;font-family:var(--bw-body);font-size:14px}
+#battleModal .bw-gear{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;width:min(620px,100%);margin:8px auto 0;padding:10px 12px;border:1px solid #3f4447;text-align:left}
+#battleModal .bw-gear[hidden]{display:none}
+#battleModal .bw-gear legend{padding:0 6px;color:#ffcf8c;font-family:var(--bw-mono);font-size:9px;letter-spacing:.08em}
+#battleModal .bw-gear label{display:flex;align-items:center;gap:7px;min-height:32px;color:#d5d8da;font-size:12px}
+#battleModal .bw-gear input{width:18px;height:18px;accent-color:var(--bw-ember)}
+#battleModal .bw-gear small{flex-basis:100%;color:#8d969c;font-size:10px;text-align:center}
+#battleModal .battle-summary{width:min(660px,100%);margin:10px auto 0;padding:9px 12px;border:1px solid #4b5053;border-left:3px solid var(--bw-amber);background:#111415;color:#e6e8e9;font-family:var(--bw-mono);font-size:clamp(10px,1.3vw,13px);overflow-wrap:anywhere}
+#battleModal .battle-summary.reject{border-left-color:var(--bw-reject);color:var(--bw-reject-text)}
+#battleModal .bw-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:min(660px,100%);margin-top:14px}
+#battleModal .bw-actions button{min-height:46px;flex:1 1 170px;max-width:330px;padding:10px 16px;border:1px solid #555b5e;border-radius:2px;background:linear-gradient(180deg,#3b3f42,#202325);color:#f0f1f2;font-family:var(--bw-display);font-size:17px;font-weight:800;letter-spacing:.055em;white-space:normal;overflow-wrap:anywhere}
+#battleModal .bw-actions button.on{border-color:#ff8a2a;background:linear-gradient(180deg,#ffa544,#e65d0b);color:#17100a;box-shadow:0 4px 0 #713005,0 9px 22px #ff6a1033}
+#battleModal .bw-actions button:focus-visible,#battleModal input:focus-visible,#battleModal select:focus-visible{outline:3px solid #ffd08a;outline-offset:3px}
+#battleModal .bw-footer{padding-top:8px;border-top:1px solid #393d40;font-family:var(--bw-mono);font-size:9px;letter-spacing:.12em;color:#8b9296}
+#battleModal #bwCeremonyLine{color:#ffbf71}
+/* 05.10: kwestia Veldy jako dymek komentatorki (wczesniej 9 px mono, ginela w stopce) */
+#battleModal #bwCeremonyLine{position:relative;display:inline-block;padding:5px 11px 4px;margin-left:6px;font-family:var(--bw-display);font-weight:800;
+  font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:#ffd08a;background:linear-gradient(180deg,rgba(38,26,16,.92),rgba(18,13,9,.92));
+  border:1px solid rgba(255,137,45,.5);border-radius:3px;box-shadow:0 0 14px rgba(255,106,16,.18);text-shadow:0 0 8px rgba(255,106,16,.35)}
+#battleModal #bwCeremonyLine::before{content:"";position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-left:0;border-right:7px solid rgba(255,137,45,.5)}
+#battleModal #bwCeremonyLine:empty,#battleModal #bwCeremonyLine[hidden]{display:none}
+#battleModal[data-screen="incomparable"] .bw-content{border-color:var(--bw-reject);background:repeating-linear-gradient(135deg,#200c0b 0 16px,#100b0b 16px 32px)}
+#battleModal[data-screen="incomparable"] #battleTitle{color:var(--bw-reject-text)}
+#battleModal[data-screen="countdown"] #battleTitle{font-size:clamp(70px,18vh,160px);color:#fff;text-shadow:0 0 38px #ff6a10}
+#battleModal[data-screen="verdict"] .bw-content{border-color:#ac7739;box-shadow:inset 0 0 40px #ff9b2d12,0 0 32px #ff9b2d12}
+#battleModal[data-screen="verdict"] #battleTitle{font-size:clamp(33px,7vw,68px);color:#ffd08a}
+#battleModal[data-screen="verdict"] .battle-summary{font-size:clamp(12px,1.5vw,16px);line-height:1.7}
+#battleModal[data-screen="setup"] .bw-content{justify-content:flex-start}
+#battleModal[data-screen="ready"] .bw-content{justify-content:flex-start}
+#battleModal[data-screen="ready"] .bw-intro{display:none}
+#battleModal[data-screen="enter"] .bw-intro{display:none}
+#battleModal[data-screen="setup"] .bw-intro{display:none} /* 05.10: wynik P1 0 · P2 0 nic nie mowi na ekranie zgody/profilu */
+#battleModal[data-screen="ready"] .battle-summary{display:none}
+#battleModal[data-screen="ready"] .battle-note{margin-bottom:6px}
+#battleModal[data-screen="ready"] .bw-gear{margin-top:4px;padding-block:7px}
+#battleModal[data-screen="ready"] .bw-actions{margin-top:8px}
+/* 05.10: GOTOWY byl przyciety na 1280x800 — ciasniejszy ekran ready */
+#battleModal[data-screen="ready"] .bw-content{padding-block:10px 12px}
+#battleModal[data-screen="ready"] #battleTitle{margin-bottom:2px}
+#battleModal[data-screen="ready"] .battle-choice{min-height:36px;padding-block:6px}
+#battleModal[data-screen="setup"] .bw-gear{display:none}
+
+.bw-hud{position:fixed;z-index:6;top:110px;left:50%;display:none;align-items:center;gap:clamp(8px,1.6vw,20px);width:min(940px,calc(100vw - 24px));min-height:32px;padding:5px 12px;transform:translateX(-50%);border:1px solid #4c5053;border-top:2px solid #ed7622;background:rgba(12,14,15,.86);backdrop-filter:blur(5px);color:#d8dcde;font:10px BWMono,ui-monospace,monospace;pointer-events:none}
+body.battle-active.bw-welding .bw-hud{display:flex}
+/* Telefon w poziomie (niski ekran): status Battle jest juz w gornym pasku ARC — pasek LIVE zabieralby blache */
+@media(max-height:560px){body.battle-active.bw-welding .bw-hud{display:none}}
+body.battle-active.bw-welding .top{z-index:7}
+.bw-hud>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bw-hud-brand{color:#ffc17a;font-weight:600}.bw-hud #bwHudOpponent{margin-left:auto;text-align:right;color:#a9d9fb;animation:bw-slow-pulse 2.8s ease-in-out infinite}
+@keyframes bw-slow-pulse{50%{opacity:.58}}
+.bw-inspection{position:fixed;z-index:12;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;background:rgba(11,13,14,.96);color:#e5e8e9;text-align:center;pointer-events:none}
+.bw-inspection-mode{position:absolute;top:max(18px,env(safe-area-inset-top));right:16px;padding:6px 9px;border:1px solid #805120;background:#20170c;color:#ffd391;font:500 10px BWMono,ui-monospace,monospace;letter-spacing:.04em}
+.bw-inspection[hidden]{display:none}
+.bw-inspection b{font:800 clamp(44px,10vw,100px)/.9 BWDisplay,"Arial Narrow",Impact,sans-serif;letter-spacing:.04em;color:#dfe3e5}
+.bw-inspection span:not(.bw-scan){font:500 clamp(13px,2vw,20px) BWMono,ui-monospace,monospace;color:#ffbd75;letter-spacing:.07em}
+.bw-inspection small{font:500 12px BWArchivo,"Helvetica Neue",Arial,sans-serif;color:#8e989d}
+/* 05.10: kwestia Veldy w inspekcji tez jako dymek */
+.bw-inspection #bwInspectionVelda{position:relative;padding:7px 14px 6px;margin-left:6px;font:800 16px/1 BWDisplay,"Arial Narrow",Impact,sans-serif;letter-spacing:.07em;text-transform:uppercase;
+  color:#ffd08a;background:linear-gradient(180deg,rgba(38,26,16,.92),rgba(18,13,9,.92));border:1px solid rgba(255,137,45,.5);border-radius:3px;box-shadow:0 0 14px rgba(255,106,16,.18)}
+.bw-inspection #bwInspectionVelda::before{content:"";position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-left:0;border-right:7px solid rgba(255,137,45,.5)}
+.bw-scan{width:min(420px,78vw);height:3px;background:linear-gradient(90deg,transparent,#9fd3ff,transparent);box-shadow:0 0 25px #9fd3ff;animation:bw-scan 1.4s ease-in-out infinite alternate}
+@keyframes bw-scan{to{transform:translateX(24px);opacity:.45}}
+#cardModal #battleShareCanvas{display:block;width:min(900px,86vw);height:auto;aspect-ratio:1200/675;border:1px solid #555b60;border-radius:3px}
+#cardModal #battleShareCanvas[hidden]{display:none}
+#cardModal #shareCanvas[hidden]{display:none}
+@media(max-width:600px){
+  #battleModal{padding:0;align-items:stretch}
+  #battleModal .bw-shell{width:100%;min-height:100dvh;max-height:100dvh;padding:max(14px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));border-radius:0;gap:10px}
+  #battleModal .bw-header{align-items:flex-start}#battleModal .bw-mode{max-width:48%;padding:6px;font-size:8px}
+  #battleModal .bw-match{gap:5px}#battleModal .bw-player{min-height:88px;padding:8px 10px}#battleModal .bw-player span{font-size:11px}#battleModal .bw-player small{font-size:8px}
+  #battleModal .bw-vs{font-size:42px}#battleModal .bw-taskline{font-size:9px;gap:5px 8px}#battleModal .bw-stamps{flex-basis:100%;justify-content:center}
+  #battleModal .bw-content{min-height:0;flex:1;padding:13px 9px}
+  #battleModal .bw-intro{font-size:7px}
+  #battleModal .battle-note{font-size:13px;line-height:1.42}
+  #battleModal .battle-fields{grid-template-columns:1fr}
+  #battleModal .bw-actions{margin-top:9px;gap:8px}#battleModal .bw-actions button{min-height:48px;flex:1 1 100%;max-width:none;padding:10px 12px;font-size:15px;overflow-wrap:normal;word-break:normal}
+  #battleModal .bw-footer{font-size:8px}
+  .bw-hud{top:150px;left:8px;width:calc(100vw - 16px);transform:none;flex-wrap:wrap;gap:4px 8px;font-size:8px}
+  .bw-hud #bwHudOpponent{margin-left:0}
+  body.battle-active.bw-welding .mob-hud{z-index:7}
+}
+html[lang="ru"] #battleModal,html[lang="ru"] #battleModal *,
+html[lang="ru"] .bw-hud,html[lang="ru"] .bw-hud *,
+html[lang="ru"] .bw-inspection,html[lang="ru"] .bw-inspection *,
+html[lang="ru"] #cardModal.bw-battle-ru,html[lang="ru"] #cardModal.bw-battle-ru *{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif!important}
+@media(prefers-reduced-motion:reduce){
+  #battleModal *, .bw-hud *, .bw-inspection *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+/* Battle imagery is inert until the Battle root is opened by JavaScript. */
+#battleModal.bw-root{isolation:isolate;background:rgba(14,15,16,.58)}
+#battleModal .bw-arena-backdrop{position:fixed;z-index:0;inset:0;display:none;pointer-events:none;
+  background-image:url("battle-assets/arena-wide.webp");background-position:center;background-size:cover;background-repeat:no-repeat}
+#battleModal.bw-assets-active[data-screen="enter"] .bw-arena-backdrop,
+#battleModal.bw-assets-active[data-screen="setup"] .bw-arena-backdrop,
+#battleModal.bw-assets-active[data-screen="ready"] .bw-arena-backdrop,
+#battleModal.bw-assets-active[data-screen="verdict"] .bw-arena-backdrop{display:block}
+#battleModal .bw-arena-backdrop::after{content:"";position:absolute;inset:0;background:rgba(14,15,16,.28)}
+#battleModal .bw-gates{position:fixed;z-index:4;inset:0;display:none;overflow:hidden;pointer-events:none}
+#battleModal.bw-assets-active[data-screen="enter"] .bw-gates{display:block}
+#battleModal .bw-gates img{position:absolute;top:0;width:50.1%;height:100%;object-fit:cover;transition:transform .78s cubic-bezier(.7,0,.2,1)}
+#battleModal #bwGateLeft{left:0;object-position:left center}
+#battleModal #bwGateRight{right:0;object-position:right center}
+#battleModal.bw-gates-open #bwGateLeft{transform:translateX(-101%)}
+#battleModal.bw-gates-open #bwGateRight{transform:translateX(101%)}
+/* Delikatny zar w kolorach logo (user 05.10): poswiata od logo (lewy gorny rog) i luna od dolu; srodek ciemny dla kontrastu */
+#battleModal .bw-shell{z-index:3;background:radial-gradient(ellipse 55% 42% at 16% 0%,rgba(255,106,16,.17),transparent 72%),radial-gradient(ellipse 75% 45% at 50% 100%,rgba(255,150,50,.11),transparent 70%),linear-gradient(155deg,rgba(35,38,41,.91),rgba(12,14,15,.95) 55%,rgba(8,9,10,.94))}
+#battleModal .bw-brand-block{min-width:0}
+#battleModal .bw-brand{position:relative;display:block;width:clamp(150px,29vw,330px);height:clamp(38px,7vw,82px);overflow:hidden}
+#battleModal[data-screen="enter"] .bw-brand{width:clamp(185px,34vw,390px);height:clamp(54px,10vw,112px)}
+#battleModal .bw-brand img{display:block;width:100%;height:100%;object-fit:contain;object-position:left center}
+#battleModal .bw-wordmark-fallback{display:none;font-family:var(--bw-display);font-size:clamp(29px,5.8vw,58px);font-weight:800;line-height:.9;letter-spacing:.035em;color:#e2e5e7;text-shadow:0 2px 0 #34383b,0 5px 14px #000}
+#battleModal .bw-wordmark-fallback b{color:var(--bw-ember-hot);font-weight:800}
+#battleModal .bw-brand.logo-failed img{display:none}
+#battleModal .bw-brand.logo-failed .bw-wordmark-fallback{display:block}
+#battleModal .bw-slogan{margin-top:5px}
+#battleModal[data-screen="enter"] .bw-slogan{display:none}
+#battleModal .bw-player-name{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%}
+#battleModal .bw-p2 .bw-player-name{flex-direction:row-reverse}
+#battleModal .bw-avatar{display:block;flex:none;width:clamp(34px,5vw,52px);height:clamp(34px,5vw,52px);object-fit:cover;border:1px solid var(--bw-dim);border-radius:50%;background:var(--bw-coal)}
+#battleModal .bw-avatar[hidden]{display:none}
+#battleModal .bw-player-name strong{min-width:0}
+#battleModal .bw-velda{display:flex;align-items:center;gap:9px;min-width:0;color:#ffbf71}
+#battleModal .bw-velda[hidden],#battleModal .bw-velda-portrait[hidden]{display:none}
+#battleModal .bw-velda-portrait{display:block;flex:none;width:40px;height:44px;object-fit:cover;object-position:center 20%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 78% at 50% 48%,#000 56%,transparent 100%);mask-image:radial-gradient(ellipse 70% 78% at 50% 48%,#000 56%,transparent 100%)}
+#battleModal .bw-velda-portrait[hidden]{display:none}
+#battleModal .bw-footer-mark{flex:none}
+.bw-inspection-velda{display:flex;align-items:center;gap:7px;min-height:36px}
+.bw-inspection-velda .bw-velda-portrait{width:34px;height:36px}
+#bwInspectionVelda:empty{display:none}
+@media(max-width:600px){
+  #battleModal .bw-arena-backdrop{background-image:url("battle-assets/arena-tall.webp")}
+  #battleModal .bw-footer{align-items:flex-start;flex-direction:column;gap:3px}
+  #battleModal .bw-velda{max-width:100%}
+  #battleModal .bw-velda .vline{white-space:normal}
+  #battleModal .bw-footer-mark{align-self:flex-end}
+  #battleModal .bw-player-name{gap:5px}
+  #battleModal .bw-avatar{width:32px;height:32px}
+}
+/* ENTER has no match yet; reclaim the scoreboard row and scale the gate wordmark on short screens. */
+@media(max-height:820px){#battleModal[data-screen="enter"] .bw-brand{width:clamp(185px,31vw,350px);height:clamp(48px,8vh,84px)}#battleModal[data-screen="enter"] .bw-shell{gap:8px;padding-block:14px}#battleModal[data-screen="enter"] .bw-content{justify-content:flex-start;padding-block:8px}#battleModal[data-screen="enter"] .battle-choice{min-height:36px;padding-block:7px}#battleModal[data-screen="enter"] .bw-actions{margin-top:8px}}
+@media(max-height:760px){#battleModal[data-screen="enter"] .bw-brand{height:clamp(44px,7vh,66px)}#battleModal[data-screen="enter"] .bw-shell{gap:clamp(7px,1.2vh,10px);padding-block:14px}#battleModal[data-screen="enter"] .bw-content{padding-block:12px}}
+@media(max-height:680px){#battleModal[data-screen="enter"] .bw-brand{height:48px;width:min(270px,52vw)}#battleModal[data-screen="enter"] .bw-match .bw-player{min-height:72px;padding-block:8px}#battleModal[data-screen="enter"] .bw-content{min-height:0;padding-block:8px}#battleModal[data-screen="enter"] .battle-note{margin-block:3px 7px;line-height:1.3}#battleModal[data-screen="enter"] #battleTaskChoices{max-height:20vh}#battleModal[data-screen="enter"] .battle-choice{min-height:36px;padding-block:6px}#battleModal[data-screen="enter"] .bw-actions{margin-top:6px}}
+@media(max-height:620px){#battleModal[data-screen="enter"] .bw-brand{height:40px;width:min(230px,48vw)}#battleModal[data-screen="enter"] .bw-match .bw-player{min-height:60px}#battleModal[data-screen="enter"] .bw-match .bw-player small{display:none}#battleModal[data-screen="enter"] .bw-content{padding-block:6px}#battleModal[data-screen="enter"] #battleTitle{font-size:clamp(22px,3.5vw,32px)}#battleModal[data-screen="enter"] .battle-note{font-size:12px;margin:2px auto 5px}#battleModal[data-screen="enter"] .battle-choice{min-height:32px;padding-block:4px}#battleModal[data-screen="enter"] .bw-actions button{min-height:38px;padding-block:6px}}
+@media(min-width:900px) and (min-height:700px){#battleModal .bw-velda-portrait{width:72px;height:92px}#battleModal #bwCeremonyLine{font-size:16px;padding:7px 14px 6px}#battleModal .bw-footer{align-items:center}#battleModal .bw-velda{gap:10px}.bw-inspection-velda{min-height:92px}.bw-inspection-velda .bw-velda-portrait{width:72px;height:92px}}
+@media(max-height:399px){#battleModal .bw-velda-portrait{display:none!important}}
+@media(prefers-reduced-motion:reduce){#battleModal .bw-gates{display:none!important}}
+/* 05.10 (przeglad Codexa): READY/VERDICT ucinaly sie na 1280x800, 1366x768, 1280x720.
+   safe center = przy przepelnieniu tresc zaczyna sie od gory (da sie przewinac), plus ciasniejsza glowa okna. */
+#battleModal .bw-content{justify-content:safe center}
+#battleModal[data-screen="ready"] .bw-content,#battleModal[data-screen="setup"] .bw-content{justify-content:flex-start}
+@media(min-width:601px) and (max-height:900px){
+  #battleModal:not([data-screen="enter"]) .bw-shell{gap:8px;padding-block:14px}
+  #battleModal:not([data-screen="enter"]) .bw-slogan{display:none}
+  #battleModal:not([data-screen="enter"]) .bw-brand{height:54px;width:clamp(150px,22vw,240px)}
+  #battleModal:not([data-screen="enter"]) .bw-match .bw-player{min-height:0;padding-block:8px}
+  #battleModal:not([data-screen="enter"]) .bw-content{padding-block:10px}
+  #battleModal[data-screen="verdict"] #battleTitle{font-size:clamp(30px,6vh,52px);margin-bottom:2px}
+  #battleModal[data-screen="verdict"] .battle-summary{width:min(960px,100%);line-height:1.45;padding-block:6px;margin-top:6px}
+  #battleModal[data-screen="verdict"] .bw-actions{margin-top:8px}
+  #battleModal[data-screen="verdict"] .battle-choice{min-height:36px;padding-block:6px}
+  /* 05.10 zgoda produkcyjna jest dluzsza: bez paska wyniku (P1 0 · P2 0) i szerszy akapit */
+  #battleModal[data-screen="setup"] .battle-note{max-width:min(860px,100%);line-height:1.45}
+}
+@media(min-width:601px) and (max-height:760px){
+  #battleModal[data-screen="verdict"] .bw-intro{margin-bottom:4px}
+  #battleModal[data-screen="verdict"] #battleTitle{font-size:clamp(28px,5.4vh,40px)}
+  #battleModal[data-screen="verdict"] .battle-summary{font-size:13px;line-height:1.35}
+  #battleModal[data-screen="verdict"] .bw-actions button{min-height:38px;padding-block:6px}
+}

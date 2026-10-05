@@ -148,6 +148,8 @@
   #zoom { display:block; border-radius:10px; border:1px solid #232b31; margin:10px auto 4px; box-shadow:0 4px 20px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04); }
   .card .act { display:flex; gap:8px; margin-top:16px; }
   .card .act button { flex:1; padding:11px; }
+  #cardModal .card .act { flex-wrap:wrap; justify-content:center; }
+  #cardModal .card .act button { flex:1 1 130px; }
 
   /* O ARC / FAQ — statyczny HTML w DOM od początku (czyta go Google bez JS). Widać wersję wg <html lang>, RU → EN */
   .about-lang { display:none; font-size:13.5px; line-height:1.55; color:#b9c4cb; }
@@ -227,6 +229,23 @@
   .splash-bar > div { height:100%; width:40%; background:linear-gradient(90deg,var(--cyan),var(--amber)); animation:splashload 1.2s ease-in-out infinite; }
   @keyframes splashload { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
   .mob-only { display:none; }
+  #battleBadge { padding:5px 9px; border:1px solid rgba(255,174,60,.45); border-radius:7px; color:#ffae3c; font-size:10px; font-weight:800; letter-spacing:1px; white-space:nowrap; }
+  .battle-mode-tag { display:inline-block; padding:5px 8px; border:1px solid #ffae3c66; color:#ffcf78; background:#171108; font-size:10px; font-weight:800; letter-spacing:.45px; line-height:1.3; }
+  .battle-mode-tag[hidden],.battle-fields[hidden] { display:none; }
+  .battle-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; text-align:left; }
+  .battle-fields label { display:grid; gap:5px; color:#9aa6ad; font-size:11px; }
+  .battle-fields input,.battle-fields select { width:100%; min-height:40px; box-sizing:border-box; padding:8px 10px; border:1px solid #35424a; border-radius:5px; background:#0d1318; color:#e9eef2; }
+  @media(max-width:520px) { .battle-fields { grid-template-columns:1fr; } }
+  .battle-choice { display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%; margin:7px 0; text-align:left; }
+  .battle-note { color:#9aa6ad; line-height:1.55; margin:8px 0 14px; white-space:pre-line; }
+  .battle-summary { margin:10px 0; padding:10px 12px; border:1px solid #303b42; border-left:3px solid var(--amber); background:#0d1318; color:#e1e8ec; text-align:left; line-height:1.5; white-space:pre-line; }
+  .battle-summary.reject { border-left-color:#ff5a4a; color:#ffb1a9; }
+  .battle-vs { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .battle-vs > div { padding:12px; background:#0d1318; border:1px solid #273139; text-align:left; }
+  .battle-vs strong { display:block; color:#ffae3c; font-size:12px; }
+  #battleReportSummary { margin:8px 0 4px; padding:9px 10px; background:#111a20; border:1px solid #303b42; border-radius:8px; font-weight:800; letter-spacing:.4px; }
+  #battleReportSummary.reject { color:#ff7568; border-color:#8b3b35; }
+  @media(max-width:520px) { .battle-vs { grid-template-columns:1fr; } }
   .setup-backdrop { display:none; position:fixed; inset:0; z-index:7; background:rgba(0,0,0,.55); backdrop-filter:blur(2px); }
   .setup-sheet { display:none; }
   .mob-hud { display:none; position:fixed; left:8px; right:8px; top:52px; z-index:6; pointer-events:none;
@@ -288,6 +307,7 @@
     body.is-mobile .mob-actions{ min-height:44px; padding:4px 8px; font-size:17px; }
   }
 </style>
+<link rel="stylesheet" href="battle-ui.css?v=20261004d">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 </head>
@@ -307,6 +327,7 @@
 
   <div class="panel top">
     <div class="brand"><img src="/favicon.png" alt="GORWELD" style="height:30px;width:30px;border-radius:50%"><span><b>GORWELD</b>® ARC</span><span class="demo-badge">DEMO</span></div>
+    <span id="battleBadge" hidden>BATTLE WELD</span>
     <div class="wal" id="wal" hidden></div>
     <button id="setupBtn" class="mob-only on" type="button" title="Settings">⚙️</button>
     <button id="mobInspect" class="mob-only" type="button" title="Inspect">🔎</button>
@@ -368,17 +389,64 @@
     <button id="helmet" class="on" data-i18n="btn_helmet">🥽 HELMET</button>
     <button id="snd">🔊 ARC</button>
     <button id="inspect" data-i18n="btn_inspect">🔎 INSPECT</button>
+    <button id="battleLaunch">⚔ BATTLE WELD</button>
+    <button id="battleLaunchMobile" class="mob-actions" type="button" title="BATTLE WELD">⚔</button>
     <button id="career" data-i18n="btn_career">🎓 CAREER</button>
     <button id="help" data-i18n="btn_help">❔ HOW TO</button>
     <button id="methods" data-i18n="btn_methods">📖 METHODS</button>
     <button id="about" data-i18n="btn_about">ℹ️ ABOUT</button>
     <button id="clear" data-i18n="btn_clear">✕ CLEAR</button>
+    <button id="music" type="button" aria-pressed="false" data-i18n="btn_music">🎵 MUSIC</button>
     <button id="mobHelmet" class="mob-actions on" type="button" title="Helmet">🥽</button>
     <button id="mobSnd" class="mob-actions" type="button" title="Sound">🔊</button>
+    <button id="mobMusic" class="mob-actions" type="button" aria-pressed="false" title="Music">🎵</button>
     <button id="mobClear" class="mob-actions" type="button" title="Clear">✕</button>
     <button id="mobHelp" class="mob-actions" type="button" title="Help">❔</button>
     <button id="mobSetup2" class="mob-actions" type="button" title="Settings">⚙️</button>
   </div>
+
+  <!-- BATTLE WELD — isolated visual shell; the ARC stage remains untouched beneath it. -->
+  <div id="battleModal" class="modal bw-root" role="dialog" aria-modal="true" aria-labelledby="battleTitle" data-screen="enter">
+    <div id="bwArenaBackdrop" class="bw-arena-backdrop" aria-hidden="true"></div>
+    <div id="bwGates" class="bw-gates" aria-hidden="true"><img id="bwGateLeft" alt=""><img id="bwGateRight" alt=""></div>
+    <div class="bw-shell">
+      <header class="bw-header">
+        <div class="bw-brand-block"><span id="bwBrand" class="bw-brand" role="img" aria-label="BATTLE WELD"><img id="bwBrandImage" alt="" aria-hidden="true"><span id="bwBrandFallback" class="bw-wordmark-fallback" aria-hidden="true">BATTLE <b>WELD</b></span></span><span class="bw-slogan">SAME TASK · SAME RULES · ONE VERDICT</span></div>
+        <div id="battleModeTag" class="bw-mode" hidden></div>
+      </header>
+      <div class="bw-match" aria-label="Battle Weld match">
+        <section class="bw-player bw-p1"><span id="bwPlayer1Slot">PLAYER 1</span><div class="bw-player-name"><img class="bw-avatar" id="bwPlayer1Avatar" alt="" aria-hidden="true" hidden><strong id="bwPlayer1Name">—</strong></div><small id="bwPlayer1State">STANDING BY</small></section>
+        <div class="bw-vs" aria-hidden="true">VS</div>
+        <section class="bw-player bw-p2"><span id="bwPlayer2Slot">PLAYER 2</span><div class="bw-player-name"><img class="bw-avatar" id="bwPlayer2Avatar" alt="" aria-hidden="true" hidden><strong id="bwPlayer2Name">—</strong></div><small id="bwPlayer2State">STANDING BY</small></section>
+      </div>
+      <div class="bw-taskline"><span id="bwTaskValue">SAME TASK · SAME RULES</span><span id="bwCheckStamps" class="bw-stamps"><i data-check="taskHash">HASH · —</i><i data-check="engineVersion">ENGINE · —</i><i data-check="scoringVersion">SCORING · —</i></span><span id="bwVersionValue"></span></div>
+      <main class="bw-content">
+        <div class="bw-intro" aria-hidden="true"><span>GORWELD® ARC</span><b id="bwScoreboard">P1 0 · P2 0</b><span>SERVER JUDGED</span></div>
+        <h2 id="battleTitle">BATTLE WELD</h2>
+        <p id="battleMessage" class="battle-note" aria-live="polite"></p>
+        <div id="battleTaskChoices"></div>
+        <div id="battleServerFields" class="battle-fields" hidden>
+          <label><span id="battleNicknameLabel">Nickname (optional)</span><input id="battleNickname" maxlength="24" autocomplete="nickname"></label>
+          <label><span id="battleProfileLabel">Replay profile</span><select id="battleInputProfile"><option value="full">Full</option><option value="touch">Touch</option></select></label>
+        </div>
+        <fieldset id="bwGearCheck" class="bw-gear" hidden>
+          <legend id="bwGearLegend">GEAR CHECK · PLAYER CONFIRMATION</legend>
+          <label><input id="bwHelmetCheck" type="checkbox"><span id="bwHelmetText">Helmet on</span></label>
+          <label><input id="bwGlovesCheck" type="checkbox"><span id="bwGlovesText">Gloves on</span></label>
+          <small id="bwGearNote">Player confirmation only. This screen does not verify physical PPE.</small>
+        </fieldset>
+        <div id="battleModalSummary" class="battle-summary" hidden></div>
+        <div class="bw-actions">
+          <button id="battlePrimary" class="on" type="button"></button>
+          <button id="battleSecondary" type="button"></button>
+        </div>
+      </main>
+      <footer class="bw-footer"><span class="bw-velda"><img id="bwVeldaPortrait" class="bw-velda-portrait" alt="" hidden><span id="bwCeremonyLine" aria-live="polite">GEAR CHECK.</span></span><span class="bw-footer-mark">GORWELD® · ARC</span></footer>
+    </div>
+  </div>
+
+  <div id="bwHud" class="bw-hud" aria-hidden="true"><span class="bw-hud-brand">BATTLE WELD · LIVE</span><span id="bwHudMode"></span><span id="bwHudTask"></span><span id="bwHudAttempt"></span><span id="bwHudOpponent"></span></div>
+  <div id="bwInspection" class="bw-inspection" hidden role="status" aria-live="polite"><span id="bwInspectionMode" class="bw-inspection-mode"></span><span class="bw-scan" aria-hidden="true"></span><b id="bwInspectionTitle">INSPECTION</b><span id="bwInspectionText">VERIFYING…</span><span class="bw-inspection-velda"><img id="bwInspectionPortrait" class="bw-velda-portrait" alt="" hidden><small id="bwInspectionVelda"></small></span></div>
 
   <!-- INSPECTION REPORT -->
   <div id="repModal" class="modal"><div class="card" style="width:min(460px,90vw)">
@@ -391,6 +459,7 @@
       </div>
     </div>
     <div class="reward" id="rReward"></div>
+    <div id="battleReportSummary" hidden></div>
     <canvas id="zoom" width="380" height="120"></canvas>
     <ul class="defects" id="rDefects"></ul>
     <div class="row"><span data-i18n="row_cov">Groove coverage</span><b id="rCov">—</b></div>
@@ -399,6 +468,7 @@
     <div class="row"><span data-i18n="row_even">Bead evenness</span><b id="rEven">—</b></div>
     <div class="act">
       <button id="rCard" data-i18n="btn_cardx">📤 X CARD</button>
+      <button id="rBattleShare" hidden type="button">BEAT MY WELD</button>
       <button id="rClose" class="on" data-i18n="btn_weldon">KEEP WELDING</button>
     </div>
   </div></div>
@@ -413,11 +483,15 @@
 
   <!-- SHARE CARD -->
   <div id="cardModal" class="modal"><div class="card" style="text-align:center">
-    <h2 data-i18n="card_title">Score card</h2>
+    <h2 id="cardTitle" data-i18n="card_title">Score card</h2>
+    <div id="cardBattleModeTag" class="battle-mode-tag" hidden></div>
     <canvas id="shareCanvas" width="600" height="338" style="width:min(560px,86vw); border-radius:12px; border:1px solid #232b31"></canvas>
+    <canvas id="battleShareCanvas" width="1200" height="675" hidden aria-label="Battle Weld result card"></canvas>
     <div class="act">
       <button id="cardDl" class="on" data-i18n="card_dl">💾 SAVE PNG</button>
       <button id="cardTxt" data-i18n="card_copy">📋 COPY TEXT</button>
+      <button id="cardBattleLink" hidden type="button">COPY BATTLE LINK</button>
+      <button id="cardBattleShare" hidden type="button">SHARE</button>
       <button id="cardProof" style="display:none">🔒 KOPIUJ PROOF</button>
       <button id="cardClose" data-i18n="card_close">CLOSE</button>
     </div>
@@ -506,8 +580,10 @@
   </div></div>
 
 <script src="sim.js"></script>
+<script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
+const Battle=GorWeldBattle;
 const stage=document.getElementById("stage"), ctx=stage.getContext("2d");
 const flashEl=document.getElementById("flash"), toast=document.getElementById("toast");
 const plate=document.createElement("canvas"), pctx=plate.getContext("2d");
@@ -586,7 +662,7 @@ try{ const l=localStorage.getItem('gorweld_lang'); if(l) lang=l; }catch(e){}
 const I18N={
  pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE",
   jt_butt:"Doczołowe V", jt_fillet:"Pachwinowe T", jt_pipe:"Rura", mat_steel:"Stal", mat_ss:"Nierdz.", mat_alu:"Alu",
-  btn_helmet:"🥽 HEŁM", btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ ZETRZYJ",
+  btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ ZETRZYJ",
   grav:"grawitacja<br>jeziorka", vset:"v zadane:", forA:"za A ≈",
   tool_elec:"🔥 Elektroda: ", tool_used:"ZUŻYTA — klik = nowa", tool_mig:"🔫 <b>Drut z automatu</b> — jedna ręka, ciągłe podawanie", tool_tig:"👐 <b>Palnik + drut</b> — LPM zapala, SPACJA dokłada spoiwo, PPM gasi",
   fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu", fb_slow:"ZA WOLNO — przepalenie / przelew", fb_good:"DOBRE TEMPO — pełny przetop",
@@ -623,7 +699,7 @@ const I18N={
   cardtext_cut:"Przeciąłem %1 — ocena %2, ISO 9013 %3. 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#ciecie #spawanie #GorWeld" },
  en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL",
   jt_butt:"Butt V", jt_fillet:"Fillet T", jt_pipe:"Pipe", mat_steel:"Steel", mat_ss:"Stainless", mat_alu:"Alu",
-  btn_helmet:"🥽 HELMET", btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
+  btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"set v:", forA:"for A ≈",
   tool_elec:"🔥 Electrode: ", tool_used:"SPENT — click for new", tool_mig:"🔫 <b>Auto-fed wire</b> — one hand, continuous", tool_tig:"👐 <b>Torch + rod</b> — LMB lights it, SPACE dabs filler, RMB puts it out",
   fb_fast:"TOO FAST — cold lap, no fusion", fb_slow:"TOO SLOW — burn-through / overflow", fb_good:"GOOD SPEED — full penetration",
@@ -660,7 +736,7 @@ const I18N={
   cardtext_cut:"Cut %1 — grade %2, ISO 9013 %3. 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#cutting #welding #GorWeld" },
  ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ",
   jt_butt:"Стыковое V", jt_fillet:"Тавровое T", jt_pipe:"Труба", mat_steel:"Сталь", mat_ss:"Нерж.", mat_alu:"Алюм.",
-  btn_helmet:"🥽 МАСКА", btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
+  btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"задан. v:", forA:"за A ≈",
   tool_elec:"🔥 Электрод: ", tool_used:"ИЗРАСХОДОВАН — клик = новый", tool_mig:"🔫 <b>Автоподача</b> — одна рука, непрерывно", tool_tig:"👐 <b>Горелка + пруток</b> — присадка макая, веди медленно",
   fb_fast:"СЛИШКОМ БЫСТРО — непровар", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
@@ -1088,7 +1164,12 @@ let eyeBurn=0, lastFrameT=0, eyeWarned=false;
 function gVec(){ return POSITIONS[posKey].g; }
 function nearestSeam(x,y){ let d=1e18,px=x,py=y; for(const p of seamPts){ const dd=(p.x-x)**2+(p.y-y)**2; if(dd<d){d=dd;px=p.x;py=p.y;} } return {d:Math.sqrt(d),x:px,y:py}; }
 function plateHalf(){ return grooveHalf+bevelW+75; }                 // half width of the coupon plate
-function onPlate(x,y){ return nearestSeam(x,y).d <= plateHalf(); }
+// 3.5.0 (1:1 z sim.js): za koncem szwu prostego nie ma blachy — luk gasnie na krawedzi, nie ~90 px dalej.
+function pastSeamEnd(x,y){ if(isCut()||POSITIONS[posKey].pipe||seamPts.length<2) return false;
+  const a=seamPts[0],b=seamPts[seamPts.length-1],dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy;
+  if(!L2) return false; const t=((x-a.x)*dx+(y-a.y)*dy)/L2,tol=1.5/Math.sqrt(L2);
+  return t<-tol||t>1+tol; }
+function onPlate(x,y){ return nearestSeam(x,y).d <= plateHalf() && !pastSeamEnd(x,y); }
 function coverageNow(){ if(!seamPts.length||!baked.length) return 0; let c=0;
   for(const pt of seamPts){ let d=1e18; for(const b of baked){ const dd=(b.x-pt.x)**2+(b.y-pt.y)**2; if(dd<d)d=dd; } if(Math.sqrt(d)<grooveHalf*1.6) c++; }
   return c/seamPts.length; }
@@ -1202,11 +1283,14 @@ function snap(p){ p.x=Math.round(p.x*100)/100; p.y=Math.round(p.y*100)/100; retu
 function uiHit(e){ return !!(e.target&&e.target.closest&&e.target.closest(".panel,.modal,.covbar,.toolhud,.mob-hud,button")); }
 function unlockAudio(){ try{ if(actx&&actx.state==="suspended") actx.resume(); }catch(e){} const v=document.getElementById("pagebg"); if(v&&v.paused) v.play&&v.play().catch(()=>{}); }
 function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) return;
-  if(uiHit(e)) return; unlockAudio();
+  if(uiHit(e)) return;
+  unlockAudio();
   // drugi przycisk dociśnięty w trakcie ściegu to NIE nowe zajarzenie — nie płać znowu za płytę
   if(welding){ btnMask=e.buttons|0; e.preventDefault(); return; }
   if(document.body.classList.contains("setup-open")){ document.body.classList.remove("setup-open"); return; }
-  if(isCut())return cutStart(e); if(modalOpen())return; const p=snap(pos(e)); cursor.x=p.x; cursor.y=p.y; cursor.seen=true;
+  if(isCut())return cutStart(e); if(modalOpen())return;
+  if(!battleStartAllowed()){ e.preventDefault(); return; }
+  const p=snap(pos(e)); cursor.x=p.x; cursor.y=p.y; cursor.seen=true;
   if(!onPlate(p.x,p.y)){ showToast(t("t_strikeoff"),"#ff9a3c"); e.preventDefault(); return; } // can't strike off the plate
   if(isChallenge()&&!chalWidthOK()){ showToast(t("t_toosmall"),"#ff5a4a"); e.preventDefault(); return; } // równe warunki albo wcale
   if(isChallenge()&&!chalCfgOK){ showToast(t("t_cfgfail"),"#ff5a4a"); e.preventDefault(); return; }       // nie startuj na nieoficjalnym seedzie
@@ -1219,7 +1303,11 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
   // przepisujemy parametry na żywo — dzięki temu przeoczenie w JAKIMKOLWIEK przełączniku panelu
   // (tak jak `.bead` do 3.4.0) nie może już po cichu rozjechać ekranu z `sim.js`. Po pierwszym
   // zdarzeniu nagranie jest nietykalne, więc kolejne pociągnięcia w tej samej rundzie nic nie kasują.
-  lastDab=t0; if(!rec||!rec.events.length)recStart(); recEv('down',p.x,p.y,t0,btnMask); arcOn(); updateToolHud();
+  lastDab=t0; if(!rec||!rec.events.length){
+    if(battleTaskActive()){battleAttemptStart();reseedRound(battleState.task.seed);}
+    recStart();
+  }
+  recEv('down',p.x,p.y,t0,btnMask); arcOn(); updateToolHud();
   if(e.pointerId!==undefined) try{ stage.setPointerCapture(e.pointerId); }catch(err){}
   e.preventDefault(); }
 function move(e){ if(isCut())return cutMove(e);
@@ -1577,9 +1665,10 @@ function drawHelmetFrame(now){
   }
   ctx.restore();
 }
-function drawSpeedPill(x,y,text,good,alpha){
+function drawSpeedPill(x,y,text,good,alpha,anchorLeft){
   ctx.save(); ctx.font="700 11px 'Segoe UI',system-ui,sans-serif"; ctx.textAlign="center";
   const m=ctx.measureText(text), pw=m.width+18, ph=20;
+  if(anchorLeft) x+=pw/2;  // lewa krawedz w x (szew pionowy: tuz za blacha)
   const col=good?"#5fe08a":"#ff9a3c";
   x=Math.max(pw/2+8,Math.min(W-pw/2-8,x)); y=Math.max(ph/2+8,Math.min(H-ph/2-8,y));  // nie wychodz poza pole
   ctx.globalAlpha=(alpha===undefined?1:Math.max(0,Math.min(1,alpha)));
@@ -1604,7 +1693,16 @@ function drawSpeedCoach(now){
   if(fbGood) fbBadT=0; else fbBadT+=dt;
   if(fbBadT>=FB_ARM){ fbText=speedFb; fbAlpha=Math.min(1,fbAlpha+dt/FB_IN); }
   else fbAlpha=Math.max(0,fbAlpha-dt/FB_OUT);
-  if(fbAlpha>0.01) drawSpeedPill(last.x,last.y+idealHalf+22,fbText,false,fbAlpha);
+  if(fbAlpha>0.01){ const at=speedPillSpot(); drawSpeedPill(at.x,at.y,fbText,false,fbAlpha,at.left); }
+}
+// 05.10 (user: napisy w trakcie spawania za blisko elektrody, "mega to drazni"): pigulka juz NIE jedzie za lukiem.
+// Stale miejsce liczone ze szwu: pod blacha (szew poziomy / rura) albo z boku blachy (szew pionowy PF/PG),
+// zawsze >= ~115 px od linii spoiny, wiec nigdy nie lezy na elektrodzie ani jeziorku.
+function speedPillSpot(){
+  if(!seamPts.length) return {x:W/2,y:H-40};
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const q of seamPts){ if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y; }
+  return (y1-y0)>(x1-x0)*1.5 ? {x:x1+100,y:y1-70,left:true} : {x:(x0+x1)/2,y:Math.min(H-40,y1+115)};
 }
 // the molten pool — where the arc liquefies and fuses the base metal
 function drawPuddle(now){
@@ -1839,6 +1937,7 @@ function acceptanceText(score,verdict,defects){
   return fmt("accept_fail",[score,reason]);
 }
 function inspect(){
+  if(battleTaskActive()&&battleState.roundInspected){ showToast(bt("inspectAgain"),"#ffae3c"); return; }
   if(baked.length<10){ showToast(t("t_layfirst"),"#ff9a3c"); return; }
   const K=seamPts.length;
   const cur=passMetrics(), all=passLog.concat([cur]), n=all.length, avg=k=>all.reduce((a,m)=>a+m[k],0)/n;
@@ -1919,6 +2018,7 @@ function inspect(){
   if(isChallenge()){ if(score>=(CHALLENGE.minScore||90)) burstConfetti(); }
   else if(!jobSettled){ jobSettled=true; if(passed && score>=90 && diff>=7) burstConfetti(); }   // MISTRZOWSKA na A
   lastReport={score,letter,iso,std:"ISO 5817",procLbl:proc,cut:false,proc,posKey,thick,coverage,spdAcc,evenness,avgV,diff,passed,material:MATERIAL[bead].name[lang]};
+  if(battleTaskActive()) battleFinishInspection(lastReport,verdict);
 
   const letEl=document.getElementById("rLetter"); letEl.textContent=letter; letEl.style.color=col;
   letEl.classList.remove("pop"); void letEl.offsetWidth; letEl.classList.add("pop");
@@ -1985,7 +2085,7 @@ function openCareer(){
     const el=document.createElement("div"); el.className="coupon"+(done?" done":"")+(unlocked?"":" locked");
     el.innerHTML='<div class="ttl">'+c.name[lang]+'</div><div class="meta">'+c.proc+' · '+POSITIONS[c.pos].lbl+' · '+c.t+'mm · '+t("car_req")+' '+c.req+'%</div>'+
       '<div class="badge">'+(done?'⭐'+done+'%':(unlocked?'':'🔒'))+'</div>';
-    if(unlocked) el.onclick=()=>{ loadCoupon(c); closeModal("carModal"); showToast(fmt("t_couponSel",[c.name[lang]]),"#1fd6e3"); };
+    if(unlocked) el.onclick=()=>{ if(!loadCoupon(c)) return; closeModal("carModal"); showToast(fmt("t_couponSel",[c.name[lang]]),"#1fd6e3"); };
     grid.appendChild(el);
   });
   const r=rankFor(progress.xp), next=RANKS.find(x=>x[0]>progress.xp);
@@ -1994,22 +2094,34 @@ function openCareer(){
   openModal("carModal");
 }
 function loadCoupon(c){
+  if(battleTaskActive()){ showToast(bt("careerUnavailable"),"#ffae3c"); return false; }
   activeCoupon=c.id; proc=c.proc; joint=c.joint; posKey=c.pos; thick=c.t;
   document.querySelectorAll(".proc").forEach(b=>b.classList.toggle("on",b.dataset.proc===proc));
   document.querySelectorAll(".joint").forEach(b=>b.classList.toggle("on",b.dataset.joint===joint));
   document.querySelectorAll(".thk").forEach(b=>b.classList.toggle("on",+b.dataset.t===thick));
   refreshPositions();
+  return true;
 }
 function updateRank(){ const r=rankFor(progress.xp); document.getElementById("rankbar").innerHTML='<b>'+t(r[1])+'</b><br>'+progress.xp+' XP'; }
 function applyI18N(){
   document.documentElement.lang=lang;
   document.querySelectorAll("[data-i18n]").forEach(el=>{ el.innerHTML=t(el.dataset.i18n); });
   document.getElementById("snd").textContent = soundOn? t("btn_arc") : t("btn_mute");
+  if(typeof battleState!=="undefined"&&battleState&&document.getElementById("battleModal").classList.contains("open"))
+    battleUiRefresh(document.getElementById("battleTitle").textContent,document.getElementById("battleMessage").textContent,document.getElementById("battlePrimary").textContent);
+  battleUpdateShareButtons();
   updateInfo(); updateToolHud(); updateRank(); fillTut(); fillQs(); updateWallet(); updateMobHud();
 }
 
 // ── Share card ────────────────────────────────────────────────────
 function buildCard(){
+  if(battleTaskActive()&&battleState.cardView){ buildBattleCard(); return; }
+  document.getElementById("cardModal").classList.remove("bw-battle-ru");
+  document.getElementById("shareCanvas").hidden=false;document.getElementById("battleShareCanvas").hidden=true;
+  document.getElementById("cardBattleModeTag").hidden=true;
+  document.getElementById("cardTitle").textContent=t("card_title");
+  document.getElementById("cardBattleLink").hidden=true;
+  document.getElementById("cardBattleShare").hidden=true;
   if(!lastReport){ showToast("NAJPIERW INSPEKCJA","#ff9a3c"); return; }
   const r=lastReport,cv=document.getElementById("shareCanvas"),x=cv.getContext("2d"),Wc=cv.width,Hc=cv.height;
   const bg=x.createLinearGradient(0,0,Wc,Hc); bg.addColorStop(0,"#080c10"); bg.addColorStop(0.5,"#0e161c"); bg.addColorStop(1,"#0a1218");
@@ -2039,6 +2151,7 @@ function buildCard(){
   openModal("cardModal");
 }
 function cardText(){ const r=lastReport;
+  if(battleTaskActive()&&battleState.cardView) return battleResultSummary(battleState.cardView)+(battleState.shareUrl?"\n"+battleState.shareUrl:"");
   return fmt(r.cut?"cardtext_cut":"cardtext",
     [ (r.procLbl||r.proc)+" · "+r.material+" · "+POSITIONS[r.posKey].lbl+" ("+r.thick+"mm)",
       r.letter+" ("+r.score+"%)", r.iso ]); }
@@ -2055,7 +2168,7 @@ function initAudio(){ if(actx)return;
   const lp=actx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=600; buzzOsc.connect(lp); lp.connect(bg); bg.connect(master);
   noiseSrc.start(); buzzOsc.start();
 }
-function arcOn(){ if(!soundOn)return; initAudio(); if(actx.state==="suspended")actx.resume();
+function arcOn(){ if(!soundOn)return; initAudio(); if(actx.state==="suspended")actx.resume(); if(typeof amDuck==="function")amDuck(true);
   const P=PROCESS[proc]; bpFilter.frequency.value=P.hiss; buzzOsc.frequency.value=P.buzz;
   master.gain.cancelScheduledValues(actx.currentTime); master.gain.setTargetAtTime(0.22,actx.currentTime,0.02);
   clearInterval(crackleTimer); crackleTimer=setInterval(()=>{ if(!master)return;
@@ -2063,7 +2176,7 @@ function arcOn(){ if(!soundOn)return; initAudio(); if(actx.state==="suspended")a
     buzzOsc.frequency.setTargetAtTime(P.buzz*(0.85+Math.random()*0.3),actx.currentTime,0.02); },P.crackInt);
 }
 function arcIntensity(v){ if(master&&soundOn) master.gain.setTargetAtTime(0.12+v*0.18,actx.currentTime,0.03); }
-function arcOff(){ clearInterval(crackleTimer); if(master) master.gain.setTargetAtTime(0,actx.currentTime,0.05); }
+function arcOff(){ clearInterval(crackleTimer); if(master) master.gain.setTargetAtTime(0,actx.currentTime,0.05); if(typeof amDuck==="function")amDuck(false); }
 
 // ── UI ────────────────────────────────────────────────────────────
 function refreshPositions(){
@@ -2198,12 +2311,12 @@ function copyProof(){
     ta.remove(); }
 }
 
-function clearWeld(){
+function clearWeld(seedOverride){
   // Najpierw ZGASIĆ łuk. Od 2.0.0 nie gaśnie sam od puszczenia przycisku, więc bez tego zmiana
   // grubości albo pozycji zostawiała `welding=true` przy świeżym, pustym nagraniu: gra odkładałaby
   // ścieg bez zdarzenia zajarzenia, a `sim.js` pomijałby te ruchy (`!last`) — czysty rozjazd.
   if(welding){ welding=false; last=null; speedFb=""; arcOff(); }
-  reseedRound(isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
+  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
@@ -2214,7 +2327,7 @@ function clearWeld(){
 let openM=null;
 function openModal(id){ if(welding) end(null);   // modal w trakcie palącego się łuku = koniec ściegu
   closeModal(openM); const el=document.getElementById(id); el.style.display="flex"; requestAnimationFrame(()=>el.classList.add("open")); openM=id; }
-function closeModal(id){ if(id){ const el=document.getElementById(id); el.classList.remove("open"); setTimeout(()=>{ if(!el.classList.contains("open")) el.style.display="none"; },220); } if(openM===id) openM=null; }
+function closeModal(id){ if(id==="battleModal"&&typeof bwMusicStop==="function")setTimeout(()=>{const r=document.getElementById("battleModal");if(!r||!r.classList.contains("open"))bwMusicStop();},250); if(id){ const el=document.getElementById(id); el.classList.remove("open"); setTimeout(()=>{ if(!el.classList.contains("open")) el.style.display="none"; },220); } if(openM===id) openM=null; }
 function modalOpen(){ return !!openM; }
 addEventListener("keydown",e=>{ if(e.key==="Escape"&&openM) closeModal(openM); });
 
@@ -2246,9 +2359,9 @@ document.querySelectorAll(".bead").forEach(b=>b.onclick=()=>{ if(isChallenge()&&
   document.querySelectorAll(".bead").forEach(x=>x.classList.remove("on")); b.classList.add("on"); bead=b.dataset.bead; activeCoupon=null; selectPos(); });
 document.querySelectorAll(".lng").forEach(b=>{ b.classList.toggle("on", b.dataset.lng===lang);
   b.onclick=()=>{ document.querySelectorAll(".lng").forEach(x=>x.classList.remove("on")); b.classList.add("on");
-    lang=b.dataset.lng; try{localStorage.setItem("gorweld_lang",lang);}catch(e){} applyI18N(); }; });
+    lang=b.dataset.lng; try{localStorage.setItem("gorweld_lang",lang);}catch(e){} applyI18N(); document.getElementById("battleLaunch").textContent=bt("launch"); document.getElementById("battleLaunchMobile").title=bt("launch"); }; });
 document.getElementById("helmet").onclick=e=>{ helmetOn=!helmetOn; e.target.classList.toggle("on",helmetOn); };
-document.getElementById("snd").onclick=e=>{ soundOn=!soundOn; e.target.textContent=soundOn?t("btn_arc"):t("btn_mute"); if(!soundOn)arcOff(); };
+document.getElementById("snd").onclick=e=>{ soundOn=!soundOn; e.target.textContent=soundOn?t("btn_arc"):t("btn_mute"); if(!soundOn){arcOff();if(typeof bwMusicStop==="function")bwMusicStop();} };
 document.getElementById("inspect").onclick=inspect;
 document.getElementById("career").onclick=openCareer;
 document.getElementById("clear").onclick=()=>{ clearWeld(); flashEl.style.opacity="0.5"; setTimeout(()=>flashEl.style.opacity="0",80); };
@@ -2257,9 +2370,11 @@ document.getElementById("rCard").onclick=()=>{ closeModal("repModal"); buildCard
 document.getElementById("carClose").onclick=()=>closeModal("carModal");
 document.getElementById("carReset").onclick=()=>{ progress={done:{},xp:0}; saveProgress(); updateInfo(); updateRank(); openCareer(); };
 document.getElementById("cardClose").onclick=()=>closeModal("cardModal");
-document.getElementById("cardDl").onclick=()=>{ const a=document.createElement("a"); a.download="gorweld-card-"+Date.now()+".png"; a.href=document.getElementById("shareCanvas").toDataURL("image/png"); a.click(); };
+document.getElementById("cardDl").onclick=()=>{ const a=document.createElement("a"),cv=document.getElementById("battleShareCanvas").hidden?document.getElementById("shareCanvas"):document.getElementById("battleShareCanvas"); a.download="gorweld-card-"+Date.now()+".png"; a.href=cv.toDataURL("image/png"); a.click(); };
 document.getElementById("cardProof").onclick=copyProof;
-document.getElementById("cardTxt").onclick=()=>{ navigator.clipboard?.writeText(cardText()).then(()=>showToast(t("t_copied"),"#5fe08a"),()=>showToast(t("t_clipFail"),"#ff9a3c")); };
+document.getElementById("cardTxt").onclick=()=>{ const value=cardText(); if(battleTaskActive()&&battleState.cardView){battleCopy(value);return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(()=>showToast(t("t_copied"),"#5fe08a"),()=>showToast(t("t_clipFail"),"#ff9a3c"));
+  else showToast(t("t_clipFail"),"#ff9a3c"); };
 let toastTmr=0;
 function showToast(msg,c){ toast.textContent=msg; toast.style.color=c||"#fff"; toast.classList.add("show");
   clearTimeout(toastTmr); toastTmr=setTimeout(()=>toast.classList.remove("show"),1400); }
@@ -2279,10 +2394,10 @@ let qsProc="MMA";
 function fillQs(){ document.querySelectorAll(".qs-opt").forEach(b=>b.classList.toggle("on",b.dataset.qs===qsProc));
   const how=document.getElementById("qsHow"); if(!how) return;
   how.innerHTML=document.body.classList.contains("is-mobile")?t("qs_how_mob"):t(qsProc==="TIG"?"qs_how_tig":"qs_how"); }
-function openQs(){ fillQs(); openModal("qsModal"); }
+function openQs(){ if(BATTLE_LINK_PRESENT) return; fillQs(); openModal("qsModal"); }
 function doneQs(){ try{ localStorage.setItem("gorweld_tut","1"); }catch(e){} closeModal("qsModal"); }
 document.querySelectorAll(".qs-opt").forEach(b=>b.onclick=()=>{ qsProc=b.dataset.qs; fillQs(); });
-document.getElementById("qsGo").onclick=()=>{ const b=document.querySelector('.proc[data-proc="'+qsProc+'"]');
+document.getElementById("qsGo").onclick=()=>{ if(battleTaskActive()){showToast(bt("careerUnavailable"),"#ffae3c");return;} const b=document.querySelector('.proc[data-proc="'+qsProc+'"]');
   if(b&&proc!==qsProc) b.click(); doneQs(); };
 document.getElementById("qsSkip").onclick=doneQs;
 document.getElementById("qsGuide").onclick=()=>{ doneQs(); setTimeout(openTut,240); };
@@ -2560,11 +2675,1476 @@ function fitStage(){
   stage.style.width=Math.max(1,Math.round(W*s))+"px"; stage.style.height=Math.max(1,Math.round(H*s))+"px";
 }
 addEventListener("resize",resize);
+
+// ── WELD BATTLE adapter — ARC pozostaje jedynym źródłem wyniku i WPS ──
+const BATTLE_TEXT={
+  pl:{launch:"⚔ BATTLE WELD",choose:"Wybierz zadanie Battle",chooseNote:"Obaj spawacze dostają te same ustawienia. Battle V1 używa tylko automatycznego prądu z WPS.",
+    start:"USTAW ZADANIE",ready:"ZADANIE GOTOWE",accept:"ZAŁADUJ ZADANIE",close:"ZAMKNIJ",newBattle:"NOWE ZADANIE",exitBattle:"WYJDŹ Z BATTLE",
+    inspectAgain:"Wyczyść płytę (CLEAR), aby zacząć nową próbę",careerUnavailable:"Kariera niedostępna w trakcie Battle",shareLink:"UDOSTĘPNIJ LINK",
+    linkTitle:"Zaproszenie BATTLE WELD",resultTitle:"WERDYKT",errorTitle:"Nie można uruchomić Battle",
+    badLink:"Link Battle jest uszkodzony lub ma nieobsługiwany format.",unsupported:"Tego zadania nie obsługuje ARC (brak WPS albo tryb inny niż AUTO).",
+    ampsMismatch:"Amperaż zadania nie zgadza się z zaleceniem ARC.",taskMismatch:"Wczytane zadanie różni się od zadania w linku.",
+    engineMismatch:"Inna wersja silnika ARC. Tego pojedynku nie można porównać.",scoreMismatch:"Inna wersja oceny ARC. Tego pojedynku nie można porównać.",
+    modeConflict:"Battle nie może działać równocześnie ze starym trybem challenge.",taskReady:"Zadanie przypięte. Uderz w blachę, aby rozpocząć próbę.",
+    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"NIEUKOŃCZONE",
+    beat:"BEAT MY WELD",share:"UDOSTĘPNIJ WYNIK",copyLink:"KOPIUJ LINK",copied:"LINK SKOPIOWANY",
+    wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",
+    incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
+    task:"Zadanie",bp:"BP",scoreUnit:"pkt",attempt:"Próba",started:"rozpoczęte",
+    friendly:"TOWARZYSKI · NIEZWERYFIKOWANY",serverTag:"SERWER · WERYFIKOWANY",nickLabel:"Nick (opcjonalnie)",profileLabel:"Profil odtworzenia",fullProfile:"Pełny",touchProfile:"Dotykowy",syncMode:"Wspólny start",linkMode:"Przez link",
+    clientError:"Błąd w przeglądarce (nie po stronie serwera): %1",attemptClosed:"Próba zamknięta, wynik zapisany. ✕ ZETRZYJ = nowa próba, albo ZAKOŃCZ POJEDYNEK.",consentTitle:"Dane pojedynku",consentBodyProd:"Po zgodzie wyślemy na serwer Battle Weld (Hetzner, Niemcy) Twój nick, nagranie rundy i czasy prób — tylko po to, żeby serwer odtworzył spaw i rozstrzygnął pojedynek. Nick jest opcjonalny. Każdy, kto ma link do pojedynku, widzi nicki, oceny i werdykt; samo nagranie nie jest publiczne. Nagrania usuwamy po 30 dniach, wynik pojedynku po 180 dniach, a nierozpoczęty pojedynek po 7 dniach. Gra nie zapisuje Twojego adresu IP. Zwykłe ARC dalej działa tylko na Twoim urządzeniu.",serverDownProd:"Serwer Battle Weld jest teraz niedostępny. Spróbuj ponownie za chwilę; tryb towarzyski nie został uruchomiony.",consentBody:"Po zgodzie wyślemy nick, nagranie rundy i czasy do lokalnego serwera testowego Battle Weld. Serwer działa tylko na tym komputerze, a dane są przechowywane w pamięci do restartu serwera.",continueText:"KONTYNUUJ",cancelText:"ANULUJ",createText:"UTWÓRZ POJEDYNEK",joinText:"DOŁĄCZ DO POJEDYNKU",copyInvite:"KOPIUJ ZAPROSZENIE",waitingPlayer:"Oczekiwanie na drugiego gracza",waitingReady:"Oczekiwanie na gotowość przeciwnika",readyText:"GOTOWY",finishText:"ZAKOŃCZ POJEDYNEK",confirmFinish:"Zakończyć? Po potwierdzeniu nie można wysłać kolejnych prób.",exitText:"WYJDŹ Z BATTLE",spectator:"Podgląd tylko do odczytu",mouseWarning:"Ten pojedynek wymaga myszy.",versions:"Silnik %1 · ocena %2",serverDown:"Serwer Battle Weld jest niedostępny. Połącz się ponownie z serwerem testowym; tryb towarzyski nie został uruchomiony.",joinPreview:"Zadanie: %1 · tryb: %2 · profil: %3 · gracz 1: %4",incomparableServer:"INCOMPARABLE — wersja ARC nie pasuje. Nie dołączono do pojedynku.",countdown:"Start za %1",strikeNow:"START — możesz rozpocząć spawanie.",verifying:"WERYFIKOWANIE PRÓBY…",verified:"WYNIK SERWERA · %1 · %2 BP",opponentWelding:"Przeciwnik spawa",opponentIdle:"Przeciwnik oczekuje",serverWaiting:"Oczekiwanie na przeciwnika",serverResult:"Wynik serwera",serverAttemptError:"Próba nie została przyjęta: %1",duplicateAttempt:"To nagranie zostało już wysłane.",attemptLimit:"Wykorzystano limit 20 zaakceptowanych prób.",invalidAttempt:"Serwer odrzucił nieprawidłowe nagranie ARC.",unknownServerError:"Serwer odrzucił żądanie (%1).",noCredentials:"Brak zapisanej sesji. Ten ekran jest tylko do odczytu.",taskAndVersions:"%1 · %2 · %3",replayFull:"pełny",replayTouch:"dotykowy",finishedNotice:"Pojedynek zakończony",statusDisconnected:"Połączenie utracone. Trwa ponowne łączenie…",copyFailed:"Nie udało się skopiować zaproszenia."},
+  en:{launch:"⚔ BATTLE WELD",choose:"Choose a Battle task",chooseNote:"Both welders get the same settings. Battle V1 uses AUTO current from the WPS only.",
+    start:"SET TASK",ready:"TASK READY",accept:"LOAD TASK",close:"CLOSE",newBattle:"NEW TASK",exitBattle:"EXIT BATTLE",
+    inspectAgain:"Clear the plate to start a new attempt",careerUnavailable:"Career unavailable during Battle",shareLink:"SHARE LINK",
+    linkTitle:"BATTLE WELD invite",resultTitle:"VERDICT",errorTitle:"Battle cannot start",
+    badLink:"The Battle link is damaged or uses an unsupported format.",unsupported:"ARC does not support this task (no WPS value or non-AUTO mode).",
+    ampsMismatch:"Task amperage does not match the ARC recommendation.",taskMismatch:"Loaded task differs from the linked task.",
+    engineMismatch:"ARC engine version differs. These attempts cannot be compared.",scoreMismatch:"ARC scoring version differs. These attempts cannot be compared.",
+    modeConflict:"Battle cannot run together with the legacy challenge mode.",taskReady:"Task pinned. Strike the plate to begin your attempt.",
+    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"INCOMPLETE",
+    beat:"BEAT MY WELD",share:"SHARE RESULT",copyLink:"COPY BATTLE LINK",copied:"LINK COPIED",
+    wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",
+    incomparable:"INCOMPARABLE",unsupportedReason:"TASK_UNSUPPORTED",
+    task:"Task",bp:"BP",scoreUnit:"pts",attempt:"Attempt",started:"started",
+    friendly:"FRIENDLY · UNVERIFIED",serverTag:"SERVER · VERIFIED",nickLabel:"Nickname (optional)",profileLabel:"Replay profile",fullProfile:"Full",touchProfile:"Touch",syncMode:"Synchronized start",linkMode:"Link battle",
+    clientError:"Browser error (not a server problem): %1",attemptClosed:"Attempt closed, score saved. ✕ CLEAR = new attempt, or FINISH BATTLE.",consentTitle:"Battle data",consentBodyProd:"With your consent, we send your nickname, round recording and attempt times to the Battle Weld server (Hetzner, Germany) — only so the server can replay the weld and decide the battle. The nickname is optional. Anyone with the battle link can see nicknames, grades and the verdict; the recording itself is not public. Recordings are deleted after 30 days, battle results after 180 days, and battles that never started after 7 days. The game does not store your IP address. Normal ARC still runs only on your device.",serverDownProd:"The Battle Weld server is unavailable right now. Try again in a moment; friendly mode was not started.",consentBody:"With your consent, your nickname, round recording and times will be sent to the local Battle Weld test server. It runs on this computer, and data stays in memory until the server restarts.",continueText:"CONTINUE",cancelText:"CANCEL",createText:"CREATE BATTLE",joinText:"JOIN BATTLE",copyInvite:"COPY INVITE",waitingPlayer:"Waiting for the second player",waitingReady:"Waiting for opponent readiness",readyText:"READY",finishText:"FINISH BATTLE",confirmFinish:"Finish this battle? You will not be able to submit more attempts.",exitText:"EXIT BATTLE",spectator:"Read-only spectator",mouseWarning:"This battle needs a mouse.",versions:"Engine %1 · scoring %2",serverDown:"The Battle Weld server is unavailable. Reconnect to the test server; friendly mode was not started.",joinPreview:"Task: %1 · mode: %2 · profile: %3 · player 1: %4",incomparableServer:"INCOMPARABLE — ARC version mismatch. You have not joined the battle.",countdown:"Starting in %1",strikeNow:"START — you can begin welding.",verifying:"VERIFYING ATTEMPT…",verified:"SERVER RESULT · %1 · %2 BP",opponentWelding:"Opponent welding",opponentIdle:"Opponent waiting",serverWaiting:"Waiting for opponent",serverResult:"Server result",serverAttemptError:"Attempt was not accepted: %1",duplicateAttempt:"This recording was already submitted.",attemptLimit:"The limit of 20 accepted attempts has been reached.",invalidAttempt:"The server rejected an invalid ARC recording.",unknownServerError:"The server rejected the request (%1).",noCredentials:"No saved session. This screen is read-only.",taskAndVersions:"%1 · %2 · %3",replayFull:"full",replayTouch:"touch",finishedNotice:"Battle finished",statusDisconnected:"Connection lost. Reconnecting…",copyFailed:"Could not copy the invite."},
+  ru:{launch:"⚔ BATTLE WELD",choose:"Выберите задание Battle",chooseNote:"Оба сварщика получают одинаковые настройки. В V1 используется только AUTO-ток по WPS.",
+    start:"ЗАДАТЬ РЕЖИМ",ready:"ЗАДАНИЕ ГОТОВО",accept:"ЗАГРУЗИТЬ ЗАДАНИЕ",close:"ЗАКРЫТЬ",newBattle:"НОВОЕ ЗАДАНИЕ",exitBattle:"ВЫЙТИ ИЗ BATTLE",
+    inspectAgain:"Очистите пластину (CLEAR), чтобы начать новую попытку",careerUnavailable:"Карьера недоступна во время Battle",shareLink:"ПОДЕЛИТЬСЯ ССЫЛКОЙ",
+    linkTitle:"Приглашение BATTLE WELD",resultTitle:"ВЕРДИКТ",errorTitle:"Нельзя запустить Battle",
+    badLink:"Ссылка Battle повреждена или имеет неподдерживаемый формат.",unsupported:"ARC не поддерживает задание (нет значения WPS или режим не AUTO).",
+    ampsMismatch:"Ток задания не совпадает с рекомендацией ARC.",taskMismatch:"Загруженное задание отличается от задания в ссылке.",
+    engineMismatch:"Версия движка ARC отличается. Результаты нельзя сравнить.",scoreMismatch:"Версия оценки ARC отличается. Результаты нельзя сравнить.",
+    modeConflict:"Battle нельзя запускать одновременно со старым режимом challenge.",taskReady:"Задание закреплено. Коснитесь пластины, чтобы начать попытку.",
+    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"НЕ ЗАВЕРШЕНО",
+    beat:"BEAT MY WELD",share:"ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ",copyLink:"КОПИРОВАТЬ ССЫЛКУ",copied:"ССЫЛКА СКОПИРОВАНА",
+    wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",
+    incomparable:"НЕСРАВНИМЫ",unsupportedReason:"TASK_UNSUPPORTED",
+    task:"Задание",bp:"BP",scoreUnit:"очк.",attempt:"Попытка",started:"начато",
+    friendly:"ДРУЖЕСКИЙ · НЕ ПРОВЕРЕН",serverTag:"СЕРВЕР · ПРОВЕРЕН",nickLabel:"Ник (необязательно)",profileLabel:"Профиль повтора",fullProfile:"Полный",touchProfile:"Сенсорный",syncMode:"Общий старт",linkMode:"По ссылке",
+    clientError:"Ошибка в браузере (не на сервере): %1",attemptClosed:"Попытка закрыта, результат сохранён. ✕ СТЕРЕТЬ — новая попытка, или ЗАВЕРШИТЬ ПОЕДИНОК.",consentTitle:"Данные поединка",consentBodyProd:"После согласия мы отправим на сервер Battle Weld (Hetzner, Германия) ваш ник, запись раунда и время попыток — только чтобы сервер воспроизвёл шов и определил победителя. Ник необязателен. Любой, у кого есть ссылка на поединок, видит ники, оценки и вердикт; сама запись не публикуется. Записи удаляются через 30 дней, результат поединка — через 180 дней, а неначатый поединок — через 7 дней. Игра не сохраняет ваш IP-адрес. Обычный ARC по-прежнему работает только на вашем устройстве.",serverDownProd:"Сервер Battle Weld сейчас недоступен. Попробуйте ещё раз чуть позже; дружеский режим не запускался.",consentBody:"После согласия мы отправим ваш ник, запись раунда и время на локальный тестовый сервер Battle Weld. Сервер работает на этом компьютере, данные хранятся в памяти до перезапуска сервера.",continueText:"ПРОДОЛЖИТЬ",cancelText:"ОТМЕНА",createText:"СОЗДАТЬ ПОЕДИНОК",joinText:"ПРИСОЕДИНИТЬСЯ",copyInvite:"КОПИРОВАТЬ ПРИГЛАШЕНИЕ",waitingPlayer:"Ожидание второго игрока",waitingReady:"Ожидание готовности соперника",readyText:"ГОТОВ",finishText:"ЗАВЕРШИТЬ ПОЕДИНОК",confirmFinish:"Завершить? После подтверждения новые попытки отправить нельзя.",exitText:"ВЫЙТИ ИЗ BATTLE",spectator:"Только просмотр",mouseWarning:"Для этого поединка нужна мышь.",versions:"Движок %1 · оценка %2",serverDown:"Сервер Battle Weld недоступен. Подключитесь к тестовому серверу повторно; дружеский режим не запускался.",joinPreview:"Задание: %1 · режим: %2 · профиль: %3 · игрок 1: %4",incomparableServer:"INCOMPARABLE — версия ARC не совпадает. Вы не присоединились к поединку.",countdown:"Старт через %1",strikeNow:"СТАРТ — можно начинать сварку.",verifying:"ПРОВЕРКА ПОПЫТКИ…",verified:"РЕЗУЛЬТАТ СЕРВЕРА · %1 · %2 BP",opponentWelding:"Соперник сваривает",opponentIdle:"Соперник ожидает",serverWaiting:"Ожидание соперника",serverResult:"Результат сервера",serverAttemptError:"Попытка не принята: %1",duplicateAttempt:"Эта запись уже отправлена.",attemptLimit:"Достигнут лимит 20 принятых попыток.",invalidAttempt:"Сервер отклонил некорректную запись ARC.",unknownServerError:"Сервер отклонил запрос (%1).",noCredentials:"Нет сохранённой сессии. Доступен только просмотр.",taskAndVersions:"%1 · %2 · %3",replayFull:"полный",replayTouch:"сенсорный",finishedNotice:"Поединок завершён",statusDisconnected:"Соединение потеряно. Повторное подключение…",copyFailed:"Не удалось скопировать приглашение."}
+};
+const BATTLE_UI_COPY={
+  pl:{p1:"GRACZ 1",p2:"GRACZ 2",standby:"W GOTOWOŚCI",attempt:"PRÓBA",slogan:"SAME TASK · SAME RULES · ONE VERDICT",introLeft:"GORWELD® ARC",introRight:"WERDYKT SERWERA",gearLegend:"KONTROLA SPRZĘTU · POTWIERDZA GRACZ",helmet:"Mam założoną przyłbicę",gloves:"Mam założone rękawice",gearNote:"To wyłącznie potwierdzenie gracza. Ekran nie sprawdza fizycznego wyposażenia.",gearMissing:"Potwierdź przyłbicę i rękawice przed gotowością.",live:"BATTLE WELD · NA ŻYWO",inspection:"INSPEKCJA",verifying:"WERYFIKOWANIE…",veldaGear:"Gear check.",veldaRules:"Same task. Same rules.",veldaStrike:"Strike the arc.",veldaInspect:"Inspection complete.",veldaVerdict:"Verdict locked.",serverPending:"SERWER · OCZEKUJE NA POJEDYNEK"},
+  en:{p1:"PLAYER 1",p2:"PLAYER 2",standby:"STANDING BY",attempt:"ATTEMPT",slogan:"SAME TASK · SAME RULES · ONE VERDICT",introLeft:"GORWELD® ARC",introRight:"SERVER JUDGED",gearLegend:"GEAR CHECK · PLAYER CONFIRMATION",helmet:"Helmet on",gloves:"Gloves on",gearNote:"Player confirmation only. This screen does not verify physical PPE.",gearMissing:"Confirm helmet and gloves before readying.",live:"BATTLE WELD · LIVE",inspection:"INSPECTION",verifying:"VERIFYING…",veldaGear:"Gear check.",veldaRules:"Same task. Same rules.",veldaStrike:"Strike the arc.",veldaInspect:"Inspection complete.",veldaVerdict:"Verdict locked.",serverPending:"SERVER · AWAITING BATTLE"},
+  ru:{p1:"ИГРОК 1",p2:"ИГРОК 2",standby:"ГОТОВИТСЯ",attempt:"ПОПЫТКА",slogan:"ОДНО ЗАДАНИЕ · ОДНИ ПРАВИЛА · ОДИН ВЕРДИКТ",introLeft:"GORWELD® ARC",introRight:"РЕШЕНИЕ СЕРВЕРА",gearLegend:"ПРОВЕРКА ЭКИПИРОВКИ · ПОДТВЕРЖДЕНИЕ ИГРОКА",helmet:"Шлем надет",gloves:"Перчатки надеты",gearNote:"Только подтверждение игрока. Экран не проверяет физическую экипировку.",gearMissing:"Подтвердите шлем и перчатки перед готовностью.",live:"BATTLE WELD · ИДЁТ БОЙ",inspection:"ИНСПЕКЦИЯ",verifying:"ПРОВЕРКА…",veldaGear:"Gear check.",veldaRules:"Same task. Same rules.",veldaStrike:"Strike the arc.",veldaInspect:"Inspection complete.",veldaVerdict:"Verdict locked.",serverPending:"СЕРВЕР · ОЖИДАНИЕ ПОЕДИНКА"}
+};
+function bwc(key){return (BATTLE_UI_COPY[lang]||BATTLE_UI_COPY.en)[key]||BATTLE_UI_COPY.en[key]||key;}
+function bt(key){ return (BATTLE_TEXT[lang]||BATTLE_TEXT.en)[key]||BATTLE_TEXT.en[key]||key; }
+function battleFmt(key,values){let value=bt(key);(values||[]).forEach((item,index)=>value=value.replace("%"+(index+1),String(item)));return value;}
+const BATTLE_SERVER_ERROR_TEXT={
+  pl:{RENDER_WIDTH_UNSUPPORTED:"Okno jest za wąskie (poniżej 400 px). Poszerz je lub obróć telefon i spróbuj ponownie.",
+    INPUT_PROFILE_MOUSE:"Ten pojedynek wymaga myszy.",INPUT_PROFILE_TOUCH:"Ten pojedynek wymaga sterowania dotykowego.",
+    ROUND_TOO_LONG:"Runda rozpoczęła się przed startem pojedynku.",TASK_MISMATCH:"Nagranie nie pasuje do zablokowanego zadania.",
+    EVENT_LIMIT:"Nagranie zawiera zbyt wiele zdarzeń.",DUPLICATE_ATTEMPT:"To nagranie zostało już wysłane.",
+    ATTEMPT_LIMIT:"Wykorzystano limit 20 zaakceptowanych prób.",PLAYER_FINISHED:"Nie możesz już wysłać próby — zakończyłeś udział.",
+    BATTLE_DECIDED:"Werdykt pojedynku jest już ustalony.",BATTLE_NOT_STARTED:"Pojedynek jeszcze się nie rozpoczął.",
+    BATTLE_NOT_JOINED:"Dołącz do pojedynku, zanim wyślesz próbę.",INVALID_ATTEMPT:"Serwer odrzucił nieprawidłowe nagranie ARC."},
+  en:{RENDER_WIDTH_UNSUPPORTED:"Window too narrow (< 400 px). Widen the window or rotate the phone and weld again.",
+    INPUT_PROFILE_MOUSE:"This battle needs a mouse.",INPUT_PROFILE_TOUCH:"This battle needs touch controls.",
+    ROUND_TOO_LONG:"Round started before the battle start.",TASK_MISMATCH:"The recording does not match the locked task.",
+    EVENT_LIMIT:"The recording contains too many events.",DUPLICATE_ATTEMPT:"This recording was already submitted.",
+    ATTEMPT_LIMIT:"The limit of 20 accepted attempts has been reached.",PLAYER_FINISHED:"You cannot submit more attempts after finishing.",
+    BATTLE_DECIDED:"The battle verdict has already been decided.",BATTLE_NOT_STARTED:"The battle has not started yet.",
+    BATTLE_NOT_JOINED:"Join the battle before submitting an attempt.",INVALID_ATTEMPT:"The server rejected an invalid ARC recording."},
+  ru:{RENDER_WIDTH_UNSUPPORTED:"Окно слишком узкое (менее 400 px). Расширьте его или поверните телефон и повторите сварку.",
+    INPUT_PROFILE_MOUSE:"Для этого поединка нужна мышь.",INPUT_PROFILE_TOUCH:"Для этого поединка нужно сенсорное управление.",
+    ROUND_TOO_LONG:"Раунд начался до старта поединка.",TASK_MISMATCH:"Запись не соответствует зафиксированному заданию.",
+    EVENT_LIMIT:"В записи слишком много событий.",DUPLICATE_ATTEMPT:"Эта запись уже отправлена.",
+    ATTEMPT_LIMIT:"Достигнут лимит в 20 принятых попыток.",PLAYER_FINISHED:"После завершения участия нельзя отправить новую попытку.",
+    BATTLE_DECIDED:"Вердикт поединка уже вынесен.",BATTLE_NOT_STARTED:"Поединок ещё не начался.",
+    BATTLE_NOT_JOINED:"Сначала присоединитесь к поединку.",INVALID_ATTEMPT:"Сервер отклонил некорректную запись ARC."}
+};
+function battleServerErrorText(code,detail){
+  const locale=BATTLE_SERVER_ERROR_TEXT[lang]||BATTLE_SERVER_ERROR_TEXT.en;
+  if(code==="INPUT_PROFILE_MISMATCH"){
+    const profile=battleState&&battleState.task&&battleState.task.inputProfile||battleState&&battleState.serverBattle&&battleState.serverBattle.inputProfile;
+    return locale[profile==="touch"?"INPUT_PROFILE_TOUCH":"INPUT_PROFILE_MOUSE"];
+  }
+  const reason=code==="INVALID_ATTEMPT"&&detail?detail:code;
+  return locale[reason]||null;
+}
+// Test serwera Battle tylko w sieci prywatnej (localhost / LAN). Domena publiczna -> zawsze null.
+function battleDevHost(h){
+  if(typeof h!=="string")return false;
+  h=h.toLowerCase();
+  if(h.startsWith("[")&&h.endsWith("]"))h=h.slice(1,-1);
+  if(h==="localhost"||h==="127.0.0.1"||h==="::1")return true;
+  if(h.includes(":")){
+    if(h.includes("%")||h.includes("."))return false;
+    const halves=h.split("::");if(halves.length>2)return false;
+    const left=halves[0]?halves[0].split(":"):[],right=halves.length===2&&halves[1]?halves[1].split(":"):[];
+    const groups=left.concat(right);
+    if(groups.some(g=>! /^[\da-f]{1,4}$/.test(g)))return false;
+    if(halves.length===1?groups.length!==8:left.length+right.length>=8)return false;
+    const first=parseInt(groups[0]||"0",16);
+    return (first&0xfe00)===0xfc00 || (first&0xffc0)===0xfe80;
+  }
+  const parts=h.split(".");
+  if(parts.length!==4||parts.some(part=>! /^(0|[1-9]\d{0,2})$/.test(part)||Number(part)>255))return false;
+  const [a,b]=parts.map(Number);
+  return a===10||a===192&&b===168||a===172&&b>=16&&b<=31;
+}
+function battleResolveApi(hostname,search){
+  if(!battleDevHost(hostname)) return null;
+  try{
+    const raw=new URLSearchParams(search||"").get("battleApi"); if(!raw) return null;
+    const url=new URL(raw);
+    if(!["http:","https:"].includes(url.protocol)||url.username||url.password||
+       !battleDevHost(url.hostname)) return null;
+    url.hash=""; return url.href.replace(/\/+$/g,"");
+  }catch(e){return null;}
+}
+const BATTLE_PROD_API=null;
+const BATTLE_API=typeof location!=="undefined"?
+  ((location.hostname==="gorweldarc.com"||location.hostname==="www.gorweldarc.com")?
+    BATTLE_PROD_API:battleResolveApi(location.hostname,location.search)):null;
+// 05.10: tekst zgody i bledu serwera zalezy od tego, czy gra mowi z serwerem produkcyjnym (dysk, Niemcy, retencja)
+// czy z lokalnym serwerem testowym (pamiec do restartu). __bwForceProdCopy tylko dla testow ukladu.
+function battleIsProdApi(){return !!(typeof window!=="undefined"&&window.__bwForceProdCopy)||!!(BATTLE_API&&BATTLE_PROD_API&&BATTLE_API===BATTLE_PROD_API);}
+function battleCopyKey(key){return battleIsProdApi()?key+"Prod":key;}
+const BATTLE_REQUIRED_COVERAGE=0.8, BATTLE_MAX_LINK=8000;
+let BATTLE_SERVER_LINK_PRESENT=typeof location!=="undefined"&&location.hash.indexOf("#bw=")===0;
+let BATTLE_LINK_PRESENT=typeof location!=="undefined"&&(location.hash.indexOf("#battle=")===0||BATTLE_SERVER_LINK_PRESENT);
+let battleState=null, battlePrimaryAction=null, battleSecondaryAction=null, battleSnapshot=null, battlePendingSnapshot=null;
+let battleServerStream=null,battleServerCountdownTimer=null,battleServerOffsetMs=0,battlePendingHostTask=null,battlePendingHostMode="sync";
+function battleIsFriendlyScreen(){ return battleState?battleState.localMode===true:!BATTLE_API; }
+function battleTaskActive(){ return !!(battleState&&battleState.task&&!battleState.blocked); }
+function battleCaptureSetup(){ return {proc,joint,pos:posKey,thick,bead,ampMode,ampMul,ampSet,activeCoupon,roundSeed}; }
+function battleModeConflict(){
+  if(!isChallenge()) return false;
+  battleState={blocked:true,reason:"BATTLE_MODE_CONFLICT"};
+  battleShow(bt("errorTitle"),battleReasonText("BATTLE_MODE_CONFLICT"),[],"",null,bt("close"),()=>closeModal("battleModal"));
+  return true;
+}
+function battleReasonText(reason,detail){
+  if(detail==="AMP_MODE_UNSUPPORTED"||detail==="AMP_TABLE_UNAVAILABLE"||reason==="TASK_UNSUPPORTED") return bt("unsupported");
+  if(detail==="AMP_MISMATCH") return bt("ampsMismatch");
+  return ({ENGINE_VERSION_MISMATCH:bt("engineMismatch"),SCORING_VERSION_MISMATCH:bt("scoreMismatch"),
+    TASK_MISMATCH:bt("taskMismatch"),TASK_UNSUPPORTED:bt("unsupported"),
+    BATTLE_MODE_CONFLICT:bt("modeConflict")})[reason]||bt("badLink");
+}
+const BATTLE_ASSET_PATH="battle-assets/";
+const battleAssetImages=new Map();
+function battleAssetUrl(name){return new URL(BATTLE_ASSET_PATH+name,location.href).href;}
+function battleLoadAsset(name){
+  if(!battleAssetImages.has(name)){
+    const promise=new Promise(resolve=>{
+      const image=new Image();image.decoding="async";
+      image.onload=async()=>{try{if(image.decode)await image.decode();}catch(_){}resolve(image);};
+      image.onerror=()=>resolve(null);image.src=battleAssetUrl(name);
+    });
+    battleAssetImages.set(name,promise);
+  }
+  return battleAssetImages.get(name);
+}
+function battleSetAssetImage(element,name,onFailure){
+  if(!element)return;
+  if(!name){element.hidden=true;element.removeAttribute("src");delete element.dataset.asset;return;}
+  const url=battleAssetUrl(name);
+  if(element.dataset.asset===name&&element.getAttribute("src")===url){
+    if(element.complete&&element.naturalWidth>0)element.hidden=false;
+    return;
+  }
+  element.dataset.asset=name;element.hidden=false;
+  element.onload=()=>{element.hidden=false;if(onFailure)onFailure(false);};
+  element.onerror=()=>{element.hidden=true;if(onFailure)onFailure(true);};
+  element.src=url;
+}
+function battleAssetsActivate(stageName){
+  const root=document.getElementById("battleModal");if(!root)return;
+  root.classList.add("bw-assets-active");
+  if(stageName==="enter"&&!root.dataset.gatesPlayed){
+    root.dataset.gatesPlayed="1";
+    const gates=[document.getElementById("bwGateLeft"),document.getElementById("bwGateRight")];
+    battleSetAssetImage(gates[0],"gate-left.webp");battleSetAssetImage(gates[1],"gate-right.webp");
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches)root.classList.add("bw-gates-open");
+    else Promise.all(gates.map(image=>image.decode?image.decode().catch(()=>{}):Promise.resolve())).then(()=>
+      requestAnimationFrame(()=>setTimeout(()=>root.classList.add("bw-gates-open"),80)));
+  }
+}
+function battleAvatarAsset(battleId,slot){
+  let hash=2166136261;
+  for(const char of String(battleId)+":"+String(slot))hash=Math.imul(hash^char.charCodeAt(0),16777619)>>>0;
+  return "avatar-"+(hash%4+1)+".webp";
+}
+function battleUiAssignAvatars(){
+  const battle=battleState&&battleState.serverBattle,id=battle&&battle.battleId||battleState&&battleState.battleId;
+  for(const [slot,imageId] of [["P1","bwPlayer1Avatar"],["P2","bwPlayer2Avatar"]]){
+    const image=document.getElementById(imageId),player=battle&&battle.players&&battle.players[slot];
+    const stableId=id||((document.getElementById("battleModal").dataset.screen==="enter")?"battle-weld-enter":null);
+    if(!stableId){battleSetAssetImage(image,null);continue;}
+    let picture=player&&(player.picture||player.avatarUrl);
+    if(picture){try{if(new URL(picture,location.href).origin!==location.origin)picture=null;}catch(_){picture=null;}}
+    battleSetAssetImage(image,picture||battleAvatarAsset(stableId,slot));
+  }
+}
+function battleVeldaAsset(line){
+  if(line===bwc("veldaGear")||line===bwc("veldaRules"))return "velda-calm.webp";
+  if(line===bwc("veldaStrike")||line===bwc("veldaInspect"))return "velda-focus.webp";
+  if(line===bwc("veldaVerdict"))return "velda-verdict.webp";
+  return null;
+}
+function battleUiSetInspectionVelda(complete){
+  const line=document.getElementById("bwInspectionVelda");
+  line.textContent=complete?bwc("veldaInspect"):"";
+  battleSetAssetImage(document.getElementById("bwInspectionPortrait"),complete?battleVeldaAsset(line.textContent):null);
+}
+function battleShow(title,message,choices,primaryText,primaryAction,secondaryText,secondaryAction,summary){
+  const titleEl=document.getElementById("battleTitle"), msg=document.getElementById("battleMessage");
+  const list=document.getElementById("battleTaskChoices"), sum=document.getElementById("battleModalSummary");
+  const modeTag=document.getElementById("battleModeTag");
+  document.getElementById("battleServerFields").hidden=true;
+  const serverTag=!!(battleState&&battleState.serverMode),friendly=battleIsFriendlyScreen();
+  modeTag.hidden=false;modeTag.textContent=serverTag?bt("serverTag"):friendly?bt("friendly"):bwc("serverPending");
+  titleEl.textContent=title; msg.textContent=message||""; list.replaceChildren();
+  (choices||[]).forEach(choice=>{
+    const b=document.createElement("button"); b.type="button"; b.className="battle-choice";
+    b.textContent=choice.label; b.onclick=()=>{battleUiSound("clamp");if(choice.action)choice.action();}; list.appendChild(b);
+  });
+  sum.textContent=summary||""; sum.hidden=!summary;
+  const p=document.getElementById("battlePrimary"), q=document.getElementById("battleSecondary");
+  p.textContent=primaryText||""; p.hidden=!primaryText; p.onclick=primaryAction||null;
+  q.textContent=secondaryText||""; q.hidden=!secondaryText; q.onclick=secondaryAction||(()=>closeModal("battleModal"));
+  battlePrimaryAction=primaryAction||null; battleSecondaryAction=secondaryAction||null;
+  const modal=document.getElementById("battleModal");modal.hidden=false;
+  battleUiRefresh(title,message,primaryText);
+  if(openM==="battleModal"){modal.style.display="flex";modal.classList.add("open");}
+  else openModal("battleModal");
+}
+function battleUiStage(title,message){
+  const t=String(title||""),m=String(message||"");
+  if(/INCOMPARABLE|НЕСРАВНИМ|NIEPORÓWNYWAL/i.test(t+m))return "incomparable";
+  if(t===bt("errorTitle"))return "error";
+  if(battleState&&battleState.done)return "verdict";
+  if(t===bt("consentTitle"))return "setup";
+  if(!document.getElementById("battleServerFields").hidden)return "setup";
+  if(m.includes(bt("countdown").split("%1")[0])||t===bt("countdown"))return "countdown";
+  if(t===bt("choose"))return "enter";
+  if(t===bt("linkTitle")||t===bt("ready")||t===bt("createText"))return "ready";
+  if(t===bt("resultTitle"))return "verdict";
+  return battleState&&battleState.serverMode?"ready":"enter";
+}
+function battleUiRefresh(title,message,primaryText){
+  const root=document.getElementById("battleModal"),stageName=battleUiStage(title,message),battle=battleState&&battleState.serverBattle;
+  root.dataset.screen=stageName;
+  battleAssetsActivate(stageName);bwMusicSync(stageName);
+  const brand=document.getElementById("bwBrand"),brandImage=document.getElementById("bwBrandImage");
+  const brandAsset="battle-weld-wordmark-v2.svg"; // logo v2 z fontu interfejsu (Big Shoulders) — pasuje do reszty tekstu; litery Groka: battle-weld-letters-600.webp (zapas)
+  if(brandImage.dataset.asset!==brandAsset){brand.classList.remove("logo-failed");
+    battleSetAssetImage(brandImage,brandAsset,failed=>brand.classList.toggle("logo-failed",failed));}
+  document.getElementById("bwPlayer1Slot").textContent=bwc("p1");document.getElementById("bwPlayer2Slot").textContent=bwc("p2");
+  document.getElementById("bwPlayer1Name").textContent=battle&&battle.players&&battle.players.P1&&battle.players.P1.nickname||battleState&&battleState.cardView&&battleState.cardView.player1&&battleState.cardView.player1.nickname||bt("p1");
+  document.getElementById("bwPlayer2Name").textContent=battle&&battle.players&&battle.players.P2&&battle.players.P2.nickname||battleState&&battleState.cardView&&battleState.cardView.player2&&battleState.cardView.player2.nickname||bt("p2");
+  const own=battle&&battleState&&battleState.slot&&battle.players&&battle.players[battleState.slot];
+  document.getElementById("bwPlayer1State").textContent=battle&&battle.players&&battle.players.P1?(battle.players.P1.ready?bt("readyText"):bwc("standby")):bwc("standby");
+  document.getElementById("bwPlayer2State").textContent=battle&&battle.players&&battle.players.P2?(battle.players.P2.ready?bt("readyText"):bwc("standby")):bwc("standby");
+  const task=battleState&&(battleState.task||battleState.serverTask)||battle&&battle.task;
+  document.getElementById("bwTaskValue").textContent=task?battleTaskLabel({...task,seed:task.seed===undefined?1:task.seed}):bwc("slogan");
+  const versions=battle&&battle.engineVersion?bt("versions").replace("%1",battle.engineVersion).replace("%2",battle.scoringVersion||""):
+    battleState&&battleState.engineVersion?bt("versions").replace("%1",battleState.engineVersion).replace("%2",battleState.scoringVersion||""):"";
+  document.getElementById("bwVersionValue").textContent=versions;
+  const serverHash=battle&&battle.taskHash,localHash=battleState&&battleState.taskHash;
+  const hashKnown=!!(serverHash||localHash),hashMismatch=!!(serverHash&&localHash&&serverHash!==localHash);
+  const expectedEngine=battle&&battle.engineVersion||battleState&&battleState.engineVersion||ArcSim.VERSION;
+  const expectedScoring=battle&&battle.scoringVersion||battleState&&battleState.scoringVersion||ArcSim.SCORING_VERSION;
+  const compatibleEngine=expectedEngine===ArcSim.VERSION,compatibleScoring=expectedScoring===ArcSim.SCORING_VERSION;
+  const stamps=[
+    ["taskHash","HASH",!hashKnown?"WAIT":hashMismatch?String(serverHash).slice(0,8)+" ≠ "+String(localHash).slice(0,8):"LOCKED",hashKnown&&!hashMismatch,hashKnown],
+    ["engineVersion","ENGINE",compatibleEngine?"MATCH":String(expectedEngine)+" ≠ "+String(ArcSim.VERSION),compatibleEngine,true],
+    ["scoringVersion","SCORING",compatibleScoring?"MATCH":String(expectedScoring)+" ≠ "+String(ArcSim.SCORING_VERSION),compatibleScoring,true]
+  ];
+  stamps.forEach(([key,label,value,ok,known])=>{
+    const stamp=document.querySelector('#bwCheckStamps [data-check="'+key+'"]');
+    stamp.textContent=label+" "+(known?(ok?"✓ ":"✕ "):"· ")+value;
+    stamp.classList.toggle("ok",!!known&&!!ok);stamp.classList.toggle("bad",!!known&&!ok);
+  });
+  document.querySelector("#battleModal .bw-slogan").textContent=bwc("slogan");
+  document.querySelector("#battleModal .bw-intro span:first-child").textContent=bwc("introLeft");
+  document.querySelector("#battleModal .bw-intro span:last-child").textContent=bwc("introRight");
+  document.getElementById("bwGearLegend").textContent=bwc("gearLegend");document.getElementById("bwHelmetText").textContent=bwc("helmet");
+  document.getElementById("bwGlovesText").textContent=bwc("gloves");document.getElementById("bwGearNote").textContent=bwc("gearNote");
+  const readyCheck=stageName==="ready"&&battleState&&battleState.serverMode&&battle&&own&&!own.ready&&battle.players.P2;
+  const gear=document.getElementById("bwGearCheck");gear.hidden=!readyCheck;
+  const readyButton=primaryText===bt("readyText"),confirmed=document.getElementById("bwHelmetCheck").checked&&document.getElementById("bwGlovesCheck").checked;
+  document.getElementById("battlePrimary").disabled=!!(readyCheck&&readyButton&&!confirmed);
+  const mode=battleState&&battleState.serverMode?bt("serverTag"):battleIsFriendlyScreen()?bt("friendly"):bwc("serverPending");
+  document.getElementById("battleModeTag").textContent=mode;
+  const view=battleState&&battleState.cardView;
+  const started=slot=>{
+    const player=battle&&battle.players&&battle.players[slot];
+    if(player)return Number(player.attemptsCount||player.best&&player.best.attemptNumber||0);
+    const result=view&&view[slot==="P1"?"player1":"player2"];
+    return Number(result&&result.attemptsStarted||0);
+  };
+  document.getElementById("bwScoreboard").textContent="P1 "+started("P1")+" · P2 "+started("P2");
+  const silent=stageName==="incomparable"||stageName==="error";
+  const line=silent?"":stageName==="verdict"?bwc("veldaVerdict"):stageName==="countdown"?bwc("veldaStrike"):stageName==="ready"?bwc("veldaRules"):bwc("veldaGear");
+  const veldaLine=document.getElementById("bwCeremonyLine");veldaLine.textContent=line;veldaLine.hidden=silent;
+  battleSetAssetImage(document.getElementById("bwVeldaPortrait"),!silent?battleVeldaAsset(line):null);
+  battleUiAssignAvatars();
+  document.getElementById("battleModal").setAttribute("aria-label",title||"BATTLE WELD");
+  battleUiUpdateHud();
+}
+function battleUiUpdateHud(){
+  const active=!!(battleState&&battleTaskActive()&&(welding||battleState.hudActive)),hud=document.getElementById("bwHud");
+  battleUiPlaceHud();
+  document.body.classList.toggle("bw-welding",active);
+  if(active)battleSetAssetImage(document.getElementById("bwVeldaPortrait"),null);
+  if(!active){hud.setAttribute("aria-hidden","true");return;}
+  const task=battleState.task||{},own=battleState.serverBattle&&battleServerGetOwnPlayer(battleState.serverBattle),opponent=battleState.serverBattle&&battleServerOpponent(battleState.serverBattle);
+  document.getElementById("bwHudTask").textContent=battleTaskLabel(task);
+  document.getElementById("bwHudMode").textContent=battleState.serverMode?bt("serverTag"):bt("friendly");
+  document.getElementById("bwHudAttempt").textContent=bwc("attempt")+" "+((battleState.serverAttemptsStarted||battleState.attemptNumber||1))+" / 20";
+  document.getElementById("bwHudOpponent").textContent=battleState.serverMode?(opponent&&opponent.status==="welding"?bt("opponentWelding"):bt("opponentIdle")):bt("friendly");
+  hud.setAttribute("aria-hidden","false");
+}
+// ── Muzyka ARC (05.10, wariant A „Warsztat”, lo-fi 78 BPM) — synteza Web Audio, zero plikow.
+// Domyslnie WYL. (szkoly, sale komputerowe); przycisk 🎵 pamieta wybor. Gra tylko poza Battle (tam gra
+// muzyka Battle), po pierwszym kliknieciu (wymog przegladarek), przy spawaniu sciszona do 20%.
+const arcMusic={on:false,gesture:false,out:null,duck:null,bus:null,delay:null,noise:null,timer:null,next:0,step:0,drone:[],playing:false};
+try{arcMusic.on=localStorage.getItem("gorweld_music")==="1";}catch(e){}
+function amInit(){
+  if(arcMusic.out)return true; if(!soundOn)return false;
+  try{if(!actx)initAudio();
+    const comp=actx.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=3;comp.attack.value=.006;comp.release.value=.25;
+    arcMusic.out=actx.createGain();arcMusic.out.gain.value=.28;arcMusic.out.connect(comp);comp.connect(actx.destination);
+    arcMusic.duck=actx.createGain();arcMusic.duck.connect(arcMusic.out);
+    const d=actx.createDelay(1.5),fb=actx.createGain(),lp=actx.createBiquadFilter(),wet=actx.createGain();
+    d.delayTime.value=60/78*.75;fb.gain.value=.38;lp.type="lowpass";lp.frequency.value=2200;wet.gain.value=.32;
+    arcMusic.bus=actx.createGain();arcMusic.bus.connect(arcMusic.duck);arcMusic.bus.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(wet);wet.connect(arcMusic.duck);
+    arcMusic.noise=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);const nd=arcMusic.noise.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+    return true;}catch(e){return false;}
+}
+function amEnv(g,t,a,peak,dec){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+dec);}
+function amNoise(t,dur){const n=actx.createBufferSource();n.buffer=arcMusic.noise;n.start(t,Math.random()*1.5);n.stop(t+dur);return n;}
+function amKick(t,peak){const o=actx.createOscillator(),g=actx.createGain();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(40,t+.16);
+  amEnv(g,t,.004,peak,.42);o.connect(g);g.connect(arcMusic.bus);o.start(t);o.stop(t+.5);}
+function amSnare(t,peak){const n=amNoise(t,.2),bp=actx.createBiquadFilter(),g=actx.createGain();bp.type="bandpass";bp.frequency.value=1700;bp.Q.value=.8;
+  amEnv(g,t,.003,peak,.16);n.connect(bp);bp.connect(g);g.connect(arcMusic.bus);}
+function amHat(t,peak){const n=amNoise(t,.06),hp=actx.createBiquadFilter(),g=actx.createGain();hp.type="highpass";hp.frequency.value=7000;
+  amEnv(g,t,.001,peak,.035);n.connect(hp);hp.connect(g);g.connect(arcMusic.bus);}
+function amTick(t,f,peak){[[1,1],[2.76,.5],[5.4,.25]].forEach(([m,a])=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f*m;
+  amEnv(g,t,.001,peak*a,.18/m**.4);o.connect(g);g.connect(arcMusic.bus);o.start(t);o.stop(t+.3);});}
+function amPluck(t,f,peak){const o=actx.createOscillator(),o2=actx.createOscillator(),lp=actx.createBiquadFilter(),g=actx.createGain(),g2=actx.createGain();
+  o.type="triangle";o.frequency.value=f;o2.frequency.value=f*2;g2.gain.value=.25;lp.type="lowpass";lp.frequency.setValueAtTime(3200,t);lp.frequency.exponentialRampToValueAtTime(500,t+.5);
+  o2.connect(g2);g2.connect(lp);o.connect(lp);amEnv(g,t,.004,peak,.5);lp.connect(g);g.connect(arcMusic.bus);o.start(t);o2.start(t);o.stop(t+.6);o2.stop(t+.6);}
+function amPad(t,freqs,dur,peak){freqs.forEach(f=>[["sine",0],["triangle",7]].forEach(([type,cents])=>{const o=actx.createOscillator(),g=actx.createGain(),lp=actx.createBiquadFilter();
+  o.type=type;o.frequency.value=f;o.detune.value=cents;lp.type="lowpass";lp.frequency.value=1400;
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.6);g.gain.setValueAtTime(peak,t+dur-.6);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(lp);lp.connect(g);g.connect(arcMusic.bus);o.start(t);o.stop(t+dur+.05);}));}
+function amBass(t,f,dur,peak){const o=actx.createOscillator(),lp=actx.createBiquadFilter(),g=actx.createGain();o.type="sawtooth";o.frequency.value=f;
+  lp.type="lowpass";lp.frequency.value=220;lp.Q.value=2;amEnv(g,t,.01,peak,dur);o.connect(lp);lp.connect(g);g.connect(arcMusic.bus);o.start(t);o.stop(t+dur+.05);}
+const amN=m=>440*Math.pow(2,(m-69)/12);
+const AM_CHORDS=[[57,60,64,67],[53,57,60,64],[48,55,59,64],[55,59,62,64]],AM_ROOTS=[45,41,36,43],AM_PENTA=[69,72,74,76,79,81,84];
+const AM_MEL=[[0,4],[3,2],[6,3],[10,1],[14,0],[16,4],[19,5],[22,3],[26,2],[30,1]];
+function amStart(){
+  if(arcMusic.playing||!amInit())return;
+  try{if(actx.state==="suspended")actx.resume();
+    const t=actx.currentTime,lp=actx.createBiquadFilter(),g=actx.createGain(),lfo=actx.createOscillator(),lg=actx.createGain();
+    lp.type="lowpass";lp.frequency.value=320;lfo.frequency.value=.05;lg.gain.value=140;lfo.connect(lg);lg.connect(lp.frequency);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.05,t+3);lp.connect(g);g.connect(arcMusic.duck);
+    const os=[amN(33),amN(33)*1.005].map(f=>{const o=actx.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);return o;});
+    lfo.start(t);arcMusic.drone=[...os,lfo,g];
+    arcMusic.step=0;arcMusic.next=t+.08;const sd=60/78/4;
+    arcMusic.timer=setInterval(()=>{
+      while(arcMusic.next<actx.currentTime+.15){const st=arcMusic.step%16,bar=Math.floor(arcMusic.step/16);let t2=arcMusic.next;
+        if(st%2===1)t2+=sd*.18;                                   // swing jak lo-fi
+        if(st===0||st===10)amKick(t2,.55); if(st===7&&bar%2===1)amKick(t2,.35);
+        if(st===4||st===12)amSnare(t2,.12);
+        if(st%2===0)amHat(t2,st%4===2?.03:.018);
+        if(st===0)amPad(t2,AM_CHORDS[bar%4].map(amN),60/78*4,.018);
+        if(st===0||st===8)amBass(t2,amN(AM_ROOTS[bar%4]),.9,.09);
+        const ph=(bar%2)*16+st,shift=bar%4<2?0:2;for(const [at,ni] of AM_MEL)if(at===ph)amPluck(t2,amN(AM_PENTA[(ni+shift)%AM_PENTA.length]),.07);
+        if(st===14&&bar%4===3)amTick(t2,1250,.05);
+        arcMusic.step++;arcMusic.next+=sd;}
+    },25);
+    arcMusic.playing=true;
+  }catch(e){}
+}
+function amStop(){
+  if(arcMusic.timer){clearInterval(arcMusic.timer);arcMusic.timer=null;}
+  if(arcMusic.drone.length&&actx){const t=actx.currentTime,g=arcMusic.drone[arcMusic.drone.length-1];
+    try{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(.0001,t,.3);arcMusic.drone.slice(0,-1).forEach(o=>o.stop(t+1.6));}catch(e){}}
+  arcMusic.drone=[];arcMusic.playing=false;
+}
+function amDuck(on){if(arcMusic.duck&&actx){const t=actx.currentTime;arcMusic.duck.gain.cancelScheduledValues(t);arcMusic.duck.gain.setTargetAtTime(on?.2:1,t,on?.08:.35);}}
+function amWanted(){const bm=document.getElementById("battleModal");
+  return arcMusic.on&&soundOn&&arcMusic.gesture&&!document.hidden&&!(bm&&bm.classList.contains("open"))&&!document.body.classList.contains("battle-active");}
+function amRefresh(){if(amWanted())amStart();else amStop();}
+function amSyncButtons(){for(const id of ["music","mobMusic"]){const b=document.getElementById(id);if(!b)continue;b.classList.toggle("on",arcMusic.on);b.setAttribute("aria-pressed",String(arcMusic.on));}}
+function amToggle(){arcMusic.on=!arcMusic.on;arcMusic.gesture=true;try{localStorage.setItem("gorweld_music",arcMusic.on?"1":"0");}catch(e){}amSyncButtons();amRefresh();}
+document.addEventListener("pointerdown",()=>{if(!arcMusic.gesture){arcMusic.gesture=true;amRefresh();}},true);
+document.addEventListener("keydown",()=>{if(!arcMusic.gesture){arcMusic.gesture=true;amRefresh();}},true);
+document.addEventListener("visibilitychange",amRefresh);
+document.getElementById("music").onclick=()=>amToggle();
+document.getElementById("mobMusic").onclick=()=>amToggle();
+amSyncButtons();
+setInterval(amRefresh,500);   // Battle otwarte/zamkniete, mute ARC, karta w tle — jeden prosty straznik zamiast haczykow wszedzie
+// ── Muzyka Battle (05.10, wariant A „Hala” 92 BPM) — synteza Web Audio, zero plikow.
+// Gra tylko w oknie Battle (enter/setup/ready), milknie przy odliczaniu, spawaniu, inspekcji; mute ARC = cisza.
+const bwMusic={out:null,noise:null,timer:null,next:0,step:0,drone:[],playing:false,cueKey:"",log:[]};
+function bwMusicInit(){
+  if(bwMusic.out)return true; if(!soundOn)return false;
+  try{if(!actx)initAudio();
+    const comp=actx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.2;
+    bwMusic.out=actx.createGain();bwMusic.out.gain.value=.32;bwMusic.out.connect(comp);comp.connect(actx.destination);
+    bwMusic.noise=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);const d=bwMusic.noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    return true;}catch(e){return false;}
+}
+function bwEnv(g,t,a,peak,dec){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+dec);}
+function bwNoise(t,dur){const n=actx.createBufferSource();n.buffer=bwMusic.noise;n.start(t,Math.random()*1.5);n.stop(t+dur);return n;}
+function bwKick(t,peak){const o=actx.createOscillator(),g=actx.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);
+  bwEnv(g,t,.003,peak,.38);o.connect(g);g.connect(bwMusic.out);o.start(t);o.stop(t+.45);}
+function bwClank(t,f,peak,dec){
+  [[1,1],[2.76,.55],[5.4,.3],[8.9,.16]].forEach(([m,a])=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f*m;
+    bwEnv(g,t,.002,peak*a,dec/m**.35);o.connect(g);g.connect(bwMusic.out);o.start(t);o.stop(t+dec+.1);});
+  const n=bwNoise(t,.08),bp=actx.createBiquadFilter(),g=actx.createGain();bp.type="bandpass";bp.frequency.value=f*3;bp.Q.value=6;
+  bwEnv(g,t,.001,peak*.8,.06);n.connect(bp);bp.connect(g);g.connect(bwMusic.out);}
+function bwHiss(t,peak,dur){const n=bwNoise(t,dur+.02),hp=actx.createBiquadFilter(),g=actx.createGain();hp.type="highpass";hp.frequency.value=6500;
+  bwEnv(g,t,.001,peak,dur);n.connect(hp);hp.connect(g);g.connect(bwMusic.out);}
+function bwBass(t,f,dur,peak){const o=actx.createOscillator(),lp=actx.createBiquadFilter(),g=actx.createGain();o.type="square";o.frequency.value=f;
+  lp.type="lowpass";lp.frequency.setValueAtTime(600,t);lp.frequency.exponentialRampToValueAtTime(140,t+dur);lp.Q.value=4;
+  bwEnv(g,t,.005,peak,dur);o.connect(lp);lp.connect(g);g.connect(bwMusic.out);o.start(t);o.stop(t+dur+.05);}
+function bwArcZap(t,dur,peak){const n=bwNoise(t,dur),bp=actx.createBiquadFilter(),g=actx.createGain();bp.type="bandpass";bp.Q.value=1.4;
+  for(let i=0;i<dur*60;i++)bp.frequency.setValueAtTime(1800+Math.random()*3500,t+i/60);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.01);g.gain.setValueAtTime(peak*.7,t+dur*.7);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  n.connect(bp);bp.connect(g);g.connect(bwMusic.out);}
+function bwPad(t,freqs,dur,peak,bright){freqs.forEach(f=>[-6,6].forEach(cents=>{const o=actx.createOscillator(),lp=actx.createBiquadFilter(),g=actx.createGain();
+  o.type="sawtooth";o.frequency.value=f;o.detune.value=cents;lp.type="lowpass";lp.frequency.setValueAtTime(300,t);lp.frequency.exponentialRampToValueAtTime(bright,t+.35);
+  lp.frequency.exponentialRampToValueAtTime(400,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.08);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(lp);lp.connect(g);g.connect(bwMusic.out);o.start(t);o.stop(t+dur+.05);}));}
+function bwMusicStart(){
+  if(typeof amStop==="function")amStop();
+  if(bwMusic.playing||!bwMusicInit())return;
+  try{if(actx.state==="suspended")actx.resume();
+    const t=actx.currentTime,lp=actx.createBiquadFilter(),g=actx.createGain(),lfo=actx.createOscillator(),lg=actx.createGain();
+    lp.type="lowpass";lp.frequency.value=260;lp.Q.value=2;lfo.frequency.value=.07;lg.gain.value=120;lfo.connect(lg);lg.connect(lp.frequency);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.10,t+2);lp.connect(g);g.connect(bwMusic.out);
+    const oscs=[55,55*1.006,55*1.498].map(f=>{const o=actx.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);return o;});
+    lfo.start(t);bwMusic.drone=[...oscs,lfo,g];
+    bwMusic.step=0;bwMusic.next=t+.08;const stepDur=60/92/4;
+    bwMusic.timer=setInterval(()=>{
+      while(bwMusic.next<actx.currentTime+.12){const st=bwMusic.step%16,t2=bwMusic.next;
+        if(st===0||st===6||st===10)bwKick(t2,st===0?.9:.65);
+        if(st===4)bwClank(t2,420,.2,.6);if(st===12)bwClank(t2,377,.17,.8);
+        if(st%2===1)bwHiss(t2,st%4===3?.045:.025,.05);
+        if([0,3,6,8,11,14].includes(st))bwBass(t2,st>=8&&bwMusic.step%32>=16?49:55,.2,.13);
+        if(st===15&&Math.random()<.35)bwArcZap(t2,.12,.06);
+        bwMusic.step++;bwMusic.next+=stepDur;}
+    },25);
+    bwMusic.playing=true;bwMusic.log.push("loop");
+  }catch(e){}
+}
+function bwMusicStop(){
+  if(bwMusic.timer){clearInterval(bwMusic.timer);bwMusic.timer=null;}
+  if(bwMusic.drone.length&&actx){const t=actx.currentTime,g=bwMusic.drone[bwMusic.drone.length-1];
+    try{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(.0001,t,.25);bwMusic.drone.slice(0,-1).forEach(o=>o.stop(t+1.5));}catch(e){}}
+  bwMusic.drone=[];if(bwMusic.playing)bwMusic.log.push("stop");bwMusic.playing=false;
+}
+function bwMusicCue(kind){
+  if(!bwMusicInit())return;
+  try{if(actx.state==="suspended")actx.resume();const t=actx.currentTime+.03;bwMusic.log.push(kind);
+    if(kind==="count"){bwClank(t,880,.12,.25);bwKick(t,.5);}
+    else if(kind==="strike"){bwKick(t,1);bwClank(t,330,.3,1.4);bwArcZap(t+.02,.9,.2);}
+    else if(kind==="win"){bwKick(t,1);bwClank(t,330,.28,1.6);bwPad(t+.02,[110,164.8,220,277.2],2.6,.06,2600);bwClank(t+.45,660,.12,.9);}
+    else if(kind==="lose"){bwKick(t,.8);bwClank(t,247,.22,1.4);bwPad(t+.02,[98,146.8,196,233.1],2.4,.055,1200);}
+    else if(kind==="draw"){bwKick(t,.8);bwClank(t,392,.2,.9);bwClank(t+.32,392,.2,1.1);bwPad(t+.34,[110,164.8,220],1.8,.045,1500);}
+    else if(kind==="reject"){const o=actx.createOscillator(),g=actx.createGain(),lp=actx.createBiquadFilter();o.type="square";
+      o.frequency.setValueAtTime(220,t);o.frequency.linearRampToValueAtTime(140,t+.5);bwEnv(g,t,.005,.08,.55);lp.type="lowpass";lp.frequency.value=900;
+      o.connect(lp);lp.connect(g);g.connect(bwMusic.out);o.start(t);o.stop(t+.6);bwKick(t,.7);bwClank(t+.05,180,.18,1);}
+  }catch(e){}
+}
+function bwMusicVerdictKind(){
+  const view=battleState&&battleState.cardView;if(!view||!view.verdict)return null;
+  const code=view.verdict,slot=battleState.serverMode?battleState.slot:(battleState.mode==="guest"?"P2":"P1");
+  const me=slot==="P2"?view.player2:view.player1;
+  if(code==="INCOMPARABLE")return null;
+  if(code==="DRAW")return "draw";
+  if(code==="P1_WINS"||code==="P2_WINS")return code===(slot==="P2"?"P2_WINS":"P1_WINS")?"win":(me&&me.inspectionRejected?"reject":"lose");
+  return "reject";
+}
+function bwMusicSync(stageName){
+  if(!soundOn){bwMusicStop();return;}
+  if(["enter","setup","ready"].includes(stageName)){bwMusicStart();return;}
+  bwMusicStop();
+  if(stageName==="verdict"){const kind=bwMusicVerdictKind(),key=(battleState&&(battleState.battleId||""))+":"+kind;
+    if(kind&&key!==bwMusic.cueKey){bwMusic.cueKey=key;bwMusicCue(kind);}}
+}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)bwMusicStop();
+  else{const root=document.getElementById("battleModal");if(root&&root.classList.contains("open"))bwMusicSync(root.dataset.screen);}});
+function battleUiSound(kind){
+  if(!soundOn)return;
+  try{if(!actx)initAudio();if(actx.state==="suspended")actx.resume();
+    const now=actx.currentTime,osc=actx.createOscillator(),gain=actx.createGain();osc.type="triangle";
+    osc.frequency.setValueAtTime(kind==="impact"?115:kind==="tick"?720:kind==="alarm"?260:420,now);
+    if(kind==="alarm")osc.frequency.linearRampToValueAtTime(170,now+.18);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(kind==="impact"?.10:.045,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+(kind==="impact"?.22:.11));
+    osc.connect(gain);gain.connect(actx.destination);osc.start(now);osc.stop(now+.24);
+  }catch(e){}
+}
+function battleWpsTasks(){
+  const defs=[
+    {seed:1296914737,proc:"MMA",joint:"butt",pos:"PA",thick:3,bead:"steel"},
+    {seed:1296914738,proc:"MMA",joint:"butt",pos:"PF",thick:3,bead:"steel"},
+    {seed:1296914739,proc:"MMA",joint:"butt",pos:"PC",thick:3,bead:"steel"} // 05.10: bylo PA 5 mm = 2 warstwy (gran+lico) i mylilo; Battle = jedno przejscie
+  ];
+  return defs.map(d=>{
+    const amps=ArcSim.recommendedAmps(d.proc,d.thick,d.pos);
+    if(amps==null) return null;
+    return Battle.validateBattleTaskForArc({...d,W:PLAY_W,H:PLAY_H,amps,ampMode:"auto",
+      requiredCoverage:BATTLE_REQUIRED_COVERAGE},ArcSim);
+  }).filter(x=>x&&x.supported);
+}
+function battleTaskLabel(task){
+  return task.proc+" · "+task.pos+" · "+task.thick+" mm · "+task.amps+" A · "+task.bead;
+}
+function battleTaskSupported(task){
+  let check;
+  try{ check=Battle.validateBattleTaskForArc(task,ArcSim); }
+  catch(e){ return {supported:false,reason:"TASK_UNSUPPORTED",detail:"TASK_UNSUPPORTED"}; }
+  if(!check.supported) return check;
+  const P=POSITIONS[check.task.pos], M=MATERIAL[check.task.bead];
+  if(!P||!P.joints||!P.joints.includes(check.task.joint)||!M||
+     !["butt","fillet","pipe"].includes(check.task.joint)) {
+    return {supported:false,reason:"TASK_UNSUPPORTED",detail:"TASK_UNSUPPORTED",task:check.task};
+  }
+  return check;
+}
+function battleCaptureTask(seed,coverage){
+  const amps=ArcSim.recommendedAmps(proc,thick,posKey);
+  if(amps==null) return null;
+  return Battle.normalizeBattleTask({seed,W:PLAY_W,H:PLAY_H,proc,joint,pos:posKey,thick,bead,
+    amps,ampMode,requiredCoverage:coverage==null?BATTLE_REQUIRED_COVERAGE:coverage});
+}
+function battleApplyTask(task){
+  if(!battleSnapshot){ battleSnapshot=battlePendingSnapshot||battleCaptureSetup(); battlePendingSnapshot=null; }
+  if(welding) end(null);
+  clearWeld();
+  proc=task.proc; joint=task.joint; posKey=task.pos; thick=task.thick; bead=task.bead;
+  ampMode=Battle.toArcAmpMode(task.ampMode); ampMul=1; ampSet=null; activeCoupon=null;
+  reseedRound(task.seed); recStart();
+  document.querySelectorAll(".proc").forEach(b=>b.classList.toggle("on",b.dataset.proc===proc));
+  document.querySelectorAll(".joint").forEach(b=>b.classList.toggle("on",b.dataset.joint===joint));
+  document.querySelectorAll(".thk").forEach(b=>b.classList.toggle("on",+b.dataset.t===thick));
+  document.querySelectorAll(".bead").forEach(b=>b.classList.toggle("on",b.dataset.bead===bead));
+  refreshPositions();
+  reseedRound(task.seed); recStart();
+  battleLockControls(true);
+  document.getElementById("battleBadge").hidden=false;
+  document.getElementById("battleBadge").textContent=battleState&&battleState.serverMode?bt("serverTag"):bt("friendly");
+  document.body.classList.add("battle-active");
+}
+function battleLockControls(locked){
+  document.querySelectorAll(".proc,.joint,.pos,.thk,.bead,.amp,.ampmode,#ampRange,#ampNum")
+    .forEach(el=>{el.disabled=!!locked;});
+}
+function battleMakeId(){
+  const raw=(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID().replace(/-/g,"").slice(0,7):
+    Math.random().toString(36).slice(2,9);
+  return "GW-"+raw.toUpperCase();
+}
+function battleStorageKey(state){ return "gorweld_battle_"+state.battleId+"_"+state.taskHash; }
+function battleReadHistory(state){
+  try{
+    const h=JSON.parse(localStorage.getItem(battleStorageKey(state))||"null");
+    if(!h||!Number.isInteger(h.attemptsStarted)||h.attemptsStarted<0||!Array.isArray(h.attempts))
+      return {attemptsStarted:0,attempts:[]};
+    const attempts=h.attempts.filter(a=>{try{Battle.validateBattleResult(a);return true;}catch(e){return false;}});
+    return {attemptsStarted:h.attemptsStarted,attempts};
+  }catch(e){return {attemptsStarted:0,attempts:[]};}
+}
+function battleWriteHistory(state,history){
+  try{localStorage.setItem(battleStorageKey(state),JSON.stringify(history));}catch(e){}
+}
+function battleEncode(envelope){
+  const bytes=new TextEncoder().encode(JSON.stringify(envelope));
+  let binary=""; for(let i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
+  const value=btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  const url=new URL(location.href); url.searchParams.delete("challenge"); url.hash="battle="+value;
+  const result=url.toString();
+  if(result.length>BATTLE_MAX_LINK) throw new RangeError("Battle link is too long");
+  return result;
+}
+function battleDecode(hash){
+  const payload=hash.slice("#battle=".length).replace(/-/g,"+").replace(/_/g,"/");
+  if(!payload||payload.length>BATTLE_MAX_LINK) throw new RangeError("Invalid Battle payload length");
+  const padded=payload+"=".repeat((4-payload.length%4)%4), binary=atob(padded);
+  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function battleLocalTask(seed,coverage){
+  const task=battleCaptureTask(seed,coverage);
+  if(!task) return {supported:false,reason:"TASK_UNSUPPORTED",detail:"AMP_TABLE_UNAVAILABLE"};
+  return battleTaskSupported(task);
+}
+function battleLocalStamps(task){
+  return {engineVersion:ArcSim.VERSION,scoringVersion:ArcSim.SCORING_VERSION,task};
+}
+function battleHashEqual(a,b){ return Battle.canonicalizeTask(a)===Battle.canonicalizeTask(b); }
+function battleServerCredentialKey(battleId){ return "gorweld_bw_"+battleId; }
+function battleServerConsentKey(battleId){ return "gorweld_bw_consent_"+battleId; }
+function battleServerRememberConsent(battleId){ try{localStorage.setItem(battleServerConsentKey(battleId),"1");}catch(e){} }
+function battleServerConsentRemembered(battleId){ try{return localStorage.getItem(battleServerConsentKey(battleId))==="1";}catch(e){return false;} }
+function battleServerSaveCredentials(value){ try{localStorage.setItem(battleServerCredentialKey(value.battleId),JSON.stringify({
+  battleId:value.battleId,playerSessionId:value.playerSessionId,playerSecret:value.playerSecret,slot:value.slot}));return true;
+}catch(e){return false;} }
+function battleServerLoadCredentials(battleId){
+  try{const value=JSON.parse(localStorage.getItem(battleServerCredentialKey(battleId))||"null");
+    return value&&value.battleId===battleId&&value.playerSessionId&&value.playerSecret&&["P1","P2"].includes(value.slot)?value:null;
+  }catch(e){return null;}
+}
+function battleServerInviteUrl(battleId,inviteSecret){
+  const url=new URL(location.href); url.searchParams.delete("challenge"); url.hash="bw="+battleId+"."+inviteSecret; return url.toString();
+}
+function battleServerFriendlyError(code,detail){
+  const specific=battleServerErrorText(code,detail);if(specific)return specific;
+  const messages={SERVER_UNAVAILABLE:bt(battleCopyKey("serverDown")),BATTLE_NOT_FOUND:bt("unknownServerError").replace("%1",code),
+    BATTLE_NOT_STARTED:bt("unknownServerError").replace("%1",code),BATTLE_NOT_JOINED:bt("unknownServerError").replace("%1",code),
+    WAITING_FOR_OPPONENT:bt("serverWaiting"),BATTLE_DECIDED:bt("finishedNotice"),BATTLE_EXPIRED:bt("finishedNotice"),
+    PLAYER_FINISHED:bt("finishedNotice"),DUPLICATE_ATTEMPT:bt("duplicateAttempt"),ATTEMPT_LIMIT:bt("attemptLimit"),INPUT_PROFILE_MISMATCH:bt("taskMismatch"),
+    REPLAY_FAILED:bt("serverAttemptError").replace("%1",code),INVALID_ATTEMPT:bt("invalidAttempt"),
+    AUTH_REQUIRED:bt("noCredentials"),INVALID_CREDENTIALS:bt("noCredentials")};
+  return messages[code]||bt("unknownServerError").replace("%1",code||"ERROR");
+}
+async function battleServerRequest(battleId,route,method="GET",body,credentials){
+  if(!BATTLE_API) throw Object.assign(new Error("Battle API is not enabled on this host"),{code:"SERVER_UNAVAILABLE"});
+  let response;
+  try{
+    const headers={}; if(body!==undefined) headers["Content-Type"]="application/json";
+    if(credentials) headers.Authorization="Bearer "+credentials.playerSessionId+"."+credentials.playerSecret;
+    response=await fetch(BATTLE_API+"/battles"+(battleId?"/"+encodeURIComponent(battleId):"")+route,
+      {method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:"no-store"});
+  }catch(error){throw Object.assign(new Error(bt(battleCopyKey("serverDown"))),{code:"SERVER_UNAVAILABLE",cause:error});}
+  let payload={}; try{payload=await response.json();}catch(e){}
+  if(!response.ok) throw Object.assign(new Error(payload.message||payload.error||String(response.status)),
+    {code:payload.error||"HTTP_"+response.status,status:response.status,detail:payload.detail});
+  return payload;
+}
+function battleUiPlaceHud(){
+  const hud=document.getElementById("bwHud");if(!hud)return;
+  const mobile=matchMedia("(max-width:680px),(max-height:520px)").matches;
+  const top=document.querySelector(".top"),mobHud=document.getElementById("mobHud");
+  const anchors=[top];
+  if(mobile){
+    if(top&&mobHud&&getComputedStyle(mobHud).display!=="none")mobHud.style.top=Math.max(52,Math.ceil(top.getBoundingClientRect().bottom+8))+"px";
+    anchors.push(document.getElementById("toolhud"),mobHud);
+  }
+  let bottom=0;
+  anchors.forEach(el=>{
+    if(!el||getComputedStyle(el).display==="none")return;
+    const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)bottom=Math.max(bottom,r.bottom);
+  });
+  hud.style.top=Math.ceil(bottom+8)+"px";
+}
+addEventListener("resize",battleUiPlaceHud,{passive:true});
+function battleServerConsent(battleId,continueAction){
+  if(battleServerConsentRemembered(battleId)){continueAction();return;}
+  battleShow(bt("consentTitle"),bt(battleCopyKey("consentBody")),[],bt("continueText"),()=>{
+    if(battleId!=="new") battleServerRememberConsent(battleId); closeModal("battleModal"); continueAction();
+  },bt("cancelText"),()=>battleReset());
+}
+function battleServerShowFailure(error,canRetry){
+  // Wyjatek bez kodu to blad w przegladarce, nie awaria serwera — nie udajemy, ze serwer padl.
+  const code=error&&error.code||(error instanceof Error?"CLIENT_ERROR":"SERVER_UNAVAILABLE");
+  if(code==="CLIENT_ERROR") console.error("[Battle] client error",error);
+  battleState={...(battleState||{}),serverMode:true,localMode:false,blocked:true,reason:code};
+  let message=code==="SERVER_UNAVAILABLE"?bt(battleCopyKey("serverDown")):code==="CLIENT_ERROR"?bt("clientError").replace("%1",error.message):
+    (code==="ENGINE_VERSION_MISMATCH"||code==="SCORING_VERSION_MISMATCH")?bt("incomparableServer"):battleServerFriendlyError(code,error&&error.detail);
+  const server=battleState.serverBattle||{},stamp=code==="ENGINE_VERSION_MISMATCH"?"engineVersion":
+    code==="SCORING_VERSION_MISMATCH"?"scoringVersion":code==="TASK_MISMATCH"?"taskHash":null;
+  if(stamp){
+    const expected=stamp==="engineVersion"?server.engineVersion:stamp==="scoringVersion"?server.scoringVersion:server.taskHash||server.task&&"LOCKED TASK";
+    const actual=stamp==="engineVersion"?ArcSim.VERSION:stamp==="scoringVersion"?ArcSim.SCORING_VERSION:"LOCAL TASK";
+    message+="\n"+stamp+": "+String(expected||"—")+" / "+String(actual||"—");
+  }
+  battleShow(bt("errorTitle"),message,[],
+    canRetry?bt("continueText"):"",canRetry?()=>battleServerBootFromHash():null,
+    bt("exitText"),()=>battleReset());
+}
+function battleServerChooseTask(task){
+  battlePendingHostTask=task; battlePendingHostMode="sync";
+  const fine=!!(window.matchMedia&&matchMedia("(pointer: fine)").matches);
+  document.getElementById("battleNicknameLabel").textContent=bt("nickLabel");
+  document.getElementById("battleProfileLabel").textContent=bt("profileLabel");
+  const profile=document.getElementById("battleInputProfile");
+  profile.options[0].text=bt("fullProfile"); profile.options[1].text=bt("touchProfile"); profile.value=fine?"full":"touch";
+  const choices=[
+    {label:bt("syncMode"),action:()=>battleServerSetHostMode("sync")},
+    {label:bt("linkMode"),action:()=>battleServerSetHostMode("link")}
+  ];
+  battleShow(bt("createText"),battleTaskLabel(task),choices,bt("createText"),()=>{
+    const nickname=document.getElementById("battleNickname").value.trim();
+    const inputProfile=profile.value;
+    battleServerConsent("new",()=>battleServerCreate(task,battlePendingHostMode,nickname,inputProfile));
+  },bt("cancelText"),()=>{battlePendingHostTask=null;document.getElementById("battleServerFields").hidden=true;closeModal("battleModal");});
+  document.getElementById("battleServerFields").hidden=false;
+  battleUiRefresh(bt("createText"),battleTaskLabel(task),bt("createText"));
+}
+function battleServerSetHostMode(mode){
+  const fields=document.getElementById("battleServerFields"),profile=fields.hidden?null:document.getElementById("battleInputProfile").value;
+  const nickname=fields.hidden?"":document.getElementById("battleNickname").value;
+  battlePendingHostMode=mode;
+  const task=battlePendingHostTask; if(task) battleServerChooseTask(task);
+  battlePendingHostMode=mode;
+  if(profile) document.getElementById("battleInputProfile").value=profile;
+  if(nickname) document.getElementById("battleNickname").value=nickname;
+  const buttons=[...document.querySelectorAll("#battleTaskChoices button")];
+  buttons.forEach((button,index)=>button.classList.toggle("on",(index===0&&mode==="sync")||(index===1&&mode==="link")));
+}
+async function battleServerCreate(task,mode,nickname,inputProfile){
+  try{
+    const created=await battleServerRequest("","","POST",{task,mode,nickname,inputProfile});
+    battleServerRememberConsent(created.battleId);
+    const credentials={battleId:created.battleId,playerSessionId:created.playerSessionId,playerSecret:created.playerSecret,slot:created.slot};
+    const credentialsSaved=battleServerSaveCredentials(credentials);
+    battleState={serverMode:true,localMode:false,mode:"server",serverRole:"host",battleId:created.battleId,
+      modeType:mode,slot:"P1",credentials,credentialsSaved,task:null,serverTask:created.battle.task,
+      taskHash:null,engineVersion:created.battle.engineVersion,scoringVersion:created.battle.scoringVersion,
+      ready:false,blocked:false,done:false,serverBattle:created.battle,serverUpdateSeq:0,serverAttemptsStarted:0,
+      inviteUrl:battleServerInviteUrl(created.battleId,created.inviteSecret),cardView:null};
+    history.replaceState(null,"",location.pathname+location.search+"#bw="+created.battleId);
+    BATTLE_SERVER_LINK_PRESENT=true; BATTLE_LINK_PRESENT=true;
+    battleLockControls(true); document.getElementById("battleBadge").hidden=false;
+    document.getElementById("battleBadge").textContent=bt("serverTag"); document.body.classList.add("battle-active");
+    battleServerConnect(); battleServerRenderRoom();
+    if(!credentialsSaved) showToast(bt("noCredentials"),"#ffae3c");
+  }catch(error){battleServerShowFailure(error,false);}
+}
+function battleServerVersionCheck(battle){
+  if(battle.engineVersion!==ArcSim.VERSION) return "ENGINE_VERSION_MISMATCH";
+  if(battle.scoringVersion!==ArcSim.SCORING_VERSION) return "SCORING_VERSION_MISMATCH";
+  return null;
+}
+function battleServerSetJoinPreview(battleId,inviteSecret,battle){
+  const mismatch=battleServerVersionCheck(battle);
+  const profile=battle.inputProfile==="full"?bt("replayFull"):bt("replayTouch");
+  const mode=battle.mode==="sync"?bt("syncMode"):bt("linkMode");
+  const task=battleTaskLabel({...battle.task,seed:battle.task.seed===undefined?1:battle.task.seed});
+  const preview=battleFmt("joinPreview",[task,mode,profile,battle.players.P1&&battle.players.P1.nickname||bt("p1")]);
+  const needsMouse=battle.inputProfile==="full"&&!(window.matchMedia&&matchMedia("(pointer: fine)").matches);
+  if(mismatch){
+    battleState={serverMode:true,localMode:false,blocked:true,reason:mismatch,battleId,serverBattle:battle};
+    battleShow(bt("errorTitle"),bt("incomparableServer"),[],"",null,bt("exitText"),()=>battleReset(),preview);
+    return;
+  }
+  const message=preview+(needsMouse?"\n"+bt("mouseWarning"):"");
+  battleState={serverMode:true,localMode:false,serverRole:"joinPreview",battleId,inviteSecret,serverBattle:battle,
+    modeType:battle.mode,slot:null,engineVersion:battle.engineVersion,scoringVersion:battle.scoringVersion};
+  battleShow(bt("linkTitle"),message,[],bt("joinText"),()=>{
+    battleServerConsent(battleId,()=>battleServerJoin(battleId,inviteSecret));
+  },bt("exitText"),()=>battleReset());
+}
+async function battleServerJoin(battleId,inviteSecret){
+  try{
+    const joined=await battleServerRequest(battleId,"/join","POST",{inviteSecret},null);
+    battleServerRememberConsent(battleId);
+    const credentials={battleId,playerSessionId:joined.playerSessionId,playerSecret:joined.playerSecret,slot:joined.slot};
+    const credentialsSaved=battleServerSaveCredentials(credentials);
+    history.replaceState(null,"",location.pathname+location.search+"#bw="+battleId);
+    BATTLE_SERVER_LINK_PRESENT=true; BATTLE_LINK_PRESENT=true;
+    battleState={serverMode:true,localMode:false,mode:"server",serverRole:"guest",battleId,modeType:joined.battle.mode,
+      slot:joined.slot,credentials,credentialsSaved,task:null,serverTask:joined.battle.task,taskHash:null,
+      engineVersion:joined.battle.engineVersion,scoringVersion:joined.battle.scoringVersion,ready:false,blocked:false,
+      done:false,serverBattle:joined.battle,serverUpdateSeq:0,serverAttemptsStarted:0,cardView:null};
+    battleLockControls(true); document.getElementById("battleBadge").hidden=false;
+    document.getElementById("battleBadge").textContent=bt("serverTag"); document.body.classList.add("battle-active");
+    battleServerConnect(); await battleServerApplyBattle(joined.battle);
+    if(!credentialsSaved) showToast(bt("noCredentials"),"#ffae3c");
+  }catch(error){battleServerShowFailure(error,false);}
+}
+function battleServerGetOwnPlayer(battle){
+  return battleState&&battleState.slot&&battle.players&&battle.players[battleState.slot];
+}
+function battleServerOpponent(battle){
+  if(!battleState||!battleState.slot||!battle.players) return null;
+  return battle.players[battleState.slot==="P1"?"P2":"P1"];
+}
+function battleServerRenderRoom(){
+  if(!battleState||!battleState.serverMode||!battleState.serverBattle) return;
+  const battle=battleState.serverBattle, own=battleServerGetOwnPlayer(battle), opponent=battleServerOpponent(battle);
+  const isSpectator=!!battleState.spectator;
+  const details=battleTaskLabel({...battle.task,seed:battle.task.seed===undefined?1:battle.task.seed})+
+    " · "+bt("versions").replace("%1",battle.engineVersion).replace("%2",battle.scoringVersion);
+  let title=bt("ready"),message=details,primary="",action=null;
+  const choices=[];
+  if(isSpectator){message+= "\n"+bt("spectator");}
+  else if(battle.state==="CREATED"){
+    message+= "\n"+bt("waitingPlayer");
+    if(battleState.serverRole==="host") {primary=bt("copyInvite");action=()=>battleCopy(battleState.inviteUrl);}
+  }else if(battle.mode==="sync"&&["JOINED","READY"].includes(battle.state)){
+    message+="\n"+(own&&own.ready?bt("waitingReady"):opponent?bt("readyText"):bt("waitingPlayer"));
+    if(own&&!own.ready&&opponent){primary=bt("readyText");action=()=>{
+      if(!(document.getElementById("bwHelmetCheck").checked&&document.getElementById("bwGlovesCheck").checked)){
+        showToast(bwc("gearMissing"),"#ffae3c");return;
+      }
+      battleUiSound("impact");battleServerReady();
+    };}
+    else if(own&&own.ready) primary=bt("waitingReady");
+  }else if(battle.state==="JOINED"&&battle.mode==="link"){
+    message+="\n"+bt("strikeNow");
+  }else if(battle.state==="LOCKED"){
+    message+="\n"+(battleState.ready?
+      (opponent&&opponent.status==="welding"?bt("opponentWelding"):bt("opponentIdle")):
+      bt("countdown").replace("%1","…"));
+  }else if(battle.state==="VERDICT"){
+    battleServerRenderVerdict(); return;
+  }else if(battle.state==="EXPIRED"){
+    title=bt("finishedNotice"); message+= "\n"+bt("finishedNotice");
+  }
+  if(battleState.inviteUrl) choices.push({label:bt("copyInvite"),action:()=>battleCopy(battleState.inviteUrl)});
+  if(!isSpectator&&own&&!own.finished&&["JOINED","LOCKED"].includes(battle.state)){
+    choices.push({label:bt("finishText"),action:()=>battleServerFinishConfirm()});
+  }
+  battleShow(title,message,choices,primary,action,bt("exitText"),()=>battleReset(),
+    Object.entries(battle.players||{}).map(([slot,player])=>slot+": "+(player&&player.nickname||"—")+
+      (player?" · "+(player.ready?bt("readyText"):bt("serverWaiting")):" · "+bt("waitingPlayer"))).join("\n"));
+}
+// Telefon w poziomie: GOTOWY (gest gracza) wlacza pelny ekran, zeby pasek przegladarki nie zjadal blachy.
+// Plansza zmienia rozmiar przed startem rundy, wiec szerokosc w nagraniu (rec.rw) i tak jest z chwili zajarzenia.
+function battleTryFullscreen(){
+  try{
+    const coarse=matchMedia("(pointer: coarse)").matches, el=document.documentElement;
+    if(!coarse||innerHeight>560||innerWidth<=innerHeight||document.fullscreenElement||typeof el.requestFullscreen!=="function") return;
+    Promise.resolve(el.requestFullscreen({navigationUI:"hide"})).then(()=>{
+      try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock("landscape").catch(()=>{});}catch(e){}
+    }).catch(()=>{});
+  }catch(e){}
+}
+async function battleServerReady(){
+  battleTryFullscreen();
+  try{await battleServerRequest(battleState.battleId,"/ready","POST",{},battleState.credentials);}
+  catch(error){if(error.status===429)return;battleServerShowFailure(error,false);}
+}
+async function battleServerFinishConfirm(){
+  if(!battleState||!battleState.credentials||!confirm(bt("confirmFinish"))) return;
+  try{await battleServerRequest(battleState.battleId,"/finish","POST",{},battleState.credentials);}
+  catch(error){battleServerShowFailure(error,false);}
+}
+function battleServerStartCountdown(battle){
+  if(battleServerCountdownTimer) clearInterval(battleServerCountdownTimer);
+  if(!battleState||battleState.spectator){battleServerRenderRoom();return;}
+  const startAt=Date.parse(battle.startAt); if(!Number.isFinite(startAt)){battleServerRenderRoom();return;}
+  battleShow(bt("ready"),bt("countdown").replace("%1","…"),[],"",null,"",null);
+  let lastSecond=null;
+  const tick=()=>{
+    const remaining=startAt-(Date.now()+battleServerOffsetMs);
+    if(remaining<=0){clearInterval(battleServerCountdownTimer);battleServerCountdownTimer=null;
+      document.getElementById("battleModal").dataset.screen="countdown";
+      document.getElementById("battleTitle").textContent="STRIKE ARC";
+      document.getElementById("battleMessage").textContent=bt("strikeNow");
+      document.getElementById("bwCeremonyLine").textContent=bwc("veldaStrike");bwMusicStop();if(soundOn)bwMusicCue("strike");else battleUiSound("impact");
+      battleServerCountdownTimer=setTimeout(()=>{battleServerCountdownTimer=null;
+        battleServerActivateTask(battle.task).catch(error=>battleServerShowFailure(error,false));},300);return false;}
+    const seconds=Math.ceil(remaining/1000);
+    if(seconds!==lastSecond){lastSecond=seconds;bwMusicStop();if(soundOn&&seconds<=3)bwMusicCue("count");else battleUiSound("tick");}
+    document.getElementById("battleModal").dataset.screen="countdown";
+    document.getElementById("battleTitle").textContent=String(Math.min(seconds,3));
+    const message=seconds<=3?bt("countdown").replace("%1",String(seconds)):
+      bt("versions").replace("%1",battle.engineVersion).replace("%2",battle.scoringVersion);
+    document.getElementById("battleMessage").textContent=message;
+    return true;
+  };
+  if(tick()) battleServerCountdownTimer=setInterval(tick,100);
+}
+async function battleServerActivateTask(task){
+  if(!battleState||battleState.spectator||!Number.isInteger(task&&task.seed)) return;
+  const checked=battleTaskSupported({...task,ampMode:task.ampMode||"auto"});
+  if(!checked.supported) throw Object.assign(new Error(checked.reason),{code:checked.reason});
+  battleState.serverTask=checked.task; battleState.task=checked.task; battleState.ready=true;
+  battleState.taskHash=await Battle.computeTaskHash(checked.task); battleState.blocked=false;
+  battleApplyTask(checked.task); closeModal("battleModal");
+  if(battleState.done){battleServerRenderVerdict();return;}
+  showToast(bt("strikeNow"),"#ffae3c");
+}
+function battleServerPublicAttempt(attempt,player){
+  if(!attempt) return null;
+  return {nickname:player&&player.nickname||"",score:attempt.score,grade:attempt.letter,
+    inspectionRejected:!!attempt.inspectionRejected,taskCompleted:!!attempt.taskCompleted,
+    qualified:!!attempt.qualified,battlePoints:attempt.bp,attemptNumber:attempt.attemptNumber,
+    attemptsStarted:player&&player.attemptsCount||attempt.attemptNumber,serverTime:attempt.serverTime};
+}
+function battleServerRenderVerdict(){
+  const battle=battleState&&battleState.serverBattle; if(!battle||!battle.verdict)return;
+  const p1=battleServerPublicAttempt(battle.players.P1&&battle.players.P1.best,battle.players.P1);
+  const p2=battleServerPublicAttempt(battle.players.P2&&battle.players.P2.best,battle.players.P2);
+  const code=battle.verdict.code;
+  battleState.done=true; battleState.ready=false; battleState.cardView={kind:"server",player1:p1,player2:p2,verdict:code};
+  const line=(fallback,p)=>{
+    const name=p&&p.nickname?p.nickname:fallback;
+    if(!p)return name+": —";
+    return name+": "+p.score+" "+bt("scoreUnit")+" · "+p.battlePoints+" BP · "+battleStatus(p)+" · "+bwc("attempt")+" "+p.attemptNumber+" / "+p.attemptsStarted+" · "+
+      (p.serverTime?new Date(p.serverTime).toISOString().replace("T"," ").replace(/\.\d{3}Z$/, " UTC"):"—");
+  };
+  const previousBattle=battle;
+  const choices=battleState.spectator?[]:[{label:bt("rematch"),action:()=>{
+    const task=previousBattle.task; battleReset(); battleServerChooseTask(task);
+  }}];
+  battleShow(bt("resultTitle"),battleLabelVerdict(code),choices,battleState.spectator?"":bt("share"),()=>buildCard(),bt("exitText"),()=>battleReset(),
+    line(bt("p1"),p1)+"\n"+line(bt("p2"),p2)+"\n"+"ID: "+battle.battleId);
+}
+async function battleServerApplyBattle(battle){
+  if(!battleState||!battleState.serverMode||!battle) return;
+  const state=battleState; const update=++state.serverUpdateSeq;
+  state.serverBattle=battle; state.modeType=battle.mode;
+  const own=battleServerGetOwnPlayer(battle);
+  if(own&&own.finished) state.ready=false;
+  battleServerOffsetMs=Number.isFinite(Date.parse(battle.serverTime))?Date.parse(battle.serverTime)-Date.now():battleServerOffsetMs;
+  const mismatch=battleServerVersionCheck(battle);
+  if(mismatch){state.blocked=true;state.reason=mismatch;battleServerShowFailure({code:mismatch},false);return;}
+  if(battle.state==="VERDICT"){
+    state.done=true; state.serverBattle=battle;
+    if(!state.spectator&&battle.task&&Number.isInteger(battle.task.seed)){
+      try{await battleServerActivateTask(battle.task);}catch(error){battleServerShowFailure(error,false);return;}
+    }
+    if(battleState===state&&state.serverUpdateSeq===update) battleServerRenderVerdict();
+    return;
+  }
+  if(battle.state==="EXPIRED"){state.serverBattle=battle;battleServerRenderRoom();return;}
+  if(battle.mode==="link"&&battle.state==="JOINED"&&!state.spectator&&!(own&&own.finished)&&battle.task&&Number.isInteger(battle.task.seed)){
+    if(state.ready&&state.task&&state.task.seed===battle.task.seed){
+      if(own&&own.finished)battleServerRenderRoom();
+      else document.getElementById("battleBadge").textContent=bt("serverTag")+" · "+(battleServerOpponent(battle)&&battleServerOpponent(battle).status==="welding"?bt("opponentWelding"):bt("opponentIdle"));
+      return;
+    }
+    try{await battleServerActivateTask(battle.task);}catch(error){battleServerShowFailure(error,false);}return;
+  }
+  if(battle.mode==="sync"&&battle.state==="LOCKED"&&battle.task&&Number.isInteger(battle.task.seed)){
+    if(own&&own.finished){battleServerRenderRoom();return;}
+    if(state.ready&&state.task&&state.task.seed===battle.task.seed){
+      const opponent=battleServerOpponent(battle);
+      document.getElementById("battleBadge").textContent=bt("serverTag")+" · "+
+        (opponent&&opponent.status==="welding"?bt("opponentWelding"):bt("opponentIdle"));return;
+    }
+    battleServerStartCountdown(battle);return;
+  }
+  if(state.serverUpdateSeq===update) battleServerRenderRoom();
+}
+function battleServerHandleEvent(event){
+  if(!battleState||!battleState.serverMode) return;
+  let message; try{message=JSON.parse(event.data);}catch(e){return;}
+  if(message.at){const time=Date.parse(message.at);if(Number.isFinite(time))battleServerOffsetMs=time-Date.now();}
+  if(message.battle) battleServerApplyBattle(message.battle).catch(error=>battleServerShowFailure(error,false));
+}
+function battleServerConnect(){
+  if(!BATTLE_API||!battleState||!battleState.serverMode) return;
+  if(battleServerStream) battleServerStream.close();
+  const stream=new EventSource(BATTLE_API+"/battles/"+encodeURIComponent(battleState.battleId)+"/events");
+  battleServerStream=stream;
+  for(const type of ["battle.snapshot","player.joined","player.ready","battle.locked","battle.countdown","player.status",
+    "attempt.accepted","player.finished","battle.verdict","battle.expired"]) stream.addEventListener(type,battleServerHandleEvent);
+  stream.onopen=()=>{if(battleState&&battleState.serverMode)battleState.connection="connected";};
+  stream.onerror=()=>{if(battleState&&battleState.serverMode&&battleState.serverBattle&&battleState.serverBattle.state!=="VERDICT"){
+    battleState.connection="reconnecting"; if(!welding)showToast(bt("statusDisconnected"),"#ffae3c");
+  }};
+}
+async function battleServerBootFromHash(){
+  if(!BATTLE_SERVER_LINK_PRESENT)return;
+  if(isChallenge()){battleModeConflict();return;}
+  const raw=location.hash.slice("#bw=".length).slice(0,BATTLE_MAX_LINK+1);
+  const match=raw.match(/^(bw_[a-z2-7]+)(?:\.([a-z2-7]+))?$/i);
+  if(!match){battleServerShowFailure({code:"BATTLE_NOT_FOUND"},false);return;}
+  const battleId=match[1],inviteSecret=match[2]||null;
+  battleState={serverMode:true,localMode:false,mode:"server",battleId,inviteSecret,blocked:false};
+  if(!BATTLE_API){battleServerShowFailure({code:"SERVER_UNAVAILABLE"},false);return;}
+  const credentials=battleServerLoadCredentials(battleId);
+  if(!battleServerConsentRemembered(battleId)){
+    battleServerConsent(battleId,()=>battleServerLoadFromHash(battleId,inviteSecret,credentials)); return;
+  }
+  await battleServerLoadFromHash(battleId,inviteSecret,credentials);
+}
+async function battleServerLoadFromHash(battleId,inviteSecret,credentials){
+  try{
+    const battle=await battleServerRequest(battleId,"","GET");
+    const mismatch=battleServerVersionCheck(battle);
+    if(mismatch){battleServerShowFailure({code:mismatch},false);return;}
+    if(inviteSecret){battleServerSetJoinPreview(battleId,inviteSecret,battle);return;}
+    const spectator=!credentials;
+    battleState={serverMode:true,localMode:false,mode:"server",serverRole:spectator?"spectator":credentials.slot==="P1"?"host":"guest",
+      spectator,battleId,slot:credentials&&credentials.slot,credentials,credentialsSaved:!!credentials,
+      modeType:battle.mode,engineVersion:battle.engineVersion,scoringVersion:battle.scoringVersion,task:null,
+      serverTask:battle.task,ready:false,done:battle.state==="VERDICT",blocked:false,serverBattle:battle,
+      serverUpdateSeq:0,serverAttemptsStarted:0,cardView:null};
+    BATTLE_SERVER_LINK_PRESENT=true;BATTLE_LINK_PRESENT=true;
+    battleLockControls(true);document.getElementById("battleBadge").hidden=false;document.getElementById("battleBadge").textContent=bt("serverTag");
+    document.body.classList.add("battle-active");battleServerConnect();await battleServerApplyBattle(battle);
+  }catch(error){battleServerShowFailure(error,true);}
+}
+function battleServerCopyIdLink(){
+  if(!battleState)return;
+  const url=new URL(location.href);url.hash="bw="+battleState.battleId;battleCopy(url.toString());
+}
+function battleServerOpenPanel(){ if(battleState&&battleState.serverMode) battleServerRenderRoom(); }
+async function battleServerSubmitAttempt(report){
+  const summary=document.getElementById("battleReportSummary");
+  try{
+    const recording=typeof structuredClone==="function"?structuredClone(rec):JSON.parse(JSON.stringify(rec));
+    const response=await battleServerRequest(battleState.battleId,"/attempts","POST",
+      {rec:recording,clientScore:report.score},battleState.credentials);
+    const attempt=battleServerPublicAttempt(response.attempt,{nickname:battleState.serverBattle.players[battleState.slot].nickname,
+      attemptsCount:response.attempt.attemptNumber});
+    battleState.serverLastAttempt=attempt;
+    summary.textContent=bt("verified").replace("%1",attempt.score+" · "+battleStatus(attempt)).replace("%2",attempt.battlePoints);
+    summary.classList.toggle("reject",attempt.inspectionRejected||!attempt.taskCompleted);
+    document.getElementById("bwInspectionTitle").textContent=bwc("inspection");
+    document.getElementById("bwInspectionText").textContent=bt("verified").replace("%1",attempt.score+" · "+battleStatus(attempt)).replace("%2",attempt.battlePoints);
+    battleUiSetInspectionVelda(true);
+    setTimeout(()=>{document.getElementById("bwInspection").hidden=true;},550);
+    if(attempt.score!==report.score){
+      console.warn("[Battle] live/server score mismatch",{liveScore:report.score,serverScore:attempt.score,delta:attempt.score-report.score});
+    }
+  }catch(error){
+    const message=error.code==="SERVER_UNAVAILABLE"?bt(battleCopyKey("serverDown")):battleServerFriendlyError(error.code,error.detail);
+    summary.textContent=bt("serverAttemptError").replace("%1",message);summary.classList.add("reject");
+    document.getElementById("bwInspectionText").textContent=bt("serverAttemptError").replace("%1",message);
+    battleUiSetInspectionVelda(false);
+    setTimeout(()=>{document.getElementById("bwInspection").hidden=true;},900);
+    if(error.code==="SERVER_UNAVAILABLE") battleState.connection="reconnecting";
+  }finally{
+    try{await battleServerRequest(battleState.battleId,"/status","POST",{status:"idle"},battleState.credentials);}
+    catch(error){if(error.status!==429&&error.code!=="SERVER_UNAVAILABLE")console.warn("[Battle] idle status not accepted",error.code);}
+  }
+}
+async function battleVerifyLocal(task,engineVersion,scoringVersion){
+  const supported=battleTaskSupported(task);
+  if(!supported.supported) return supported;
+  if(ArcSim.VERSION!==engineVersion) return {supported:false,reason:"ENGINE_VERSION_MISMATCH"};
+  if(ArcSim.SCORING_VERSION!==scoringVersion) return {supported:false,reason:"SCORING_VERSION_MISMATCH"};
+  const live=battleLocalTask(task.seed,task.requiredCoverage);
+  if(!live.supported) return live;
+  if(!battleHashEqual(live.task,task)) return {supported:false,reason:"TASK_MISMATCH"};
+  return {supported:true,task:live.task};
+}
+function battleStartAllowed(){
+  // Po inspekcji proba jest zamknieta (wynik juz policzony) — spawanie po tej samej plycie nic nie daje.
+  // Nowa proba dopiero po CLEAR (pusta plyta = puste nagranie).
+  if(battleTaskActive()&&!battleState.done&&battleState.roundInspected&&rec&&rec.events&&rec.events.length){
+    showToast(bt("attemptClosed"),"#ffae3c"); return false;
+  }
+  if(battleState&&battleState.serverMode){
+    if(battleState.spectator||battleState.blocked||battleState.done||!battleState.ready||!battleState.task){
+      if(battleState.done) battleServerRenderVerdict();
+      else if(!battleState.spectator&&!battleState.blocked) battleServerRenderRoom();
+      return false;
+    }
+    if(battleState.modeType==="sync"&&battleState.serverBattle&&battleState.serverBattle.startAt&&
+       Date.now()+battleServerOffsetMs<Date.parse(battleState.serverBattle.startAt)){
+      battleServerStartCountdown(battleState.serverBattle);return false;
+    }
+    const visibleStageWidth=Math.min(stage.getBoundingClientRect().width,innerWidth);
+    if(visibleStageWidth<400){showToast(battleServerErrorText("RENDER_WIDTH_UNSUPPORTED"),"#ff5a4a");return false;}
+    const current=battleLocalTask(battleState.task.seed,battleState.task.requiredCoverage);
+    if(!current.supported||!battleHashEqual(current.task,battleState.task)){
+      battleState.blocked=true;battleState.reason=current.reason||"TASK_MISMATCH";battleServerShowFailure({code:battleState.reason},false);return false;
+    }
+    return true;
+  }
+  if(battleState&&battleState.blocked) return true;
+  if(!BATTLE_LINK_PRESENT&&!battleState) return true;
+  if(!battleState||!battleTaskActive()||!battleState.ready||battleState.done){
+    if(battleState&&battleState.done&&battleState.cardView) battleShowReturnedResult();
+    else if(battleState&&battleState.reason) battleShowProblem(battleState.reason,battleState.detail);
+    else if(battleState&&!battleState.ready){
+      if(battleState.mode==="guest") battleShowIncoming();
+      else if(battleState.mode==="host") battleShowHostReady();
+    }
+    return false;
+  }
+  const check=battleLocalTask(battleState.task.seed,battleState.task.requiredCoverage);
+  let reason=check.reason, detail=check.detail;
+  if(check.supported&&(ampMul!==1||ampSet!=null)) {reason="TASK_MISMATCH";detail="AMP_MISMATCH";}
+  else if(check.supported&&ArcSim.VERSION!==battleState.engineVersion) reason="ENGINE_VERSION_MISMATCH";
+  else if(check.supported&&ArcSim.SCORING_VERSION!==battleState.scoringVersion) reason="SCORING_VERSION_MISMATCH";
+  else if(check.supported&&!battleHashEqual(check.task,battleState.task)) reason="TASK_MISMATCH";
+  if(reason){ battleState.ready=false; battleState.blocked=true; battleState.reason=reason; battleState.detail=detail;
+    battleShowProblem(reason,detail); return false; }
+  return true;
+}
+function battleShowProblem(reason,detail){
+  battleReset(); battleState={blocked:true,reason,detail};
+  battleShow(bt("errorTitle"),battleReasonText(reason,detail),[],bt("newBattle"),()=>{
+    battleReset(); battleOpenTaskPicker();
+  },bt("close"),()=>closeModal("battleModal"));
+}
+function battleClearHash(){
+  if(BATTLE_LINK_PRESENT) history.replaceState(null,"",location.pathname+location.search);
+  BATTLE_LINK_PRESENT=false; BATTLE_SERVER_LINK_PRESENT=false;
+  document.getElementById("cardBattleLink").hidden=true;
+  document.getElementById("cardBattleShare").hidden=true;
+}
+function battleReset(){
+  if(battleServerStream){battleServerStream.close();battleServerStream=null;}
+  if(battleServerCountdownTimer){clearInterval(battleServerCountdownTimer);battleServerCountdownTimer=null;}
+  battleClearHash(); battleState=null; battlePendingSnapshot=null;
+  document.body.classList.remove("battle-active","bw-welding"); battleLockControls(false);
+  document.getElementById("bwInspection").hidden=true;document.getElementById("battleModal").hidden=true;
+  document.getElementById("shareCanvas").hidden=false;document.getElementById("battleShareCanvas").hidden=true;
+  document.getElementById("bwHelmetCheck").checked=false;document.getElementById("bwGlovesCheck").checked=false;
+  document.getElementById("battleBadge").hidden=true;
+  if(battleSnapshot){
+    const s=battleSnapshot; battleSnapshot=null;
+    proc=s.proc; joint=s.joint; posKey=s.pos; thick=s.thick; bead=s.bead;
+    ampMode=s.ampMode; ampMul=s.ampMul; ampSet=s.ampSet; activeCoupon=s.activeCoupon;
+    document.querySelectorAll(".proc").forEach(b=>b.classList.toggle("on",b.dataset.proc===proc));
+    document.querySelectorAll(".joint").forEach(b=>b.classList.toggle("on",b.dataset.joint===joint));
+    document.querySelectorAll(".thk").forEach(b=>b.classList.toggle("on",+b.dataset.t===thick));
+    document.querySelectorAll(".bead").forEach(b=>b.classList.toggle("on",b.dataset.bead===bead));
+    refreshPositions(); document.querySelectorAll(".pos").forEach(b=>b.classList.toggle("on",b.dataset.pos===posKey));
+    refreshAmps(); updateInfo(); clearWeld(s.roundSeed);
+  }
+}
+function battleOpenTaskPicker(){
+  if(battleModeConflict()) return;
+  if(welding){showToast(bt("taskReady"),"#ffae3c");return;}
+  if(!battleSnapshot) battlePendingSnapshot=battleCaptureSetup();
+  document.getElementById("battleServerFields").hidden=true;
+  const tasks=battleWpsTasks();
+  const choices=tasks.map(item=>({label:battleTaskLabel(item.task),action:()=>BATTLE_API?battleServerChooseTask(item.task):battleStartHost(item.task)}));
+  battleShow(bt("choose"),bt("chooseNote"),choices,"",null,bt("close"),()=>{battlePendingSnapshot=null;closeModal("battleModal");});
+}
+async function battleStartHost(task){
+  if(battleModeConflict()) return;
+  if(BATTLE_API){battleServerChooseTask(task);return;}
+  try{
+    const check=battleTaskSupported(task);
+    if(!check.supported){battleShowProblem(check.reason,check.detail);return;}
+    battleState={mode:"host",localMode:true,task:check.task,taskHash:"",battleId:battleMakeId(),
+      engineVersion:ArcSim.VERSION,scoringVersion:ArcSim.SCORING_VERSION,ready:false,blocked:false,done:false,
+      history:{attemptsStarted:0,attempts:[]},attemptNumber:0,envelope:null,cardView:null,shareUrl:null};
+    battleApplyTask(check.task);
+    const live=battleLocalTask(check.task.seed,check.task.requiredCoverage);
+    if(!live.supported){battleState.blocked=true;battleState.reason=live.reason;battleState.detail=live.detail;
+      battleShowProblem(live.reason,live.detail);return;}
+    if(!battleHashEqual(live.task,check.task)){battleState.blocked=true;battleState.reason="TASK_MISMATCH";battleShowProblem("TASK_MISMATCH");return;}
+    if(!ArcSim.SCORING_VERSION){battleState.blocked=true;battleState.reason="SCORING_VERSION_MISMATCH";battleShowProblem("SCORING_VERSION_MISMATCH");return;}
+    battleState.taskHash=await Battle.computeTaskHash(check.task);
+    battleShowHostReady();
+  }catch(e){battleState={blocked:true,reason:"BATTLE_LINK_INVALID",detail:e.message};battleShowProblem("BATTLE_LINK_INVALID",e.message);}
+}
+function battleShowHostReady(){
+  battleShow(bt("ready"),bt("taskReady"),[{label:bt("exitBattle"),action:()=>{battleReset();closeModal("battleModal");}}],bt("start"),()=>{
+    if(!battleTaskActive()) return;
+    battleState.ready=true; battleState.history=battleReadHistory(battleState);
+    closeModal("battleModal"); showToast(bt("taskReady"),"#5fe08a");
+  },bt("close"));
+}
+function battleBuildLocalResult(score,letter,inspectionRejected,coverage){
+  const s=battleState;
+  const completed=coverage>=s.task.requiredCoverage;
+  const result={nickname:s.mode==="host"?bt("p1"):bt("p2"),score,grade:letter,
+    inspectionRejected:!!inspectionRejected,taskCompleted:completed,
+    challengePassed:completed&&score>=90,coverage,
+    taskHash:s.taskHash,scoringVersion:ArcSim.SCORING_VERSION,engineVersion:ArcSim.VERSION,
+    attemptNumber:s.attemptNumber,attemptsStarted:s.history.attemptsStarted};
+  return Battle.validateBattleResult(result);
+}
+function battleAttemptStart(){
+  if(!battleTaskActive()) return;
+  battleState.roundInspected=false;
+  battleState.hudActive=true;battleUiUpdateHud();
+  if(battleState.serverMode){
+    battleState.serverAttemptsStarted=(battleState.serverAttemptsStarted||0)+1;
+    battleServerRequest(battleState.battleId,"/status","POST",{status:"welding"},battleState.credentials)
+      .catch(error=>{if(error.status!==429&&error.code!=="SERVER_UNAVAILABLE")showToast(battleServerFriendlyError(error.code),"#ffae3c");});
+    const summary=document.getElementById("battleReportSummary"),share=document.getElementById("rBattleShare");
+    summary.hidden=true;share.hidden=true;return;
+  }
+  const h=battleState.history||battleReadHistory(battleState);
+  h.attemptsStarted+=1; battleState.attemptNumber=h.attemptsStarted; battleState.history=h;
+  battleWriteHistory(battleState,h);
+  const summary=document.getElementById("battleReportSummary"),share=document.getElementById("rBattleShare");
+  summary.hidden=true; share.hidden=true;
+}
+function battleStatus(result){
+  if(result.inspectionRejected) return bt("reject");
+  if(!result.taskCompleted) return bt("incomplete");
+  return bt("accepted");
+}
+function battleLabelVerdict(verdict,view=battleState&&battleState.cardView){
+  if(verdict==="P1_WINS"||verdict==="P2_WINS"){
+    const player=verdict==="P1_WINS"?view&&view.player1:view&&view.player2;
+    return bt(verdict==="P1_WINS"?"wins1":"wins2").replace("%1",player&&player.nickname||bt(verdict==="P1_WINS"?"p1":"p2"));
+  }
+  return ({DRAW:bt("draw"),NO_QUALIFIED_RESULT:bt("noQualified"),INCOMPARABLE:bt("incomparable")})[verdict]||bt("incomparable");
+}
+function battleMakeHostEnvelope(result){
+  const s=battleState;
+  return {schemaVersion:1,battleId:s.battleId,engineVersion:s.engineVersion,
+    scoringVersion:s.scoringVersion,task:s.task,taskHash:s.taskHash,
+    player1:result,player2:null};
+}
+function battleSetCardView(view,envelope){
+  battleState.cardView=view; battleState.envelope=envelope;
+  try{battleState.shareUrl=battleEncode(envelope);}
+  catch(e){battleState.shareUrl=null; battleState.shareError=e.message;}
+  document.getElementById("cardBattleLink").hidden=!battleState.shareUrl;
+  document.getElementById("cardBattleShare").hidden=!battleState.shareUrl;
+}
+function battleFinishInspection(report,verdict){
+  if(!battleTaskActive()||battleState.mode==="result"||battleState.roundInspected) return;
+  if(battleState.serverMode){
+    battleState.roundInspected=true;
+    document.body.classList.remove("bw-welding");battleState.hudActive=false;
+    const overlay=document.getElementById("bwInspection");overlay.hidden=false;
+    document.getElementById("bwInspectionTitle").textContent=bwc("inspection");
+    document.getElementById("bwInspectionText").textContent=bwc("verifying");
+    battleUiSetInspectionVelda(false);
+    document.getElementById("bwInspectionMode").textContent=bt("serverTag");
+    battleUiSound("scan");
+    const summary=document.getElementById("battleReportSummary"),share=document.getElementById("rBattleShare");
+    summary.textContent=bt("verifying");summary.classList.remove("reject");summary.hidden=false;
+    share.textContent=bt("serverResult");share.hidden=false;
+    battleServerSubmitAttempt(report).catch(()=>{});return;
+  }
+  document.body.classList.remove("bw-welding");battleState.hudActive=false;
+  battleState.localMode=true;
+  const result=battleBuildLocalResult(report.score,report.letter,verdict.rejected,report.coverage);
+  if(battleState.mode==="host"){
+    const envelope=battleMakeHostEnvelope(result);
+    battleSetCardView({kind:"invite",player1:result},envelope);
+    battleState.done=true;
+    battleState.ready=false;
+  }else{
+    const h=battleState.history; h.attempts.push(result);
+    const chosen=Battle.selectBestAttempt(h.attempts);
+    const best=Battle.carryAttemptCount(chosen,h.attemptsStarted);
+    battleState.history=h; battleWriteHistory(battleState,h);
+    const envelope={...battleState.envelope,player2:best};
+    const verdictCode=Battle.battleVerdict(envelope.player1,best,{mode:"link"});
+    battleSetCardView({kind:"vs",player1:envelope.player1,player2:best,verdict:verdictCode},envelope);
+  }
+  const view=battleState.cardView, summary=document.getElementById("battleReportSummary");
+  if(view.kind==="invite"){
+    summary.textContent=report.letter+" · "+battleStatus(result)+" · "+Battle.getBattlePoints(report.score)+" BP";
+  }else{
+    summary.textContent=battleLabelVerdict(view.verdict,view)+" · "+Battle.getBattlePoints(view.player1.score)+
+      " : "+Battle.getBattlePoints(view.player2.score)+" BP";
+  }
+  summary.classList.toggle("reject",!!result.inspectionRejected); summary.hidden=false;
+  const share=document.getElementById("rBattleShare");
+  share.textContent=view.kind==="invite"?bt("beat"):bt("share"); share.hidden=false;
+  battleState.roundInspected=true;
+}
+function battleResultSummary(view){
+  const row=(label,p)=>label+" · "+p.score+" "+bt("scoreUnit")+" · "+Battle.getBattlePoints(p.score)+" BP · "+battleStatus(p)+" · "+
+    bwc("attempt")+" "+p.attemptNumber+" / "+p.attemptsStarted;
+  if(view.kind==="invite") return row(bt("p1"),view.player1);
+  return battleLabelVerdict(view.verdict,view)+"\n"+row(bt("p1"),view.player1)+"\n"+row(bt("p2"),view.player2);
+}
+function battleShowReturnedResult(){
+  const view=battleState.cardView;
+  battleShow(bt("resultTitle"),battleResultSummary(view),[
+    {label:bt("rematch"),action:()=>{
+      if(welding){showToast(bt("taskReady"),"#ffae3c");return;}
+      const task=battleState.task; battleReset(); battleStartHost(task);
+    }},
+    {label:bt("newBattle"),action:()=>{battleReset();battleOpenTaskPicker();}},
+    {label:bt("exitBattle"),action:()=>{battleReset();closeModal("battleModal");}}
+  ],bt("share"),()=>buildCard(),bt("close"));
+}
+function battleShowIncoming(){
+  const task=battleState.task, p1=battleState.envelope.player1;
+  const msg=bt("p1")+" · "+p1.grade+" · "+battleStatus(p1)+" · "+Battle.getBattlePoints(p1.score)+" BP";
+  battleShow(bt("linkTitle"),bt("taskReady")+" "+battleTaskLabel(task),[{label:bt("exitBattle"),action:()=>{battleReset();closeModal("battleModal");}}],bt("accept"),()=>{
+    battleState.ready=true; closeModal("battleModal"); showToast(bt("taskReady"),"#5fe08a");
+  },bt("close"));
+  document.getElementById("battleModalSummary").textContent=msg;
+  document.getElementById("battleModalSummary").hidden=false;
+}
+async function battleBootFromHash(){
+  if(!BATTLE_LINK_PRESENT) return;
+  if(BATTLE_SERVER_LINK_PRESENT){await battleServerBootFromHash();return;}
+  if(isChallenge()){ battleModeConflict(); return; }
+  try{
+    if(location.hash.length>BATTLE_MAX_LINK) throw new RangeError("Battle link is too long");
+    const envelope=await Battle.validateBattleEnvelope(battleDecode(location.hash));
+    const supported=battleTaskSupported(envelope.task);
+    if(!supported.supported){battleState={blocked:true,reason:supported.reason,detail:supported.detail};battleShowProblem(supported.reason,supported.detail);return;}
+    battleApplyTask(supported.task);
+    const local=battleLocalTask(supported.task.seed,supported.task.requiredCoverage);
+    if(!local.supported){battleState={blocked:true,reason:local.reason,detail:local.detail};battleShowProblem(local.reason,local.detail);return;}
+    const preflight=await Battle.preflightBattleStart(envelope,
+      {engineVersion:ArcSim.VERSION,scoringVersion:ArcSim.SCORING_VERSION,task:local.task});
+    if(!preflight.startAllowed){battleState={blocked:true,reason:preflight.reason};battleShowProblem(preflight.reason);return;}
+    battleState={mode:envelope.player2?"result":"guest",localMode:true,task:supported.task,taskHash:envelope.taskHash,
+      battleId:envelope.battleId,engineVersion:ArcSim.VERSION,scoringVersion:ArcSim.SCORING_VERSION,
+      ready:false,blocked:false,done:!!envelope.player2,envelope,attemptNumber:0,cardView:null,shareUrl:null,
+      history:{attemptsStarted:0,attempts:[]}};
+    battleState.history=battleReadHistory(battleState);
+    if(envelope.player2){
+      battleState.cardView={kind:"vs",player1:envelope.player1,player2:envelope.player2,
+        verdict:Battle.battleVerdict(envelope.player1,envelope.player2,{mode:"link"})};
+      battleSetCardView(battleState.cardView,envelope);
+      battleShowReturnedResult();
+    }else battleShowIncoming();
+  }catch(e){
+    battleReset(); battleState={blocked:true,reason:"BATTLE_LINK_INVALID",detail:e.message};
+    battleShow(bt("errorTitle"),bt("badLink")+" "+String(e.message||""),[],
+      bt("newBattle"),()=>{battleReset();battleOpenTaskPicker();},
+      bt("close"),()=>closeModal("battleModal"));
+  }
+}
+function battleMakeLinkForCurrent(){ return battleState&&battleState.shareUrl; }
+function battleCopy(text){
+  const done=()=>showToast(bt("copied"),"#5fe08a");
+  const fallback=()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();
+    try{if(!document.execCommand("copy"))throw new Error("copy failed");done();}
+    catch(e){showToast(bt("badLink"),"#ff5a4a");}ta.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,fallback);
+  else fallback();
+}
+function battleCopyLink(){
+  const link=battleMakeLinkForCurrent();
+  if(link) battleCopy(link);
+}
+function battleShare(){
+  const link=battleMakeLinkForCurrent();
+  if(!link)return;
+  if(navigator.share) navigator.share({title:"GORWELD BATTLE WELD",text:bt("beat"),url:link})
+    .catch(()=>battleCopy(link));
+  else battleCopy(link);
+}
+function battleCanvasFont(face,weight,size){
+  const system='"Arial Narrow","Roboto Condensed",Arial,sans-serif';
+  const families=lang==="ru"?system:face==="display"?'BWDisplay,"Arial Narrow",Impact,sans-serif':face==="body"?'BWArchivo,"Helvetica Neue",Arial,sans-serif':'BWMono,ui-monospace,monospace';
+  return weight+" "+size+"px "+families;
+}
+function battleCardAvatar(x,image,cx,cy,r,ring){
+  x.save();x.beginPath();x.arc(cx,cy,r+4,0,Math.PI*2);x.fillStyle="#0c0e10";x.fill();
+  x.lineWidth=3;x.strokeStyle=ring;x.stroke();x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.clip();
+  if(image)x.drawImage(image,cx-r,cy-r,r*2,r*2);else{x.fillStyle="#23282c";x.fillRect(cx-r,cy-r,r*2,r*2);}
+  x.restore();
+}
+// uklad karty 05.10: awatar + nick u gory, duza litera z BP obok, bez nachodzenia na "pkt"; zwyciezca z zarem, przegrany przygaszony
+function battlePlayerCard(x,player,name,center,avatar,state){
+  const px=center?1135:65,align=center?"right":"left",dir=center?-1:1,ring=center?"#9fd3ff":"#ff892d";
+  battleCardAvatar(x,avatar,px+dir*44,286,40,ring);
+  const tx=px+dir*104;
+  x.save();
+  if(state==="lose")x.globalAlpha=.72;
+  x.textAlign=align;x.fillStyle="#eceeef";x.font=battleCanvasFont("body",600,26);x.fillText(String(name).slice(0,24),tx,280);
+  if(!player){
+    x.fillStyle="#8a9296";x.font=battleCanvasFont("mono",500,18);x.fillText("NO RESULT",tx,312);x.restore();return;
+  }
+  const accepted=!player.inspectionRejected&&player.taskCompleted;
+  const color=player.inspectionRejected?"#ff8a80":accepted?"#ffd08a":"#e8b44a";
+  x.fillStyle="#c3c9ce";x.font=battleCanvasFont("mono",500,18);x.fillText(player.score+" "+bt("scoreUnit"),tx,312);
+  if(state==="win"){
+    const gx=px+dir*48,g=x.createRadialGradient(gx,400,0,gx,400,150);
+    g.addColorStop(0,"rgba(255,137,45,.32)");g.addColorStop(1,"rgba(255,137,45,0)");x.fillStyle=g;x.fillRect(gx-150,250,300,300);
+    x.shadowColor="rgba(255,120,30,.75)";x.shadowBlur=26;
+  }
+  x.fillStyle=color;x.font=battleCanvasFont("display",800,118);x.fillText(player.grade||"—",px,452);
+  x.shadowBlur=0;
+  const gw=x.measureText(player.grade||"—").width,sx=px+dir*(gw+22);
+  x.fillStyle=color;x.font=battleCanvasFont("mono",600,20);x.fillText(battleStatus(player),sx,384);
+  x.fillStyle="#f3f5f6";x.font=battleCanvasFont("display",800,52);x.fillText(Battle.getBattlePoints(player.score)+" BP",sx,448);
+  x.shadowColor="rgba(0,0,0,.9)";x.shadowBlur=8;
+  x.fillStyle="#a5adb1";x.font=battleCanvasFont("mono",500,17);x.fillText(bt("attempt")+" "+player.attemptNumber+" / "+player.attemptsStarted,px,500);
+  if(player.serverTime){x.fillStyle="#737c81";x.font=battleCanvasFont("mono",500,13);x.fillText(new Date(player.serverTime).toISOString().replace("T"," ").replace(/\.\d{3}Z$/, " UTC"),px,526);}
+  x.restore();
+}
+function battleCardVs(x){
+  x.save();x.strokeStyle="rgba(123,129,133,.55)";x.lineWidth=1;
+  x.beginPath();x.moveTo(600,236);x.lineTo(600,340);x.moveTo(600,452);x.lineTo(600,540);x.stroke();
+  x.textAlign="center";x.font=battleCanvasFont("display",800,96);
+  const g=x.createLinearGradient(0,350,0,440);g.addColorStop(0,"#ffd08a");g.addColorStop(1,"#ff6a10");
+  x.shadowColor="rgba(255,106,16,.6)";x.shadowBlur=22;x.fillStyle=g;x.fillText("VS",600,432);x.restore();
+}
+function battleCardAvatarName(slot){
+  const battle=battleState.serverBattle||{},player=battle.players&&battle.players[slot];
+  let picture=player&&(player.picture||player.avatarUrl);
+  if(picture){try{if(new URL(picture,location.href).origin!==location.origin)picture=null;}catch(_){picture=null;}}
+  return picture||battleAvatarAsset(battle.battleId||battleState.battleId||"battle-weld-card",slot);
+}
+function battleUpdateShareButtons(){
+  const copy=document.getElementById("cardBattleLink"), share=document.getElementById("cardBattleShare");
+  if(copy) copy.textContent=bt("copyLink");
+  if(share) share.textContent=bt("shareLink");
+}
+function buildBattleCard(){
+  if(!battleTaskActive()||!battleState.cardView)return;
+  document.getElementById("shareCanvas").hidden=true;document.getElementById("battleShareCanvas").hidden=false;
+  document.getElementById("cardModal").classList.toggle("bw-battle-ru",lang==="ru");
+  const view=battleState.cardView;
+  const modeTag=document.getElementById("cardBattleModeTag");
+  const verified=!!battleState.serverMode;
+  modeTag.hidden=false;modeTag.textContent=bt(verified?"serverTag":"friendly");
+  const cv=document.getElementById("battleShareCanvas"),x=cv.getContext("2d"),w=cv.width,h=cv.height;
+  document.getElementById("cardTitle").textContent="BATTLE WELD";
+  battleUpdateShareButtons();
+  document.getElementById("cardBattleLink").hidden=!battleState.shareUrl;
+  document.getElementById("cardBattleShare").hidden=!battleState.shareUrl;
+  openModal("cardModal");
+  const render=(async()=>{
+    const [background,logo,avatar1,avatar2]=await Promise.all([battleLoadAsset("card-bg.webp"),battleLoadAsset("battle-weld-wordmark-v2.svg"),
+      battleLoadAsset(battleCardAvatarName("P1")),battleLoadAsset(battleCardAvatarName("P2"))]);
+    cv.dataset.backgroundAsset=background?"card-bg.webp":"fallback";
+    cv.dataset.logoAsset=logo?"battle-weld-wordmark-v2.svg":"fallback";
+    if(background)x.drawImage(background,0,0,w,h);
+    else{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#0e0f10");g.addColorStop(.55,"#1c1e20");g.addColorStop(1,"#08090a");x.fillStyle=g;x.fillRect(0,0,w,h);}
+    x.fillStyle="rgba(14,15,16,.60)";x.fillRect(0,0,w,h);
+    // delikatny zar w kolorach logo: poswiata przy logo + luna od dolu (user 05.10)
+    {const g1=x.createRadialGradient(250,80,0,250,80,460);g1.addColorStop(0,"rgba(255,106,16,.20)");g1.addColorStop(1,"rgba(255,106,16,0)");x.fillStyle=g1;x.fillRect(0,0,w,h);
+     const g2=x.createRadialGradient(w/2,h+40,0,w/2,h+40,620);g2.addColorStop(0,"rgba(255,150,50,.16)");g2.addColorStop(1,"rgba(255,150,50,0)");x.fillStyle=g2;x.fillRect(0,0,w,h);}
+    for(let y=40;y<h;y+=44){x.fillStyle="rgba(255,255,255,.025)";x.fillRect(0,y,w,1);}
+    x.strokeStyle="#7b8185";x.lineWidth=3;x.strokeRect(22,22,w-44,h-44);x.strokeStyle="rgba(255,137,45,.55)";x.lineWidth=1;x.strokeRect(32,32,w-64,h-64);
+    if(logo){const lw=420,lh=Math.round(lw*(logo.naturalHeight||logo.height)/(logo.naturalWidth||logo.width));x.drawImage(logo,52,72-lh/2+8,lw,lh);} // zachowane proporcje
+    else{x.textAlign="left";x.fillStyle="#eceeef";x.font=battleCanvasFont("display",800,58);x.fillText("GORWELD ARC · BATTLE WELD",60,100);}
+    x.textAlign="left";x.fillStyle=verified?"#ffd08a":"#ff8a80";x.font=battleCanvasFont("mono",500,22);
+    const modeText=bt(verified?"serverTag":"friendly"),logoBottom=122,modeTop=160-x.measureText(modeText).actualBoundingBoxAscent;
+    cv.dataset.modeTagGapPx=String(Math.floor(modeTop-logoBottom));x.fillText(modeText,60,160);
+    const task=battleState.task||battleState.serverTask||{};x.fillStyle="#b8bec2";x.font=battleCanvasFont("body",500,24);x.fillText(battleTaskLabel(task).slice(0,70),60,207);
+    if(view.kind==="invite"){
+      battlePlayerCard(x,view.player1,view.player1.nickname||bt("p1"),false,avatar1,"");
+      x.textAlign="right";x.fillStyle="#ffae3c";x.font=battleCanvasFont("display",800,40);x.fillText(bt("beat"),w-65,452);
+    }else{
+      const code=view.verdict,st=slot=>code==="P1_WINS"?(slot==="P1"?"win":"lose"):code==="P2_WINS"?(slot==="P2"?"win":"lose"):"";
+      battleCardVs(x);
+      battlePlayerCard(x,view.player1,view.player1.nickname||bt("p1"),false,avatar1,st("P1"));
+      battlePlayerCard(x,view.player2,view.player2.nickname||bt("p2"),true,avatar2,st("P2"));
+      x.textAlign="center";x.fillStyle=code==="P1_WINS"?"#ffd08a":code==="P2_WINS"?"#ffae3c":
+        code==="DRAW"?"#9fd3ff":"#ff8a80";x.font=battleCanvasFont("display",800,44);
+      x.save();x.shadowColor="rgba(0,0,0,.8)";x.shadowBlur=12;x.fillText(battleLabelVerdict(code,view),600,590);x.restore();
+    }
+    const serverBattle=battleState.serverBattle||{};
+    x.textAlign="left";x.fillStyle="#858e93";x.font=battleCanvasFont("mono",500,17);
+    x.fillText("BATTLE ID  "+(serverBattle.battleId||battleState.battleId||"LOCAL"),60,635);
+    x.textAlign="right";x.fillText(String(battleState.modeType||battleState.mode||"link").toUpperCase()+" · "+
+      (battleState.engineVersion||serverBattle.engineVersion||"")+" / "+(battleState.scoringVersion||serverBattle.scoringVersion||""),w-60,635);
+  })();
+  window.__bwBattleCardReady=render;
+  return render;
+}
+function battleStartClick(){
+  if(battleModeConflict()) return;
+  if(battleState&&battleState.serverMode){if(battleState.done)battleServerRenderVerdict();else battleServerOpenPanel();return;}
+  if(battleTaskActive()&&battleState.mode==="guest"&&!battleState.ready){battleShowIncoming();return;}
+  if(battleState&&battleState.done){battleShowReturnedResult();return;}
+  battleOpenTaskPicker();
+}
+document.getElementById("battleLaunch").textContent=bt("launch");
+if(isChallenge()){
+  for(const id of ["battleLaunch","battleLaunchMobile"]){const el=document.getElementById(id);el.hidden=true;el.style.display="none";}
+}
+document.getElementById("battleLaunchMobile").onclick=battleStartClick;
+document.getElementById("battleLaunch").onclick=battleStartClick;
+document.getElementById("battlePrimary").onclick=()=>{if(battlePrimaryAction){battleUiSound("clamp");battlePrimaryAction();}};
+document.getElementById("battleSecondary").onclick=()=>{if(battleSecondaryAction)battleSecondaryAction();else closeModal("battleModal");};
+document.getElementById("rBattleShare").onclick=()=>{if(battleState&&battleState.shareUrl)buildCard();else showToast(battleState&&battleState.shareError||bt("badLink"),"#ff5a4a");};
+document.getElementById("cardBattleLink").onclick=battleCopyLink;
+document.getElementById("cardBattleShare").onclick=battleShare;
+for(const id of ["bwHelmetCheck","bwGlovesCheck"])document.getElementById(id).addEventListener("change",()=>{
+  const button=document.getElementById("battlePrimary");
+  button.disabled=!(document.getElementById("bwHelmetCheck").checked&&document.getElementById("bwGlovesCheck").checked);
+});
+
 resize(); refreshPositions(); updateRank(); applyI18N(); updateWallet(); requestAnimationFrame(frame);
 fitStage(); applyChallengePin(); loadChallengeConfig();   // pin od razu ze stałych, potem doprecyzuj z challenge-config.json
+if(BATTLE_LINK_PRESENT) setTimeout(battleBootFromHash,0);
 const _bgV=document.getElementById("pagebg"); if(_bgV){ _bgV.addEventListener("canplay",hideSplash,{once:true}); }
 setTimeout(hideSplash,900);
-try{ if(!localStorage.getItem("gorweld_tut")) setTimeout(isChallenge()?openTut:openQs,1100); }catch(e){}
+try{ if(!BATTLE_LINK_PRESENT&&!localStorage.getItem("gorweld_tut")) setTimeout(isChallenge()?openTut:openQs,1100); }catch(e){}
 </script>
 </body>
 </html>
