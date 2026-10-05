@@ -4138,7 +4138,12 @@ document.getElementById("battleLaunchMobile").onclick=battleStartClick;
 document.getElementById("battleLaunch").onclick=battleStartClick;
 document.getElementById("battlePrimary").onclick=()=>{if(battlePrimaryAction){battleUiSound("clamp");battlePrimaryAction();}};
 document.getElementById("battleSecondary").onclick=()=>{if(battleSecondaryAction)battleSecondaryAction();else closeModal("battleModal");};
-document.getElementById("rBattleShare").onclick=()=>{if(battleState&&battleState.shareUrl)buildCard();else showToast(battleState&&battleState.shareError||bt("badLink"),"#ff5a4a");};
+// 05.10 (zgloszenie usera z live): w trybie serwerowym ten przycisk to „WYNIK SERWERA” — nie ma linku do
+// udostepnienia, wiec stary kod pokazywal „Link Battle jest uszkodzony”. Teraz otwiera pokoj pojedynku
+// (oczekiwanie / ZAKONCZ POJEDYNEK) albo werdykt, tak jak przycisk BATTLE WELD.
+document.getElementById("rBattleShare").onclick=()=>{
+  if(battleState&&battleState.serverMode){closeModal("repModal");battleStartClick();return;}
+  if(battleState&&battleState.shareUrl)buildCard();else showToast(battleState&&battleState.shareError||bt("badLink"),"#ff5a4a");};
 document.getElementById("cardBattleLink").onclick=battleCopyLink;
 document.getElementById("cardBattleShare").onclick=battleShare;
 for(const id of ["bwHelmetCheck","bwGlovesCheck"])document.getElementById(id).addEventListener("change",()=>{
