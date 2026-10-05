@@ -2693,7 +2693,7 @@ const BATTLE_TEXT={
     modeConflict:"Battle nie może działać równocześnie ze starym trybem challenge.",taskReady:"Zadanie przypięte. Uderz w blachę, aby rozpocząć próbę.",
     rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"NIEUKOŃCZONE",
     beat:"BEAT MY WELD",share:"UDOSTĘPNIJ WYNIK",copyLink:"KOPIUJ LINK",copied:"LINK SKOPIOWANY",
-    wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",
+    wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",noResult:"BRAK WYNIKU",
     incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
     task:"Zadanie",bp:"BP",scoreUnit:"pkt",attempt:"Próba",started:"rozpoczęte",
     friendly:"TOWARZYSKI · NIEZWERYFIKOWANY",serverTag:"SERWER · WERYFIKOWANY",nickLabel:"Nick (opcjonalnie)",profileLabel:"Profil odtworzenia",fullProfile:"Pełny",touchProfile:"Dotykowy",syncMode:"Wspólny start",linkMode:"Przez link",
@@ -2708,7 +2708,7 @@ const BATTLE_TEXT={
     modeConflict:"Battle cannot run together with the legacy challenge mode.",taskReady:"Task pinned. Strike the plate to begin your attempt.",
     rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"INCOMPLETE",
     beat:"BEAT MY WELD",share:"SHARE RESULT",copyLink:"COPY BATTLE LINK",copied:"LINK COPIED",
-    wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",
+    wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",noResult:"NO RESULT",
     incomparable:"INCOMPARABLE",unsupportedReason:"TASK_UNSUPPORTED",
     task:"Task",bp:"BP",scoreUnit:"pts",attempt:"Attempt",started:"started",
     friendly:"FRIENDLY · UNVERIFIED",serverTag:"SERVER · VERIFIED",nickLabel:"Nickname (optional)",profileLabel:"Replay profile",fullProfile:"Full",touchProfile:"Touch",syncMode:"Synchronized start",linkMode:"Link battle",
@@ -2723,7 +2723,7 @@ const BATTLE_TEXT={
     modeConflict:"Battle нельзя запускать одновременно со старым режимом challenge.",taskReady:"Задание закреплено. Коснитесь пластины, чтобы начать попытку.",
     rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"НЕ ЗАВЕРШЕНО",
     beat:"BEAT MY WELD",share:"ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ",copyLink:"КОПИРОВАТЬ ССЫЛКУ",copied:"ССЫЛКА СКОПИРОВАНА",
-    wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",
+    wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",noResult:"НЕТ РЕЗУЛЬТАТА",
     incomparable:"НЕСРАВНИМЫ",unsupportedReason:"TASK_UNSUPPORTED",
     task:"Задание",bp:"BP",scoreUnit:"очк.",attempt:"Попытка",started:"начато",
     friendly:"ДРУЖЕСКИЙ · НЕ ПРОВЕРЕН",serverTag:"СЕРВЕР · ПРОВЕРЕН",nickLabel:"Ник (необязательно)",profileLabel:"Профиль повтора",fullProfile:"Полный",touchProfile:"Сенсорный",syncMode:"Общий старт",linkMode:"По ссылке",
@@ -2899,7 +2899,7 @@ function battleShow(title,message,choices,primaryText,primaryAction,secondaryTex
   const titleEl=document.getElementById("battleTitle"), msg=document.getElementById("battleMessage");
   const list=document.getElementById("battleTaskChoices"), sum=document.getElementById("battleModalSummary");
   const modeTag=document.getElementById("battleModeTag");
-  document.getElementById("battleServerFields").hidden=true;document.getElementById("bwPrivacy").hidden=true;
+  document.getElementById("battleServerFields").hidden=true;document.getElementById("battleServerFields").classList.remove("bw-join-fields");document.getElementById("bwPrivacy").hidden=true;
   const serverTag=!!(battleState&&battleState.serverMode),friendly=battleIsFriendlyScreen();
   modeTag.hidden=false;modeTag.textContent=serverTag?bt("serverTag"):friendly?bt("friendly"):bwc("serverPending");
   titleEl.textContent=title; msg.textContent=message||""; list.replaceChildren();
@@ -3439,12 +3439,18 @@ function battleServerSetJoinPreview(battleId,inviteSecret,battle){
   battleState={serverMode:true,localMode:false,serverRole:"joinPreview",battleId,inviteSecret,serverBattle:battle,
     modeType:battle.mode,slot:null,engineVersion:battle.engineVersion,scoringVersion:battle.scoringVersion};
   battleShow(bt("linkTitle"),message,[],bt("joinText"),()=>{
-    battleServerConsent(battleId,()=>battleServerJoin(battleId,inviteSecret));
+    const nickname=document.getElementById("battleNickname").value.trim();
+    battleServerConsent(battleId,()=>battleServerJoin(battleId,inviteSecret,nickname));
   },bt("exitText"),()=>battleReset());
+  // 05.10 (zgloszenie z live): gracz 2 tez moze wpisac nick (serwer przyjmowal go od poczatku, brakowalo pola).
+  // Profil odtworzenia ustala gracz 1, wiec przy dolaczaniu widac tylko nick.
+  const fields=document.getElementById("battleServerFields");fields.hidden=false;fields.classList.add("bw-join-fields");
+  document.getElementById("battleNicknameLabel").textContent=bt("nickLabel");document.getElementById("battleNickname").value="";
+  battleUiRefresh(bt("linkTitle"),message,bt("joinText"));
 }
-async function battleServerJoin(battleId,inviteSecret){
+async function battleServerJoin(battleId,inviteSecret,nickname){
   try{
-    const joined=await battleServerRequest(battleId,"/join","POST",{inviteSecret},null);
+    const joined=await battleServerRequest(battleId,"/join","POST",nickname?{inviteSecret,nickname}:{inviteSecret},null);
     battleServerRememberConsent(battleId);
     const credentials={battleId,playerSessionId:joined.playerSessionId,playerSecret:joined.playerSecret,slot:joined.slot};
     const credentialsSaved=battleServerSaveCredentials(credentials);
@@ -4031,7 +4037,7 @@ function battlePlayerCard(x,player,name,center,avatar,state){
   if(state==="lose")x.globalAlpha=.72;
   x.textAlign=align;x.fillStyle="#eceeef";x.font=battleCanvasFont("body",600,26);x.fillText(String(name).slice(0,24),tx,280);
   if(!player){
-    x.fillStyle="#8a9296";x.font=battleCanvasFont("mono",500,18);x.fillText("NO RESULT",tx,312);x.restore();return;
+    x.fillStyle="#8a9296";x.font=battleCanvasFont("mono",500,18);x.fillText(bt("noResult"),tx,312);x.restore();return;
   }
   const accepted=!player.inspectionRejected&&player.taskCompleted;
   const color=player.inspectionRejected?"#ff8a80":accepted?"#ffd08a":"#e8b44a";
@@ -4083,6 +4089,7 @@ function buildBattleCard(){
   document.getElementById("cardBattleLink").hidden=!battleState.shareUrl;
   document.getElementById("cardBattleShare").hidden=!battleState.shareUrl;
   openModal("cardModal");
+  cv.dataset.rendered="";
   const render=(async()=>{
     const [background,logo,avatar1,avatar2]=await Promise.all([battleLoadAsset("card-bg.webp"),battleLoadAsset("battle-weld-wordmark-v2.svg"),
       battleLoadAsset(battleCardAvatarName("P1")),battleLoadAsset(battleCardAvatarName("P2"))]);
@@ -4103,13 +4110,14 @@ function buildBattleCard(){
     cv.dataset.modeTagGapPx=String(Math.floor(modeTop-logoBottom));x.fillText(modeText,60,160);
     const task=battleState.task||battleState.serverTask||{};x.fillStyle="#b8bec2";x.font=battleCanvasFont("body",500,24);x.fillText(battleTaskLabel(task).slice(0,70),60,207);
     if(view.kind==="invite"){
-      battlePlayerCard(x,view.player1,view.player1.nickname||bt("p1"),false,avatar1,"");
+      battlePlayerCard(x,view.player1,(view.player1&&view.player1.nickname)||bt("p1"),false,avatar1,"");
       x.textAlign="right";x.fillStyle="#ffae3c";x.font=battleCanvasFont("display",800,40);x.fillText(bt("beat"),w-65,452);
     }else{
       const code=view.verdict,st=slot=>code==="P1_WINS"?(slot==="P1"?"win":"lose"):code==="P2_WINS"?(slot==="P2"?"win":"lose"):"";
       battleCardVs(x);
-      battlePlayerCard(x,view.player1,view.player1.nickname||bt("p1"),false,avatar1,st("P1"));
-      battlePlayerCard(x,view.player2,view.player2.nickname||bt("p2"),true,avatar2,st("P2"));
+      // 05.10 (zgloszenie z live): gracz bez proby = null — wczesniej .nickname wywracalo rysowanie (pusta prawa strona, brak werdyktu)
+      battlePlayerCard(x,view.player1,(view.player1&&view.player1.nickname)||bt("p1"),false,avatar1,st("P1"));
+      battlePlayerCard(x,view.player2,(view.player2&&view.player2.nickname)||bt("p2"),true,avatar2,st("P2"));
       x.textAlign="center";x.fillStyle=code==="P1_WINS"?"#ffd08a":code==="P2_WINS"?"#ffae3c":
         code==="DRAW"?"#9fd3ff":"#ff8a80";x.font=battleCanvasFont("display",800,44);
       x.save();x.shadowColor="rgba(0,0,0,.8)";x.shadowBlur=12;x.fillText(battleLabelVerdict(code,view),600,590);x.restore();
@@ -4120,6 +4128,7 @@ function buildBattleCard(){
     x.textAlign="right";x.fillText(String(battleState.modeType||battleState.mode||"link").toUpperCase()+" · "+
       (battleState.engineVersion||serverBattle.engineVersion||"")+" / "+(battleState.scoringVersion||serverBattle.scoringVersion||""),w-60,635);
   })();
+  render.then(()=>{cv.dataset.rendered="1";},error=>{cv.dataset.rendered="error";console.error("battle card",error);});
   window.__bwBattleCardReady=render;
   return render;
 }

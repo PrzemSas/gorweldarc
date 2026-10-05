@@ -234,3 +234,5 @@ html[lang="ru"] #cardModal.bw-battle-ru,html[lang="ru"] #cardModal.bw-battle-ru 
 #battleModal .bw-privacy[hidden]{display:none}
 #battleModal .bw-privacy a{color:#ffd08a;text-underline-offset:3px}
 #battleModal .bw-privacy a:focus-visible{outline:2px solid #ffd08a;outline-offset:2px}
+/* 05.10 dolaczanie: tylko nick, profil odtworzenia ustala gracz 1 */
+#battleModal .bw-join-fields label:has(#battleInputProfile){display:none}
