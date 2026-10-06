@@ -10,7 +10,7 @@
 <head>
 <meta charset="UTF-8">
 <script>/* ARC mieszka na gorweldarc.com — stare gorweld.com/arc przekierowuje (z ?challenge itd.) */(function(){var h=location.hostname.replace(/^www\./,"");if(h==="gorweld.com"||h==="gorweld.fun")location.replace("https://gorweldarc.com/"+location.search+location.hash);})();</script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,14 +37,15 @@
      krawedzi nad stanowiskiem i ukryty arkusz ustawien, do ktorego skrypt zdazyl juz przeniesc grupy. */
   :root { --cyan:#1fd6e3; --amber:#ffae3c; --panel:rgba(10,14,18,.78); --line:rgba(42,52,60,.9); --mob:0; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { width:100%; height:100%; overflow:hidden; background:#050709; font-family:"Segoe UI",system-ui,sans-serif; touch-action:none; color:#cfd8de; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#050709; font-family:"Segoe UI",system-ui,sans-serif; touch-action:manipulation; color:#cfd8de; }
   #pagebg { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; filter:brightness(.58) contrast(1.14) saturate(1.2); pointer-events:none;
     animation:kenburns 28s ease-in-out infinite alternate; transform-origin:50% 60%; }
   @keyframes kenburns { from{transform:scale(1)} to{transform:scale(1.045)} }
+  @media (prefers-reduced-motion: reduce) { #pagebg { animation:none; } }
   #vignette { position:fixed; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0,0,0,.55) 100%); }
   #grain { position:fixed; inset:0; z-index:3; pointer-events:none; opacity:.04; mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-  #stage { position:fixed; inset:0; display:block; cursor:none; z-index:1; transition:filter .12s, transform .12s; }
+  #stage { position:fixed; inset:0; display:block; cursor:none; z-index:1; transition:filter .12s, transform .12s; touch-action:none; }
   /* stanowisko jest poziome (stałe 1280×720) — na telefonie w pionie zostaje wąski pasek */
 
   .panel { position:fixed; z-index:6; background:var(--panel); border:1px solid var(--line); border-radius:14px;
@@ -309,24 +310,34 @@
 </style>
 <link rel="stylesheet" href="battle-ui.css?v=20261004d">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
-  <div id="splash"><div class="splash-logo"><b>GORWELD</b>® ARC</div><div class="splash-sub">DEMO · LOADING</div><div class="splash-bar"><div></div></div></div>
-  <video id="pagebg" autoplay muted loop playsinline preload="auto" src="page-bg.mp4"></video>
+  <div id="splash"><div class="splash-logo"><b>GORWELD</b>® ARC</div><div class="splash-sub">LOADING</div><div class="splash-bar"><div></div></div></div>
+  <noscript><div style="position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;padding:24px;background:#050709;color:#cfd8de;font:15px/1.5 system-ui,sans-serif;text-align:center">GORWELD® ARC — symulator spawania działa w przeglądarce i wymaga włączonego JavaScriptu.<br>The welding simulator runs in your browser and needs JavaScript enabled.</div></noscript>
+  <video id="pagebg" autoplay muted loop playsinline preload="none" poster="arc-live.jpg" aria-hidden="true"></video>
+  <script>
+  /* film (1,9 MB) tylko na komputerze z mysza; telefon, reduced-motion i oszczedzanie danych = sam poster */
+  (()=>{const video=document.getElementById("pagebg"),motion=matchMedia("(prefers-reduced-motion: reduce)"),fine=matchMedia("(pointer: fine)");
+    const saveData=!!(navigator.connection&&navigator.connection.saveData);
+    const sync=()=>{if(motion.matches||!fine.matches||saveData){if(video.hasAttribute("src")){video.pause();video.removeAttribute("src");video.load();}}
+      else if(!video.hasAttribute("src")){video.src="page-bg.mp4";video.load();video.play().catch(()=>{});}};
+    sync();for(const q of [motion,fine]){if(q.addEventListener)q.addEventListener("change",sync);else q.addListener(sync);}
+  })();
+  </script>
   <div id="vignette"></div>
   <div id="grain"></div>
   <canvas id="stage"></canvas>
   <div id="flash"></div>
   <div id="eyeburn"></div>
   <div id="toast"></div>
-  <div id="watermark">GORWELD® · DEMO</div>
+  <div id="watermark">GORWELD® · ARC</div>
   <div class="mob-hud" id="mobHud"></div>
   <div class="setup-backdrop" id="setupBackdrop"></div>
   <div class="panel setup-sheet" id="setupSheet"></div>
 
   <div class="panel top">
-    <div class="brand"><img src="/favicon.png" alt="GORWELD" style="height:30px;width:30px;border-radius:50%"><span><b>GORWELD</b>® ARC</span><span class="demo-badge">DEMO</span></div>
+    <div class="brand"><img src="/icon-96.png" alt="GORWELD" width="30" height="30" style="height:30px;width:30px;border-radius:50%"><span><b>GORWELD</b>® ARC</span><span class="demo-badge">FREE</span></div>
     <span id="battleBadge" hidden>BATTLE WELD</span>
     <div class="wal" id="wal" hidden></div>
     <button id="setupBtn" class="mob-only on" type="button" title="Settings">⚙️</button>
@@ -376,8 +387,8 @@
         <button class="amp" data-a="1.3">—</button>
       </span>
       <span id="ampMan" class="ampwrap" style="display:none">
-        <input type="range" id="ampRange" min="5" max="500" step="1" value="100">
-        <input type="number" id="ampNum" min="5" max="500" step="1" value="100">
+        <input type="range" id="ampRange" min="5" max="500" step="1" value="100" aria-label="Current (A)">
+        <input type="number" id="ampNum" min="5" max="500" step="1" value="100" aria-label="Current (A)">
         <span id="ampWps" class="ampwps"></span>
       </span>
     </div>
@@ -584,7 +595,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js"></script>
+<script src="sim.js?v=3.5.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -2135,7 +2146,7 @@ function buildCard(){
   x.strokeStyle="#1fd6e3"; x.lineWidth=2; x.strokeRect(12,12,Wc-24,Hc-24);
   x.strokeStyle="rgba(255,174,60,.35)"; x.lineWidth=1; x.strokeRect(18,18,Wc-36,Hc-36);
   x.fillStyle="#1fd6e3"; x.font="800 24px 'Segoe UI'"; x.fillText("GORWELD® ARC WELDER", 32, 54);
-  x.fillStyle="#5d6973"; x.font="600 12px 'Segoe UI'"; x.fillText("DEMO · "+new Date().toISOString().slice(0,10), 32, 74);
+  x.fillStyle="#5d6973"; x.font="600 12px 'Segoe UI'"; x.fillText("GORWELD ARC · "+new Date().toISOString().slice(0,10), 32, 74);
   const col=r.score>=78?"#5fe08a":r.score>=62?"#ffd23f":"#ff9a3c";
   x.save(); x.shadowColor=col; x.shadowBlur=24; x.fillStyle=col; x.font="900 120px 'Segoe UI'"; x.textAlign="right";
   x.fillText(r.letter, Wc-36, 195); x.shadowBlur=0; x.font="800 28px 'Segoe UI'"; x.fillText(r.score+"%", Wc-36, 232); x.restore();
@@ -3295,11 +3306,11 @@ function battleServerCredentialKey(battleId){ return "gorweld_bw_"+battleId; }
 function battleServerConsentKey(battleId){ return "gorweld_bw_consent_"+battleId; }
 function battleServerRememberConsent(battleId){ try{localStorage.setItem(battleServerConsentKey(battleId),"1");}catch(e){} }
 function battleServerConsentRemembered(battleId){ try{return localStorage.getItem(battleServerConsentKey(battleId))==="1";}catch(e){return false;} }
-function battleServerSaveCredentials(value){ try{localStorage.setItem(battleServerCredentialKey(value.battleId),JSON.stringify({
+function battleServerSaveCredentials(value){ try{sessionStorage.setItem(battleServerCredentialKey(value.battleId),JSON.stringify({
   battleId:value.battleId,playerSessionId:value.playerSessionId,playerSecret:value.playerSecret,slot:value.slot}));return true;
 }catch(e){return false;} }
 function battleServerLoadCredentials(battleId){
-  try{const value=JSON.parse(localStorage.getItem(battleServerCredentialKey(battleId))||"null");
+  try{const value=JSON.parse(sessionStorage.getItem(battleServerCredentialKey(battleId))||"null");
     return value&&value.battleId===battleId&&value.playerSessionId&&value.playerSecret&&["P1","P2"].includes(value.slot)?value:null;
   }catch(e){return null;}
 }

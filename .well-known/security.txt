@@ -1,0 +1,4 @@
+Contact: mailto:gorwelddumpster@gmail.com
+Preferred-Languages: pl, en
+Canonical: https://gorweldarc.com/.well-known/security.txt
+Expires: 2027-10-06T00:00:00.000Z
