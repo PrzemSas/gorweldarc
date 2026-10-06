@@ -595,7 +595,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.5.0"></script>
+<script src="sim.js?v=3.5.0-1"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -2702,7 +2702,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Amperaż zadania nie zgadza się z zaleceniem ARC.",taskMismatch:"Wczytane zadanie różni się od zadania w linku.",
     engineMismatch:"Inna wersja silnika ARC. Tego pojedynku nie można porównać.",scoreMismatch:"Inna wersja oceny ARC. Tego pojedynku nie można porównać.",
     modeConflict:"Battle nie może działać równocześnie ze starym trybem challenge.",taskReady:"Zadanie przypięte. Uderz w blachę, aby rozpocząć próbę.",
-    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"NIEUKOŃCZONE",
+    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"za mało spoiny",root:"brak przetopu grani",ends:"niedospawane końce",heatInput:"za duży wkład ciepła",overflow:"spoina poza rowkiem",porosity:"porowatość",offAxis:"zjazd z osi",amps:"zły prąd",arc:"niestabilny łuk",angle:"zły kąt elektrody",filler:"rytm spoiwa",score:"ocena poniżej 50"},incomplete:"NIEUKOŃCZONE",
     beat:"BEAT MY WELD",share:"UDOSTĘPNIJ WYNIK",copyLink:"KOPIUJ LINK",copied:"LINK SKOPIOWANY",
     wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",noResult:"BRAK WYNIKU",
     incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -2717,7 +2717,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Task amperage does not match the ARC recommendation.",taskMismatch:"Loaded task differs from the linked task.",
     engineMismatch:"ARC engine version differs. These attempts cannot be compared.",scoreMismatch:"ARC scoring version differs. These attempts cannot be compared.",
     modeConflict:"Battle cannot run together with the legacy challenge mode.",taskReady:"Task pinned. Strike the plate to begin your attempt.",
-    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"INCOMPLETE",
+    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"incomplete bead",root:"root not fused",ends:"unwelded ends",heatInput:"heat input over WPS",overflow:"weld off the joint",porosity:"porosity",offAxis:"off the joint line",amps:"wrong current",arc:"unstable arc",angle:"wrong electrode angle",filler:"filler rhythm",score:"score below 50"},incomplete:"INCOMPLETE",
     beat:"BEAT MY WELD",share:"SHARE RESULT",copyLink:"COPY BATTLE LINK",copied:"LINK COPIED",
     wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",noResult:"NO RESULT",
     incomparable:"INCOMPARABLE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -2732,7 +2732,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Ток задания не совпадает с рекомендацией ARC.",taskMismatch:"Загруженное задание отличается от задания в ссылке.",
     engineMismatch:"Версия движка ARC отличается. Результаты нельзя сравнить.",scoreMismatch:"Версия оценки ARC отличается. Результаты нельзя сравнить.",
     modeConflict:"Battle нельзя запускать одновременно со старым режимом challenge.",taskReady:"Задание закреплено. Коснитесь пластины, чтобы начать попытку.",
-    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",incomplete:"НЕ ЗАВЕРШЕНО",
+    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"неполный шов",root:"непровар корня",ends:"непроваренные концы",heatInput:"превышено тепловложение",overflow:"шов вне разделки",porosity:"пористость",offAxis:"уход с оси",amps:"неверный ток",arc:"нестабильная дуга",angle:"неверный угол электрода",filler:"ритм присадки",score:"оценка ниже 50"},incomplete:"НЕ ЗАВЕРШЕНО",
     beat:"BEAT MY WELD",share:"ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ",copyLink:"КОПИРОВАТЬ ССЫЛКУ",copied:"ССЫЛКА СКОПИРОВАНА",
     wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",noResult:"НЕТ РЕЗУЛЬТАТА",
     incomparable:"НЕСРАВНИМЫ",unsupportedReason:"TASK_UNSUPPORTED",
@@ -3595,6 +3595,7 @@ function battleServerPublicAttempt(attempt,player){
   if(!attempt) return null;
   return {nickname:player&&player.nickname||"",score:attempt.score,grade:attempt.letter,
     inspectionRejected:!!attempt.inspectionRejected,taskCompleted:!!attempt.taskCompleted,
+    rejectReasons:Array.isArray(attempt.rejectReasons)?attempt.rejectReasons.filter(code=>typeof code==="string").slice(0,12):[],
     qualified:!!attempt.qualified,battlePoints:attempt.bp,attemptNumber:attempt.attemptNumber,
     attemptsStarted:player&&player.attemptsCount||attempt.attemptNumber,serverTime:attempt.serverTime};
 }
@@ -3889,8 +3890,13 @@ function battleAttemptStart(){
   const summary=document.getElementById("battleReportSummary"),share=document.getElementById("rBattleShare");
   summary.hidden=true; share.hidden=true;
 }
+// Główna przyczyna odrzutu z serwera (pierwsza z listy sim.js); stare wyniki i tryb link jej nie mają.
+function battleRejectReason(result){
+  const code=Array.isArray(result&&result.rejectReasons)?result.rejectReasons[0]:null,why=bt("rejectWhy");
+  return code&&why&&typeof why==="object"&&typeof why[code]==="string"?why[code]:"";
+}
 function battleStatus(result){
-  if(result.inspectionRejected) return bt("reject");
+  if(result.inspectionRejected){const why=battleRejectReason(result);return bt("reject")+(why?" · "+why:"");}
   if(!result.taskCompleted) return bt("incomplete");
   return bt("accepted");
 }
@@ -4071,7 +4077,10 @@ function battlePlayerCard(x,player,name,center,avatar,state){
   x.fillStyle=color;x.font=battleCanvasFont("display",800,118);x.fillText(player.grade||"—",px,452);
   x.shadowBlur=0;
   const gw=x.measureText(player.grade||"—").width,sx=px+dir*(gw+22);
-  x.fillStyle=color;x.font=battleCanvasFont("mono",600,20);x.fillText(battleStatus(player),sx,384);
+  const status=battleStatus(player),statusMax=Math.max(160,dir>0?505-sx:sx-695);let statusSize=20;
+  x.font=battleCanvasFont("mono",600,statusSize);
+  while(statusSize>13&&x.measureText(status).width>statusMax){statusSize--;x.font=battleCanvasFont("mono",600,statusSize);}
+  x.fillStyle=color;x.fillText(status,sx,384);
   x.fillStyle="#f3f5f6";x.font=battleCanvasFont("display",800,52);x.fillText(Battle.getBattlePoints(player.score)+" BP",sx,448);
   x.shadowColor="rgba(0,0,0,.9)";x.shadowBlur=8;
   x.fillStyle="#a5adb1";x.font=battleCanvasFont("mono",500,17);x.fillText(bt("attempt")+" "+player.attemptNumber+" / "+player.attemptsStarted,px,500);

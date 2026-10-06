@@ -425,6 +425,21 @@
       (angPen >= 10) || (offPen >= OFF_MAJOR) || (filPen >= FIL_MAJOR) ||
       hiOver;                       // poza zakresem kwalifikacji WPS — ocena lica tego nie ratuje
 
+    // przyczyny odrzutu dla karty Battle — TE SAME warunki co Dmajor, w kolejności ważności; nie wpływają na wynik
+    const rejectReasons = [];
+    if (coverage < 0.6) rejectReasons.push("coverage");
+    if (passPlanArr[0] === "root" && rootCov < 0.8) rejectReasons.push("root");
+    if (endGap > 1) rejectReasons.push("ends");
+    if (hiOver) rejectReasons.push("heatInput");
+    if (overflow > 0.3) rejectReasons.push("overflow");
+    if (porosity > 3) rejectReasons.push("porosity");
+    if (offPen >= OFF_MAJOR) rejectReasons.push("offAxis");
+    if (ampF.sev === "major") rejectReasons.push("amps");
+    if ((arcPen >= 12) || (arcFails > 2)) rejectReasons.push("arc");
+    if (angPen >= 10) rejectReasons.push("angle");
+    if (filPen >= FIL_MAJOR) rejectReasons.push("filler");
+    if (!Dmajor && score < 50) rejectReasons.push("score");
+
     const letter = score >= 90 ? "A" : score >= 78 ? "B" : score >= 62 ? "C" : score >= 45 ? "D" : "F";
     const iso = (Dmajor || score < 50) ? "REJECT" : score >= 88 ? "B" : score >= 72 ? "C" : "D";
 
@@ -441,7 +456,7 @@
              angPen: +angPen.toFixed(2), offPen: +offPen.toFixed(2), filPen: +filPen.toFixed(2), filDabs: filCount, waDeg: +waDeg.toFixed(2), taDeg: +taDeg.toFixed(2),
              angW: +angW.toFixed(2), angT: +angT.toFixed(2), taIdeal: TA_IDEAL[proc] != null ? TA_IDEAL[proc] : 0,
              volts: arcTime ? +(arcVSum / arcTime).toFixed(2) : recommendedVolts(proc, thick),
-             hi: hiAct, hiWps, hiMax, hiOver, cvn };
+             hi: hiAct, hiWps, hiMax, hiOver, cvn, rejectReasons: iso === "REJECT" ? rejectReasons : [] };
   }
 
   // 3.0.0 — KĄT ELEKTRODY z klawiatury: A/D kąt roboczy, W/S pochylenia (ciągnięcie ↔ pchanie).
