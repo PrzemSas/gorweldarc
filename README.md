@@ -1,6 +1,6 @@
 # GORWELD® ARC
 
-Free browser welding trainer — MMA 111 · MIG/MAG 135 · TIG 141 · ISO 5817.
+Free browser welding trainer — MMA 111 · MIG/MAG 135 · TIG 141 · visual inspection modelled on ISO 5817. Teaching aid, not a qualification.
 
 https://gorweldarc.com
 
