@@ -112,10 +112,18 @@
   // CVN NIE POKRYWA złącza produkcyjnego i złącze leci NIEZALEŻNIE od tego, jak ładne jest lico.
   // Dlatego to WARUNEK DOPUSZCZENIA (wada major → REJECT), a NIE kolejny człon kary: punktów za
   // to nie odejmujemy, bo to nie jest wada wykonania — spoina może być bez zarzutu i i tak odpaść.
-  // Dół zostaje płynny i nietknięty: za mały wkład ciepła gra już karze brakiem wtopu i pokryciem.
+  // Dół: za mały wkład ciepła z ZA SZYBKIEGO przejazdu łapie FAST_TOL niżej (3.6.0, flaga `uf`) — pokrycie tego nie widziało.
   const WELD_EFF = { MMA: 0.8, MIG: 0.8, TIG: 0.6 };   // sprawność cieplna procesu — 1:1 z index.html
   const HI_MAX_R = 1.25;        // górna granica zakresu z WPS = te same 25%, które gra pokazuje na pasku HI
-  const CVN_BEADS = { steel: 1 };   // stal węglowa. Austenityczna nierdzewka i alu — bez próby udarności, bez limitu
+  const CVN_BEADS = { steel: 1 };
+  // ── ZA SZYBKI PRZEJAZD (3.6.0) — `coverage` mierzy, GDZIE przeszła ręka, nie ILE metalu tam leży,
+  // więc przejechanie próbki 2–5× za szybko dawało C / ISO D „zaliczone". Prawdziwy ścieg położony
+  // w takim tempie to niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut,
+  // nie kara. Próg na ŚREDNIM tempie ściegu (najgorszy ścieg w próbce), zwężany jak `spdAcc`
+  // tolerancją materiału: stal 1,5×, nierdzewka 1,41×, alu 1,35× tempa z WPS. Do progu nic się
+  // nie zmienia — runda w tempie liczy się bit-w-bit jak 3.5.0. Działa TYLKO w rundach z flagą `uf`
+  // (jak `cvn` w 3.4.0): stare nagrania nie mogą po fakcie wrócić jako REJECT za regułę, której nie było.
+  const FAST_TOL = 0.5;   // stal węglowa. Austenityczna nierdzewka i alu — bez próby udarności, bez limitu
   function heatInputKJmm(volts, amps, travelMmS, eff) { if (!travelMmS) return null;
     const travelMmMin = travelMmS * 60; return Math.round((volts * amps * 60) / (travelMmMin * 1000) * eff * 1000) / 1000; }
   function filPenNow(r){ return r < FIL_LO ? Math.min(25, (FIL_LO - r) * 40)
@@ -182,6 +190,7 @@
     // dawną ścieżką — bez limitu HI, bit-w-bit jak 3.3.0. Inaczej stare nagrania stali zaczęłyby
     // nagle wracać jako REJECT za regułę, której w chwili spawania nie było.
     const cvn = !!round.cvn && !!CVN_BEADS[bead];
+    const uf = !!round.uf;   // 3.6.0: „ta runda podlega progowi za szybkiego przejazdu" — starsze nagrania liczą się jak 3.5.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -407,6 +416,8 @@
     const hiAct = (uAct != null && ampsUse != null) ? heatInputKJmm(uAct, ampsUse, cur.avgV / PX_PER_MM, effP) : null;
     const hiMax = hiWps != null ? Math.round(hiWps * HI_MAX_R * 1000) / 1000 : null;
     const hiOver = !!(cvn && hiMax != null && hiAct != null && hiAct > hiMax);
+    const fastR = Math.max.apply(null, all.map(m => m.avgV)) / targetPx, fastMax = 1 + FAST_TOL * MATERIAL[bead].tol;
+    const tooFast = uf && fastR > fastMax;
 
     let score = coverage * 50 + spdAcc * 20 + evenness * 15 + (1 - overflow) * 15
               - porosity * 5 - Math.min(SPATTER_PEN_CAP, proc === "TIG" ? spatter * 3 : spatter * 0.5)
@@ -423,7 +434,8 @@
       (ampF.sev === "major") ||
       (arcPen >= 12) || (arcFails > 2) ||
       (angPen >= 10) || (offPen >= OFF_MAJOR) || (filPen >= FIL_MAJOR) ||
-      hiOver;                       // poza zakresem kwalifikacji WPS — ocena lica tego nie ratuje
+      hiOver ||                     // poza zakresem kwalifikacji WPS — ocena lica tego nie ratuje
+      tooFast;                      // niewypełniony rowek — tak samo
 
     // przyczyny odrzutu dla karty Battle — TE SAME warunki co Dmajor, w kolejności ważności; nie wpływają na wynik
     const rejectReasons = [];
@@ -431,6 +443,7 @@
     if (passPlanArr[0] === "root" && rootCov < 0.8) rejectReasons.push("root");
     if (endGap > 1) rejectReasons.push("ends");
     if (hiOver) rejectReasons.push("heatInput");
+    if (tooFast) rejectReasons.push("underfill");
     if (overflow > 0.3) rejectReasons.push("overflow");
     if (porosity > 3) rejectReasons.push("porosity");
     if (offPen >= OFF_MAJOR) rejectReasons.push("offAxis");
@@ -456,9 +469,10 @@
              angPen: +angPen.toFixed(2), offPen: +offPen.toFixed(2), filPen: +filPen.toFixed(2), filDabs: filCount, waDeg: +waDeg.toFixed(2), taDeg: +taDeg.toFixed(2),
              angW: +angW.toFixed(2), angT: +angT.toFixed(2), taIdeal: TA_IDEAL[proc] != null ? TA_IDEAL[proc] : 0,
              volts: arcTime ? +(arcVSum / arcTime).toFixed(2) : recommendedVolts(proc, thick),
-             hi: hiAct, hiWps, hiMax, hiOver, cvn, rejectReasons: iso === "REJECT" ? rejectReasons : [] };
+             hi: hiAct, hiWps, hiMax, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [] };
   }
 
+  // 3.6.0 — ZA SZYBKI PRZEJAZD = REJECT „underfill" (patrz FAST_TOL). SCORING_VERSION 1.1.0.
   // 3.0.0 — KĄT ELEKTRODY z klawiatury: A/D kąt roboczy, W/S pochylenia (ciągnięcie ↔ pchanie).
   //         Mysz nie ma już wolnej osi — obie zajmuje pozycja, oba przyciski długość łuku — więc
   //         druga ręka idzie na klawiaturę. To jest zresztą prawdziwa postawa: elektroda w jednej
@@ -496,7 +510,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, VERSION: "3.5.0", SCORING_VERSION: "1.0.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, VERSION: "3.6.0", SCORING_VERSION: "1.1.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
