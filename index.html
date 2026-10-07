@@ -230,6 +230,8 @@
   .splash-bar > div { height:100%; width:40%; background:linear-gradient(90deg,var(--cyan),var(--amber)); animation:splashload 1.2s ease-in-out infinite; }
   @keyframes splashload { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
   .mob-only { display:none; }
+  body:not(.is-mobile) #tliftWrap { display:none; }
+  @media (any-pointer:coarse){ body:not(.is-mobile) #tliftWrap { display:flex; } }
   #battleBadge { padding:5px 9px; border:1px solid rgba(255,174,60,.45); border-radius:7px; color:#ffae3c; font-size:10px; font-weight:800; letter-spacing:1px; white-space:nowrap; }
   .battle-mode-tag { display:inline-block; padding:5px 8px; border:1px solid #ffae3c66; color:#ffcf78; background:#171108; font-size:10px; font-weight:800; letter-spacing:.45px; line-height:1.3; }
   .battle-mode-tag[hidden],.battle-fields[hidden] { display:none; }
@@ -396,6 +398,10 @@
       <button class="bead on" data-bead="steel" data-i18n="mat_steel">Steel</button>
       <button class="bead" data-bead="ss" data-i18n="mat_ss">Stainless</button>
       <button class="bead" data-bead="alu" data-i18n="mat_alu">Alu</button>
+    </div>
+    <div class="group" id="tliftWrap"><span class="lbl" data-i18n="tlift">☝ Arc above finger</span>
+      <button class="tlift on" data-v="1" data-i18n="tlift_on">ON</button>
+      <button class="tlift" data-v="0" data-i18n="tlift_off">OFF</button>
     </div>
     <button id="helmet" class="on" data-i18n="btn_helmet">🥽 HELMET</button>
     <button id="snd">🔊 ARC</button>
@@ -677,7 +683,7 @@ let lang=(()=>{ const n=((navigator.languages&&navigator.languages[0])||navigato
   return n==="pl"?"pl":(["ru","uk","be"].includes(n)?"ru":"en"); })();
 try{ const l=localStorage.getItem('gorweld_lang'); if(l) lang=l; }catch(e){}
 const I18N={
- pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE",
+ pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
   jt_butt:"Doczołowe V", jt_fillet:"Pachwinowe T", jt_pipe:"Rura", mat_steel:"Stal", mat_ss:"Nierdz.", mat_alu:"Alu",
   btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ ZETRZYJ",
   grav:"grawitacja<br>jeziorka", vset:"v zadane:", forA:"za A ≈",
@@ -714,7 +720,7 @@ const I18N={
   rank_helper:"Pomocnik", rank_tacker:"Sczepiacz", rank_welder:"Spawacz", rank_cert:"Spawacz doświadczony", rank_coded:"Spawacz ekspert", rank_master:"Mistrz Spawalnictwa",
   cardtext:"Wyspawałem łagę %1 — ocena %2, ≈ ISO 5817 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#welding #spawanie #GorWeld",
   cardtext_cut:"Przeciąłem %1 — ocena %2, ≈ ISO 9013 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#ciecie #spawanie #GorWeld" },
- en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL",
+ en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
   jt_butt:"Butt V", jt_fillet:"Fillet T", jt_pipe:"Pipe", mat_steel:"Steel", mat_ss:"Stainless", mat_alu:"Alu",
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"set v:", forA:"for A ≈",
@@ -751,7 +757,7 @@ const I18N={
   rank_helper:"Helper", rank_tacker:"Tacker", rank_welder:"Welder", rank_cert:"Skilled welder", rank_coded:"Expert welder", rank_master:"Welding Master",
   cardtext:"Welded a %1 pass — grade %2, ≈ ISO 5817 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#welding #GorWeld",
   cardtext_cut:"Cut %1 — grade %2, ≈ ISO 9013 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#cutting #welding #GorWeld" },
- ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ",
+ ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ", tlift:"☝ Дуга над пальцем", tlift_on:"ВКЛ", tlift_off:"ВЫКЛ", t_tlift_hint:"☝ Дуга горит над пальцем, чтобы был виден зазор — отключается в ⚙️", t_tlift_low:"☝ Конец шва слишком низко для дуги над пальцем — поверни телефон вертикально или отключи её в ⚙️",
   jt_butt:"Стыковое V", jt_fillet:"Тавровое T", jt_pipe:"Труба", mat_steel:"Сталь", mat_ss:"Нерж.", mat_alu:"Алюм.",
   btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"задан. v:", forA:"за A ≈",
@@ -1290,9 +1296,15 @@ function moltenColor(age){ const c=BEADS[bead];
 
 // ── Pointer / laying ──────────────────────────────────────────────
 // piksele CSS → logiczne pole 1280×720 (stage jest wyskalowany letterboxem)
+// Dotyk: łuk pali się TOUCH_LIFT px (CSS) NAD palcem — inaczej opuszek zasłania szczelinę, w którą celujesz.
+// Przesunięty punkt idzie prosto do nagrania, więc sim.js/serwer liczą dokładnie to, co widać na ekranie.
+const TOUCH_LIFT=56;
+let touchLift=true, tliftLow=false;                       // tliftLow: w tym układzie dolny koniec szwu jest za nisko na palec
+try{ if(localStorage.getItem("gorweld_tlift")==="0") touchLift=false; }catch(e){}
+function liftOf(e){ return touchLift&&(e.pointerType==="touch"||!!e.touches)?TOUCH_LIFT:0; }
 function pos(e){ const t=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e;
-  const r=stage.getBoundingClientRect();
-  return { x:(t.clientX-r.left)*(W/Math.max(1,r.width)), y:(t.clientY-r.top)*(H/Math.max(1,r.height)) }; }
+  const r=stage.getBoundingClientRect(), lift=liftOf(e);
+  return { x:(t.clientX-r.left)*(W/Math.max(1,r.width)), y:(t.clientY-lift-r.top)*(H/Math.max(1,r.height)) }; }
 // Gra MUSI liczyć na dokładnie tych liczbach, które trafiają do nagrania (recEv zaokrągla do 0,01 px).
 // Bez tego weryfikator odtwarzał rundę z innych danych wejściowych niż ekran — stąd dawne
 // „218/221 punktów identycznych, reszta 1e-13". Kwantyzujemy raz, na wejściu, i po sprawie.
@@ -1307,6 +1319,7 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
   if(document.body.classList.contains("setup-open")){ document.body.classList.remove("setup-open"); return; }
   if(isCut())return cutStart(e); if(modalOpen())return;
   if(!battleStartAllowed()){ e.preventDefault(); return; }
+  if(liftOf(e)) tliftHint();
   const p=snap(pos(e)); cursor.x=p.x; cursor.y=p.y; cursor.seen=true;
   if(!onPlate(p.x,p.y)){ showToast(t("t_strikeoff"),"#ff9a3c"); e.preventDefault(); return; } // can't strike off the plate
   if(isChallenge()&&!chalWidthOK()){ showToast(t("t_toosmall"),"#ff5a4a"); e.preventDefault(); return; } // równe warunki albo wcale
@@ -1501,6 +1514,9 @@ addEventListener("keyup",e=>angKey(e,false));
 addEventListener("blur",()=>{ keyMask=0; filPend=false; });                   // alt-tab z wciśniętym klawiszem nie zostawia kąta w ruchu
 stage.addEventListener("contextmenu",e=>e.preventDefault());   // PPM to odciąganie elektrody, nie menu
 stage.addEventListener("pointerdown",start); stage.addEventListener("pointermove",move);
+// Dolny koniec szwu (PF, rura) leży przy krawędzi planszy, więc palec — TOUCH_LIFT niżej — wypada już poza nią.
+// Palec na pustym tle też zajarza; przyciski i panele dalej łapie uiHit() w start().
+addEventListener("pointerdown",e=>{ if(e.pointerType==="touch"&&(e.target===document.body||e.target===document.documentElement)&&!modalOpen()) start(e); });
 addEventListener("pointerup",end); addEventListener("pointercancel",end);
 // krzyżyk MUSI iść przez pos() — pole gry jest wyskalowanym letterboxem,
 // więc surowe clientX/clientY to już nie są współrzędne logiczne (stąd przesunięty kursor)
@@ -2403,8 +2419,20 @@ document.getElementById("cardTxt").onclick=()=>{ const value=cardText(); if(batt
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(()=>showToast(t("t_copied"),"#5fe08a"),()=>showToast(t("t_clipFail"),"#ff9a3c"));
   else showToast(t("t_clipFail"),"#ff9a3c"); };
 let toastTmr=0;
-function showToast(msg,c){ toast.textContent=msg; toast.style.color=c||"#fff"; toast.classList.add("show");
-  clearTimeout(toastTmr); toastTmr=setTimeout(()=>toast.classList.remove("show"),1400); }
+function showToast(msg,c,ms){ toast.textContent=msg; toast.style.color=c||"#fff"; toast.classList.add("show");
+  clearTimeout(toastTmr); toastTmr=setTimeout(()=>toast.classList.remove("show"),ms||1400); }
+// ☝ Łuk nad palcem: raz na zawsze „co to jest", a gdy szew sięga pod dolny pasek — raz na układ, co z tym zrobić
+let tliftLowShown="";
+function tliftHint(){
+  let seen=false; try{ seen=localStorage.getItem("gorweld_tlift_hint")==="1"; }catch(e){}
+  if(!seen){ try{ localStorage.setItem("gorweld_tlift_hint","1"); }catch(e){} showToast(t("t_tlift_hint"),"#ffae3c",4000); return; }
+  tliftLowHint(); }
+function tliftLowHint(){ const key=posKey+"|"+innerWidth+"x"+innerHeight;
+  if(tliftLow&&!welding&&tliftLowShown!==key){ tliftLowShown=key; showToast(t("t_tlift_low"),"#ffae3c",4500); } }
+function syncTlift(){ document.querySelectorAll(".tlift").forEach(b=>b.classList.toggle("on",(b.dataset.v==="1")===touchLift)); }
+document.querySelectorAll(".tlift").forEach(b=>b.onclick=()=>{ touchLift=b.dataset.v==="1";
+  try{ localStorage.setItem("gorweld_tlift",touchLift?"1":"0"); }catch(e){} syncTlift(); fitStage(); });
+syncTlift();
 
 // ── Tutorial ──────────────────────────────────────────────────────
 function fillTut(){ const el=document.getElementById("tutSteps"); if(!el) return; el.innerHTML="";
@@ -2692,11 +2720,13 @@ function fitStage(){
     let t0=tb?Math.max(0,tb.getBoundingClientRect().bottom):0;
     const th=document.querySelector(".toolhud");
     if(bw<bh*2&&th&&getComputedStyle(th).display!=="none"&&th.getBoundingClientRect().height>0) t0=Math.max(t0,th.getBoundingClientRect().bottom);
-    const br=bb?bb.getBoundingClientRect():null, b0=(br&&br.height)?Math.min(innerHeight,br.top):innerHeight;
+    const br=bb?bb.getBoundingClientRect():null, bEdge=(br&&br.height)?Math.min(innerHeight,br.top):innerHeight, b0=bEdge-(touchLift?TOUCH_LIFT:0); // miejsce na palec pod dolnym końcem szwu
     const availH=Math.max(80,b0-t0);
     s=Math.max(base, Math.min(innerWidth/(x1-x0), availH/(y1-y0)));
     left=innerWidth/2-(x0+x1)/2*s; top=(t0+b0)/2-(y0+y1)/2*s;
-  }
+    tliftLow=touchLift&&top+(y1-py)*s+TOUCH_LIFT>bEdge;     // palec pod końcem szwu wypadłby na dolny pasek
+    if(tliftLow) tliftLowHint();                            // od razu — palec na pasku i tak nie dojdzie do start()
+  } else tliftLow=false;
   stage.style.inset="auto";
   stage.style.left=Math.round(left)+"px"; stage.style.top=Math.round(top)+"px";
   stage.style.width=Math.max(1,Math.round(W*s))+"px"; stage.style.height=Math.max(1,Math.round(H*s))+"px";
