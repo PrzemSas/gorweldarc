@@ -299,15 +299,26 @@
     body.is-mobile .setup-sheet{ max-height:85vh; }
     .mob-hud{ top:44px; }
     .covbar{ top:68px; }
+    /* Telefon w poziomie: pasek akcji jako kolumna przy prawej krawędzi. Na dole zabierał ~64 px
+       z 390 — dolny koniec szwu PF/rury lądował tuż nad nim, a palec (łuk nad palcem: 56 px niżej)
+       trafiał w 🎵 zamiast zajarzyć. W kolumnie pole gry ma całą wysokość; fitStage() bierze lewą
+       krawędź kolumny jako prawą granicę pola. Geometria pola/workCY() bez zmian. */
+    body.is-mobile{ --side:calc(64px + env(safe-area-inset-right)); }
+    body.is-mobile .bottom{
+      top:0; bottom:0; left:auto; right:0; flex-direction:column; flex-wrap:wrap; align-content:center; justify-content:center;
+      gap:4px; padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) 6px;
+      width:auto; border-radius:14px 0 0 14px; }
+    body.is-mobile .mob-actions{ flex:0 0 auto; width:52px; min-width:52px; max-width:52px; min-height:44px; padding:4px; font-size:18px; }
+    body.is-mobile .top{ right:var(--side); }
+    body.is-mobile .mob-hud, body.is-mobile .toolhud{ right:calc(var(--side) + 8px); }
+    body.is-mobile #toast{ max-width:calc(100vw - 2*var(--side) - 16px); }
   }
-  /* Bardzo niski viewport: pasek akcji zaczynal wchodzic na dolna krawedz blachy (zmierzone:
-     1 px przy 300 px wysokosci, 6 px przy 280 px). Szwu ANI geometrii pola nie ruszamy — `workCY()`
-     musi zostac na 0.66H, bo `sim.js` odtwarza runde wlasnie z tego zalozenia i kazda zmiana
-     rozjechalaby parytet gra<->weryfikator. Scinamy wiec sam pasek: przyciski zostaja 44 px
-     (minimum dotykowe), schodzi tylko padding. */
+  /* Bardzo niski viewport: kolumna akcji ciasna — przyciski zostaja 44 px (minimum dotykowe),
+     schodzi gap/padding; przy ~280 px kolumna sama zawija sie w druga (flex-wrap). Szwu ANI geometrii
+     pola nie ruszamy — `workCY()` musi zostac na 0.66H, bo `sim.js` odtwarza runde z tego zalozenia. */
   @media (max-height:360px) and (orientation:landscape){
-    body.is-mobile .bottom{ padding:4px 4px max(4px,env(safe-area-inset-bottom)); gap:3px; }
-    body.is-mobile .mob-actions{ min-height:44px; padding:4px 8px; font-size:17px; }
+    body.is-mobile .bottom{ gap:3px; padding-top:max(4px,env(safe-area-inset-top)); padding-bottom:max(4px,env(safe-area-inset-bottom)); }
+    body.is-mobile .mob-actions{ min-height:44px; padding:4px; font-size:17px; }
   }
 </style>
 <link rel="stylesheet" href="battle-ui.css?v=20261004d">
@@ -2733,10 +2744,14 @@ function fitStage(){
     let t0=tb?Math.max(0,tb.getBoundingClientRect().bottom):0;
     const th=document.querySelector(".toolhud");
     if(bw<bh*2&&th&&getComputedStyle(th).display!=="none"&&th.getBoundingClientRect().height>0) t0=Math.max(t0,th.getBoundingClientRect().bottom);
-    const br=bb?bb.getBoundingClientRect():null, bEdge=(br&&br.height)?Math.min(innerHeight,br.top):innerHeight, b0=bEdge-(touchLift?TOUCH_LIFT:0); // miejsce na palec pod dolnym końcem szwu
+    const br=bb?bb.getBoundingClientRect():null, side=!!(br&&br.height>br.width);   // poziomo: pasek akcji to kolumna z prawej
+    const bEdge=(br&&br.height&&!side)?Math.min(innerHeight,br.top):innerHeight, b0=bEdge-(touchLift?TOUCH_LIFT:0); // miejsce na palec pod dolnym końcem szwu
+    const rEdge=side?Math.max(120,br.left):innerWidth;
     const availH=Math.max(80,b0-t0);
-    s=Math.max(base, Math.min(innerWidth/(x1-x0), availH/(y1-y0)));
-    left=innerWidth/2-(x0+x1)/2*s; top=(t0+b0)/2-(y0+y1)/2*s;
+    // Poniżej `base` (całe pole na ekranie) schodzimy tylko tyle, ile trzeba, żeby szew + miejsce na palec
+    // się zmieściły (PF/rura w poziomie) — mniejszy szew da się prowadzić, koniec szwu poza zasięgiem palca nie.
+    s=Math.max(base*0.7, Math.min(rEdge/(x1-x0), availH/(y1-y0)));
+    left=rEdge/2-(x0+x1)/2*s; top=(t0+b0)/2-(y0+y1)/2*s;
     tliftLow=touchLift&&top+(y1-py)*s+TOUCH_LIFT>bEdge;     // palec pod końcem szwu wypadłby na dolny pasek
     if(tliftLow) tliftLowHint();                            // od razu — palec na pasku i tak nie dojdzie do start()
   } else tliftLow=false;
