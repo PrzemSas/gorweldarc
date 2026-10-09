@@ -1095,7 +1095,8 @@ function drawFilletPlate(P,matTint){
   const dx=(B.x-A.x)/len, dy=(B.y-A.y)/len, nx=-dy, ny=dx, ph=plateHalf();
   const edge=Math.max(5,thick*PX_PER_MM*0.4);               // grubość blachy widoczna na krawędzi
   const webSide = posKey==="PA" ? 0 : P.flip ? 1 : (P.ang===90 ? 1 : -1); // +1 = strona normalnej (pod szwem / z lewej)
-  const sk=ph*0.30;                                          // skos stojącej blachy wzdłuż szwu = perspektywa
+  const trough = webSide===0;                                // PA: obie blachy pod 45° = korytko
+  const sk=ph*(trough?0.20:0.30);                            // skos stojącej blachy wzdłuż szwu = perspektywa
   const pt=(base,s,d,k)=>({x:base.x+nx*s*d+dx*k, y:base.y+ny*s*d+dy*k});
   const poly=(c,ps)=>{ c.beginPath(); c.moveTo(ps[0].x,ps[0].y); for(let i=1;i<ps.length;i++) c.lineTo(ps[i].x,ps[i].y); c.closePath(); };
   // prostokąt pasa blachy od d0 do d1 po stronie s (leżąca), albo równoległobok ze skosem (stojąca)
@@ -1105,7 +1106,7 @@ function drawFilletPlate(P,matTint){
     for(const [o,col] of stops) g.addColorStop(o,col); return g; };
   const sides = webSide ? [-webSide, webSide] : [-1,1];      // najpierw leżąca, stojąca na wierzch
   for(const s of sides){
-    const web=webSide===s, trough=webSide===0;
+    const web=webSide===s||trough;                          // korytko: obie ścianki jak stojąca blacha (skos → widać V na końcu)
     if(!web){                                               // leżąca: płyta + jej cięta krawędź (grubość) od frontu
       pctx.save(); pctx.shadowColor="rgba(0,0,0,.6)"; pctx.shadowBlur=20; pctx.shadowOffsetY=8;
       pctx.fillStyle=matTint; poly(pctx,band(s,0,ph,false)); pctx.fill(); pctx.restore();
@@ -1119,10 +1120,13 @@ function drawFilletPlate(P,matTint){
       const face=band(s,0,ph,true);
       pctx.save(); pctx.shadowColor="rgba(0,0,0,.55)"; pctx.shadowBlur=16; pctx.shadowOffsetY=6;
       pctx.fillStyle=matTint; poly(pctx,face); pctx.fill(); pctx.restore();
-      pctx.fillStyle=grad(s,[[0,"rgba(0,0,0,.40)"],[0.10,"rgba(0,0,0,.10)"],[0.55,"rgba(215,228,238,.14)"],[1,"rgba(215,228,238,.20)"]],true);
+      pctx.fillStyle = trough && s*ny>0                     // bliższa ścianka korytka odwrócona od światła
+        ? grad(s,[[0,"rgba(0,0,0,.78)"],[0.18,"rgba(0,0,0,.45)"],[0.6,"rgba(0,0,0,.28)"],[1,"rgba(0,0,0,.20)"]],true)
+        : trough ? grad(s,[[0,"rgba(0,0,0,.70)"],[0.16,"rgba(0,0,0,.30)"],[0.5,"rgba(215,228,238,.10)"],[1,"rgba(215,228,238,.22)"]],true)
+        : grad(s,[[0,"rgba(0,0,0,.40)"],[0.10,"rgba(0,0,0,.10)"],[0.55,"rgba(215,228,238,.14)"],[1,"rgba(215,228,238,.20)"]],true);
       poly(pctx,face); pctx.fill();
       // górna ścianka (grubość) i bok przy końcu szwu — to one mówią „ta blacha stoi"
-      const t0=pt(A,s,ph,sk), t1=pt(B,s,ph,sk), e=edge;
+      const t0=pt(A,s,ph,sk), t1=pt(B,s,ph,sk), e=trough?Math.min(edge,10):edge;
       const top=[t0,t1,{x:t1.x+dx*e*0.8+nx*s*e*0.6,y:t1.y+dy*e*0.8+ny*s*e*0.6},{x:t0.x+dx*e*0.8+nx*s*e*0.6,y:t0.y+dy*e*0.8+ny*s*e*0.6}];
       pctx.fillStyle="#a9b5bd"; poly(pctx,top); pctx.fill();
       pctx.fillStyle="rgba(240,248,252,.55)"; poly(pctx,[top[0],top[1],{x:t1.x+nx*s*1.2,y:t1.y+ny*s*1.2},{x:t0.x+nx*s*1.2,y:t0.y+ny*s*1.2}]); pctx.fill();
@@ -1131,8 +1135,8 @@ function drawFilletPlate(P,matTint){
     }
   }
   plateMetalSheen(pctx,seamPts,ph);
-  pctx.save(); poly(pctx,band(-1,0,ph,webSide===-1)); poly(pctx,band(1,0,ph,webSide===1)); pctx.beginPath();
-  for(const s of [-1,1]){ const q=band(s,0,ph,webSide===s); pctx.moveTo(q[0].x,q[0].y); for(const r of q.slice(1)) pctx.lineTo(r.x,r.y); pctx.closePath(); }
+  pctx.save(); pctx.beginPath();
+  for(const s of [-1,1]){ const q=band(s,0,ph,webSide===s||trough); pctx.moveTo(q[0].x,q[0].y); for(const r of q.slice(1)) pctx.lineTo(r.x,r.y); pctx.closePath(); }
   pctx.clip(); plateGrunge(pctx); pctx.restore();
   // naroże: ostra linia styku + wąska jasna krawędź stojącej blachy (tam pada światło)
   pctx.fillStyle="rgba(0,0,0,.85)"; poly(pctx,band(1,-1.2,1.2,false)); pctx.fill();
