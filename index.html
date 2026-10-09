@@ -1067,6 +1067,7 @@ function drawPlate(){
   const fullW=grooveHalf*2+bevelW*2+150,bevelEdge=(grooveHalf+bevelW)*2,root=grooveHalf*2;
   const matTint=bead==="ss"?"#5a6670":bead==="alu"?"#6a7580":"#4a525a";
   if(joint==="fillet"&&!P.pipe){ drawFilletPlate(P,matTint); return; }
+  if(!P.pipe){ drawButtPlate(P,matTint); return; }
   pctx.save(); pctx.shadowColor="rgba(0,0,0,.65)"; pctx.shadowBlur=22; pctx.shadowOffsetY=8;
   pathStroke(pctx,seamPts,fullW,matTint,"butt"); pctx.restore();
   plateMetalSheen(pctx,seamPts,fullW*0.5);
@@ -1135,6 +1136,55 @@ function drawFilletPlate(P,matTint){
   // naroże: ostra linia styku + wąska jasna krawędź stojącej blachy (tam pada światło)
   pctx.fillStyle="rgba(0,0,0,.85)"; poly(pctx,band(1,-1.2,1.2,false)); pctx.fill();
   if(webSide){ pctx.fillStyle="rgba(205,220,230,.30)"; poly(pctx,band(webSide,1.2,2.6,true)); pctx.fill(); }
+}
+
+// Złącze doczołowe (V): dwie osobne blachy ze skosem, szczelina w grani, końce ucięte równo.
+// Wcześniej fazy szły jednym pociągnięciem z zaokrąglonymi końcami → jasna „pastylka" wystająca poza blachę.
+// Czysto wizualne: szew, `plateHalf()`/onPlate, grooveHalf/bevelW i sim.js bez zmian.
+function drawButtPlate(P,matTint){
+  const A=seamPts[0], B=seamPts[seamPts.length-1], len=Math.hypot(B.x-A.x,B.y-A.y)||1;
+  const dx=(B.x-A.x)/len, dy=(B.y-A.y)/len, nx=-dy, ny=dx, ph=plateHalf();
+  const g=Math.max(1.5,grooveHalf*0.45);                   // połowa szczeliny w grani
+  const bw=grooveHalf+bevelW;                               // gdzie skos wychodzi na wierzch blachy
+  const T=Math.min(14,Math.max(6,thick*PX_PER_MM*0.45));     // grubość widoczna na krawędzi (z limitem — 12 mm nie może być „skrzynką")
+  const pt=(base,s,d,k=0)=>({x:base.x+nx*s*d+dx*k, y:base.y+ny*s*d+dy*k});
+  const poly=(c,ps)=>{ c.beginPath(); c.moveTo(ps[0].x,ps[0].y); for(let i=1;i<ps.length;i++) c.lineTo(ps[i].x,ps[i].y); c.closePath(); };
+  const band=(s,d0,d1)=>[pt(A,s,d0),pt(B,s,d0),pt(B,s,d1),pt(A,s,d1)];
+  const lin=(s,d0,d1,stops)=>{ const a=pt(A,s,d0), b=pt(A,s,d1); const q=pctx.createLinearGradient(a.x,a.y,b.x,b.y);
+    for(const [o,col] of stops) q.addColorStop(o,col); return q; };
+  // przód = koniec szwu niżej na ekranie (przy poziomym: prawy) — tam widać przekrój blachy z fazą
+  const front = (B.y>A.y+1 || Math.abs(B.y-A.y)<=1) ? 1 : -1;
+  const E = front>0 ? B : A, ux=dx*front, uy=dy*front;
+  const ep=(s,d,z)=>{ const q=pt(E,s,d); return {x:q.x+ux*z*0.8, y:q.y+uy*z*0.8+z*0.35}; };
+  const lit=s=>s*(0.5*nx+0.85*ny);                         // >0: skos patrzy w stronę światła (z góry-lewej)
+  for(const s of [-1,1]){
+    // wierzch blachy z cieniem
+    pctx.save(); pctx.shadowColor="rgba(0,0,0,.6)"; pctx.shadowBlur=20; pctx.shadowOffsetY=8;
+    pctx.fillStyle=matTint; poly(pctx,band(s,g,ph)); pctx.fill(); pctx.restore();
+    pctx.fillStyle=lin(s,bw,ph,[[0,"rgba(205,220,230,.10)"],[0.5,"rgba(0,0,0,0)"],[1,"rgba(0,0,0,.18)"]]);
+    poly(pctx,band(s,bw,ph)); pctx.fill();
+    // skos (faza): płaska pochyła ścianka, ciemnieje w stronę grani
+    const L=lit(s), hi=L>0 ? "rgba(215,228,236,"+(0.22+0.20*L)+")" : "rgba(160,175,185,"+(0.10+0.06*(1+L))+")";
+    pctx.fillStyle="#3c454c"; poly(pctx,band(s,g,bw)); pctx.fill();
+    pctx.fillStyle=lin(s,bw,g,[[0,hi],[1,"rgba(0,0,0,.55)"]]); poly(pctx,band(s,g,bw)); pctx.fill();
+    // ostra krawędź skos/wierzch — łapie światło
+    pctx.fillStyle=L>0?"rgba(235,244,250,.55)":"rgba(200,214,222,.28)"; poly(pctx,band(s,bw-0.8,bw+0.8)); pctx.fill();
+    // przód: przekrój blachy (wierzch → faza → grań), ucięty równo
+    const face=[ep(s,bw,0),ep(s,ph,0),ep(s,ph,T),ep(s,g,T),ep(s,g,T*0.82)];
+    pctx.fillStyle="#56616a"; poly(pctx,face); pctx.fill();                       // cięta krawędź — jaśniejsza, żeby było widać wycięcie V
+    pctx.strokeStyle="rgba(10,12,14,.55)"; pctx.lineWidth=1; pctx.beginPath();
+    pctx.moveTo(face[4].x,face[4].y); pctx.lineTo(face[0].x,face[0].y); pctx.stroke(); // linia fazy na przekroju
+    pctx.fillStyle="rgba(170,185,195,.35)"; poly(pctx,[pt(E,s,bw),pt(E,s,ph),ep(s,ph,0.9),ep(s,bw,0.9)]); pctx.fill();
+    // długa krawędź blachy od strony widza — grubość
+    if(s*ny>0.3){ pctx.fillStyle="#262c31"; poly(pctx,band(s,ph,ph+T*0.55)); pctx.fill(); }
+  }
+  plateMetalSheen(pctx,seamPts,ph);
+  pctx.save(); pctx.beginPath();
+  for(const s of [-1,1]){ const q=band(s,g,ph); pctx.moveTo(q[0].x,q[0].y); for(const r of q.slice(1)) pctx.lineTo(r.x,r.y); pctx.closePath(); }
+  pctx.clip(); plateGrunge(pctx); pctx.restore();
+  // szczelina w grani: ciemna, równo ucięta
+  pctx.fillStyle="#07090b"; poly(pctx,band(1,-g,g)); pctx.fill();
+  pctx.fillStyle="rgba(0,0,0,.5)"; poly(pctx,band(1,-g-1.2,g+1.2)); pctx.fill();
 }
 
 // ── State ─────────────────────────────────────────────────────────
