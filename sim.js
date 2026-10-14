@@ -135,6 +135,50 @@
     if (base == null) return null;
     return Math.round(base * (POS_AMP_MUL[POSITIONS[posK].stars] || 1));
   }
+  // ── KOMBAJN (3.7.0): realna sekwencja ściegów — wspólna tabela gry i weryfikatora (1:1 z index.html) ──
+  // Doczołowe wg ISO 9692-1 (do 3 mm złącze I, od 5 mm V 60°), liczba warstw i ściegów jak w praktyce WPS:
+  // PC/PE — dużo ściegów prostych, PF — mało, z wahadłem, PA — pośrodku. MAG ma większe stopiwo (o warstwę
+  // wypełnienia mniej przy 8–12 mm), TIG mniejsze (o warstwę więcej). Rura: 1G≈PA, 2G≈PC, 5G≈PF, 6G≈PC.
+  // Pachwina: a≈0,7·t; PB/PD/PG ściegami prostymi (MAG mniej), PF/PA (korytko) wahadłem.
+  // Ścieg: k (root|fill|cap), lay (nr warstwy), n (ściegów w warstwie), lane (-1…1 w poprzek rowka),
+  // wm (szerokość względem warstwy: 1, z wahadłem 1,2, przy n ściegach 1,2/n — sąsiednie zachodzą ~20%), wv (wahadło).
+  function weldPlan(joint, thick, pos, proc) {
+    const p = { P1G: "PA", P2G: "PC", P5G: "PF", HL045: "PC", PB: "PB", PD: "PD" }[pos] || pos;
+    let L;
+    if (joint === "fillet") {
+      if (thick <= 5) L = [["cap", 1]];
+      else if (p === "PF" || p === "PA") L = thick <= 8 ? [["cap", 1, 1]] : [["root", 1], ["cap", 1, 1]];
+      else L = (thick <= 8 || proc === "MIG") ? [["root", 1], ["cap", 2]] : [["root", 1], ["fill", 2], ["cap", 3]];
+    } else {
+      const T5 = { PA: [["root",1],["cap",1]], PC: [["root",1],["cap",2]], PE: [["root",1],["cap",2]], PF: [["root",1],["cap",1,1]], PG: [["root",1],["cap",1]] };
+      const T8 = { PA: [["root",1],["fill",1],["cap",1,1]], PC: [["root",1],["fill",2],["cap",3]], PE: [["root",1],["fill",2],["cap",2]],
+                   PF: [["root",1],["fill",1,1],["cap",1,1]], PG: [["root",1],["fill",2],["cap",2]] };
+      const T12 = { PA: [["root",1],["fill",1],["fill",2],["cap",2]], PC: [["root",1],["fill",2],["fill",3],["cap",4]],
+                    PE: [["root",1],["fill",2],["fill",3],["cap",3]], PF: [["root",1],["fill",1,1],["fill",1,1],["cap",1,1]],
+                    PG: [["root",1],["fill",1],["fill",3],["cap",2]] };
+      L = thick <= 3 ? [["cap", 1]] : (thick <= 5 ? T5 : thick <= 8 ? T8 : T12)[p] || [["cap", 1]];
+      L = L.map(l => l.slice());
+      if (thick > 5 && proc === "MIG") { const i = L.findIndex(l => l[0] === "fill"); if (i >= 0) L.splice(i, 1); }
+      if (thick > 5 && proc === "TIG") { let i = -1; L.forEach((l, j) => { if (l[0] === "fill") i = j; }); if (i >= 0) L.splice(i + 1, 0, L[i].slice()); }
+    }
+    const up = p === "PC";                       // naścienna: ściegi od dołu do góry (normalna szwu = w dół ekranu)
+    const out = [];
+    L.forEach(([k, n, wv], lay) => { for (let i = 0; i < n; i++) {
+      const lane = n === 1 ? 0 : (up ? 1 - 2 * i / (n - 1) : -1 + 2 * i / (n - 1));
+      out.push({ k, lay, n, lane, wm: n === 1 ? (wv ? 1.2 : 1) : 1.2 / n, wv: !!wv }); } });
+    return out;
+  }
+  // Krawędź fazy [px] — 1:1 z visGroove() w grze: lico ma ją przykryć (3.7.0). Złącze I: połowa szczeliny.
+  function bevelEdgePx(thick, gh) {
+    const thin = thick <= 3, tan30 = Math.tan(Math.PI / 6);
+    const gapMm = thin ? Math.max(0.5, thick * 0.4) : 2, rfMm = thin ? thick : Math.min(1.5, thick * 0.15);
+    const capHalfMm = thin ? gapMm / 2 + 2.5 : gapMm / 2 + (thick - rfMm) * tan30 + 1.5;
+    const k = gh * 1.25 / capHalfMm, gap = Math.max(1, gapMm / 2 * k);
+    return thin ? gap : gap + (thick - rfMm) * tan30 * k;
+  }
+  // Progi kontroli 3.7.0 (tylko rundy z flagą `kb`)
+  const EDGE_OK = 0.85, EDGE_MAJOR = 0.6, EDGE_PEN = 20, EDGE_PEN_CAP = 12;   // lico zakrywa krawędzie fazy
+  const IB_MAJOR = 0.3;                                                       // szczelina między ściegami / r → 401
   const BASE_REWARD = 50;
   const ELEC_STUB = 0.16;
   const V_TAU = 0.045;            // stała czasowa wygładzania prędkości [s]
@@ -191,6 +235,9 @@
     // nagle wracać jako REJECT za regułę, której w chwili spawania nie było.
     const cvn = !!round.cvn && !!CVN_BEADS[bead];
     const uf = !!round.uf;   // 3.6.0: „ta runda podlega progowi za szybkiego przejazdu" — starsze nagrania liczą się jak 3.5.0
+    // 3.7.0 KOMBAJN: `kb` = runda spawana wg realnej sekwencji ściegów (tory, zakrycie fazy, 401, żużel).
+    // Bez flagi wszystko idzie dawną ścieżką — bit-w-bit jak 3.6.0 (test kb.js na zamrożonym sim-3.6.0).
+    const kb = !!round.kb;
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -199,8 +246,10 @@
 
     // ── passy ──
     function passPlan() { if (thick <= 3) return ["cap"]; if (thick <= 5) return ["root","cap"]; return ["root","fill","cap"]; }
-    const passPlanArr = passPlan();
-    let passIndex = 0, passMul = PASS_W[passPlanArr[0]];
+    const beadPlan = kb ? weldPlan(joint, thick, posKey, proc) : null;
+    const passPlanArr = kb ? beadPlan.map(b => b.k) : passPlan();
+    const bwm = i => kb ? beadPlan[i].wm : 1;
+    let passIndex = 0, passMul = PASS_W[passPlanArr[0]] * bwm(0);
 
     // ── geometria (recalc + buildWorkpiece, cy=H*0.66) ──
     let grooveHalf, bevelW, idealHalf, targetPx;
@@ -223,6 +272,22 @@
       }
     })();
 
+    // ── tory ściegów (3.7.0) — szew przesunięty w poprzek o lane·(połowa warstwy − połowa ściegu) ──
+    const nrm = seamPts.map((p, i) => { const a = seamPts[Math.max(0, i - 1)], b = seamPts[Math.min(seamPts.length - 1, i + 1)];
+      const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1; return { x: -dy / l, y: dx / l }; });
+    let lanePts = seamPts, laneOff = 0;
+    function setLane() { if (!kb) return; const b = beadPlan[passIndex]; if (!b) return;
+      const Wl = grooveHalf * 1.25 * PASS_W[b.k]; laneOff = b.lane * (Wl - Wl * b.wm);
+      lanePts = laneOff ? seamPts.map((p, i) => ({ x: p.x + nrm[i].x * laneOff, y: p.y + nrm[i].y * laneOff })) : seamPts; }
+    setLane();
+    const EDGE = bevelEdgePx(thick, grooveHalf);
+    const capMin = kb ? seamPts.map(() => 1e9) : null, capMax = kb ? seamPts.map(() => -1e9) : null;
+    let segLen = 0; for (let i = 1; i < seamPts.length; i++) segLen += Math.hypot(seamPts[i].x - seamPts[i - 1].x, seamPts[i].y - seamPts[i - 1].y);
+    segLen /= Math.max(1, seamPts.length - 1);
+    const beadStats = []; let bSo = 0, bR = 0, bN = 0;          // średni tor i szerokość każdego ściegu → 401
+    let needChip = false, slagCount = 0;                         // MMA: żużel zbierany między ściegami → 301
+    function nearestLane(x, y) { let d = 1e18, px = x, py = y; for (const p of lanePts) { const dd = (p.x - x) ** 2 + (p.y - y) ** 2; if (dd < d) { d = dd; px = p.x; py = p.y; } } return { d: Math.sqrt(d), x: px, y: py }; }
+    function nearestIdx(x, y) { let d = 1e18, j = 0; for (let i = 0; i < seamPts.length; i++) { const dd = (seamPts[i].x - x) ** 2 + (seamPts[i].y - y) ** 2; if (dd < d) { d = dd; j = i; } } return j; }
     // ── helpery geometrii (1:1) ──
     function nearestSeam(x, y) { let d = 1e18, px = x, py = y; for (const p of seamPts) { const dd = (p.x - x) ** 2 + (p.y - y) ** 2; if (dd < d) { d = dd; px = p.x; py = p.y; } } return { d: Math.sqrt(d), x: px, y: py }; }
     function plateHalf() { return grooveHalf + bevelW + 75; }
@@ -251,18 +316,26 @@
       else w = idealHalf;
       const arcW = arcLive ? Math.min(1.6, Math.max(0.62, Math.pow(Math.max(0.15, arcLen / arcL0), 0.35))) : 1;
       return w * ampF.w * arcW * (angLive ? angWFac(taDeg) : 1); }   // 1:1 z arcWFac()/angWFac() w index.html
-    function depositBead(x, y, w) { const ns = nearestSeam(x, y);
+    function depositBead(x, y, w) { const ns = kb ? nearestLane(x, y) : nearestSeam(x, y);
       if (ns.d < grooveHalf + bevelW) { x += (ns.x - x) * 0.4; y += (ns.y - y) * 0.4; }
       const jit = proc === "MMA" ? (rng() * 0.18 - 0.09) * w : 0;   // jedyny pobór z rng (jak w grze)
-      x += jit; baked.push({ x, y, r: w, off: ns.d }); return { x, y }; }
+      x += jit;
+      if (kb) { const j = nearestIdx(x, y), so = (x - seamPts[j].x) * nrm[j].x + (y - seamPts[j].y) * nrm[j].y;
+        bSo += so; bR += w; bN++;
+        if (passPlanArr[passIndex] === "cap") { const s = Math.ceil(w / Math.max(1e-6, segLen));
+          for (let i = Math.max(0, j - s); i <= Math.min(seamPts.length - 1, j + s); i++) {
+            if (so - w < capMin[i]) capMin[i] = so - w; if (so + w > capMax[i]) capMax[i] = so + w; } } }
+      baked.push({ x, y, r: w, off: ns.d }); return { x, y }; }
 
+    function covThr() { const b = kb && beadPlan[passIndex]; return b && b.n > 1 ? grooveHalf * 1.25 * PASS_W[b.k] * b.wm * 1.3 : grooveHalf * 1.6; }
     function passMetrics() {
-      const K = seamPts.length; let covered = 0; const gaps = [];
-      for (let i = 0; i < K; i++) { const p = seamPts[i]; let d = 1e18; for (const b of baked) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < d) d = dd; }
-        if (Math.sqrt(d) < grooveHalf * 1.6) covered++; else gaps.push(p); }
+      const K = seamPts.length; let covered = 0; const gaps = [], thr = covThr();
+      for (let i = 0; i < K; i++) { const p = lanePts[i]; let d = 1e18; for (const b of baked) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < d) d = dd; }
+        if (Math.sqrt(d) < thr) covered++; else gaps.push(p); }
       const coverage = K ? covered / K : 0;
       let out = 0, narrow = 0, wide = 0, rs = [];
-      for (const b of baked) { if (b.off > grooveHalf + bevelW * 0.7) out++; if (b.r < grooveHalf * 0.9) narrow++; if (b.r > idealHalf * 1.65) wide++; rs.push(b.r); }
+      const nThr = kb ? idealHalf * 0.75 : grooveHalf * 0.9;   // 3.7.0: „wąski" względem WŁASNEGO ściegu (ścieg prosty z wielu jest wąski z założenia)
+      for (const b of baked) { if (b.off > grooveHalf + bevelW * 0.7) out++; if (b.r < nThr) narrow++; if (b.r > idealHalf * 1.65) wide++; rs.push(b.r); }
       const overflow = baked.length ? out / baked.length : 0;
       // 3.2.0 — ODCHYŁKA TORU OD GRANI jako ZBOCZE, nie schodek. Do 3.1.0 zjechanie z osi
       // kosztowało DOKŁADNIE ZERO aż do progu `out`, a tuż za nim leciał od razu REJECT —
@@ -282,17 +355,21 @@
       const instab = vTimeS ? vVarSum / ticks : 0; const porosity = Math.max(0, Math.round((instab / 8 + (proc === "MIG" && spdAcc < 0.4 ? 2 : 0)) / tol)) + ampF.por;
       const weldSec = Math.max(0.5, passWeldMs / 1000);
       const spatter = Math.round((spatterCount / weldSec) * PROCESS[proc].sparks / 40);
-      let endGap = 0; for (const e of [seamPts[0], seamPts[K - 1]]) { let d = 1e18; for (const b of baked) { const dd = (b.x - e.x) ** 2 + (b.y - e.y) ** 2; if (dd < d) d = dd; } if (Math.sqrt(d) > grooveHalf * 1.7) endGap++; }
+      let endGap = 0; for (const e of [lanePts[0], lanePts[K - 1]]) { let d = 1e18; for (const b of baked) { const dd = (b.x - e.x) ** 2 + (b.y - e.y) ** 2; if (dd < d) d = dd; } if (Math.sqrt(d) > grooveHalf * 1.7) endGap++; }
       return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen };
     }
     function bankReset() { passLog.push(passMetrics());
+      if (kb) { const b = beadPlan[passIndex]; if (b) beadStats.push({ lay: b.lay, lane: b.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
+        bSo = 0; bR = 0; bN = 0; if (proc === "MMA") needChip = true; }
       baked = []; speedSum = 0; speedN = 0; vVarSum = 0; spatterCount = 0; distAcc = 0;
       vSumT = 0; vTimeS = 0; passWeldMs = 0; depCarry = 0; tickAcc = 0; vTickRef = vEMA;
-      passIndex++; passMul = PASS_W[passPlanArr[passIndex]] || 1; recalc(); }
+      passIndex++; passMul = (PASS_W[passPlanArr[passIndex]] || 1) * (kb && beadPlan[passIndex] ? beadPlan[passIndex].wm : 1); recalc(); setLane(); }
 
     // ── replay zdarzeń ──
     for (const ev of events) {
-      if (ev.type === "down") { last = { x: ev.x, y: ev.y }; lastT = ev.t; vEMA = targetPx; lastDab = ev.t;
+      if (ev.type === "chip") { if (kb) needChip = false; continue; }   // 3.7.0: żużel zebrany młotkiem
+      if (ev.type === "down") { if (kb && needChip) { slagCount++; needChip = false; }   // następny ścieg na niezebranym żużlu
+        last = { x: ev.x, y: ev.y }; lastT = ev.t; vEMA = targetPx; lastDab = ev.t;
         btnMask = ev.b | 0; arcLen = 0; contactT = 0;   // dotyk blachy = zajarzenie
         trail = [{ t: ev.t, x: ev.x, y: ev.y }];
         if (replacing) { electrodeLeft = 1; replacing = false; } continue; }
@@ -405,6 +482,17 @@
     const offPen = avg("offPen");
     const filPen = filCount ? Math.min(FIL_PEN_CAP, filPenAcc / filCount) : 0;
     const rootCov = (passPlanArr[0] === "root" && passLog.length) ? passLog[0].coverage : 1;
+    // ── 3.7.0: lico vs krawędzie fazy, wtopienie między ściegami, żużel ──
+    let edgeCov = 1, ibGaps = 0, ibMax = 0;
+    if (kb) {
+      if (joint !== "fillet") { let okN = 0; for (let i = 0; i < K; i++) if (capMin[i] <= -EDGE && capMax[i] >= EDGE) okN++; edgeCov = K ? okN / K : 0; }
+      const cb = beadPlan[passIndex]; if (cb) beadStats.push({ lay: cb.lay, lane: cb.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
+      const byLay = {}; for (const s of beadStats) (byLay[s.lay] = byLay[s.lay] || []).push(s);
+      for (const k in byLay) { const a = byLay[k].filter(s => s.n).sort((p, q) => p.so - q.so);
+        for (let i = 1; i < a.length; i++) { const g = (a[i].so - a[i].r) - (a[i - 1].so + a[i - 1].r);
+          if (g > 0) { ibGaps++; ibMax = Math.max(ibMax, g / Math.max(1e-6, Math.min(a[i].r, a[i - 1].r))); } } }
+    }
+    const edgePen = kb ? Math.min(EDGE_PEN_CAP, (1 - edgeCov) * EDGE_PEN) : 0;
 
     // HI liczony DOKŁADNIE tak, jak raport w grze: napięcie z przebiegu łuku (dłuższy łuk = wyższe U),
     // prąd GRACZA i JEGO tempo. `arcTime` rośnie wyłącznie przy żywym łuku, więc na dotyku i przy TIG
@@ -421,7 +509,7 @@
 
     let score = coverage * 50 + spdAcc * 20 + evenness * 15 + (1 - overflow) * 15
               - porosity * 5 - Math.min(SPATTER_PEN_CAP, proc === "TIG" ? spatter * 3 : spatter * 0.5)
-              - ampF.pen - arcPen - Math.min(15, arcFails * 4) - angPen - offPen - filPen;
+              - ampF.pen - arcPen - Math.min(15, arcFails * 4) - angPen - offPen - filPen - edgePen;
     score = Math.max(0, Math.min(100, Math.round(score)));
 
     // wady major (do oceny ISO / odrzutu) — te same progi co w grze
@@ -435,7 +523,10 @@
       (arcPen >= 12) || (arcFails > 2) ||
       (angPen >= 10) || (offPen >= OFF_MAJOR) || (filPen >= FIL_MAJOR) ||
       hiOver ||                     // poza zakresem kwalifikacji WPS — ocena lica tego nie ratuje
-      tooFast;                      // niewypełniony rowek — tak samo
+      tooFast ||                    // niewypełniony rowek — tak samo
+      (kb && edgeCov < EDGE_MAJOR) ||   // 3.7.0: lico nie przykryło krawędzi fazy (511/401)
+      (kb && ibMax >= IB_MAJOR) ||      // brak wtopienia między ściegami (401)
+      (kb && slagCount > 0);            // wtrącenie żużla (301)
 
     // przyczyny odrzutu dla karty Battle — TE SAME warunki co Dmajor, w kolejności ważności; nie wpływają na wynik
     const rejectReasons = [];
@@ -444,6 +535,9 @@
     if (endGap > 1) rejectReasons.push("ends");
     if (hiOver) rejectReasons.push("heatInput");
     if (tooFast) rejectReasons.push("underfill");
+    if (kb && edgeCov < EDGE_MAJOR) rejectReasons.push("edges");
+    if (kb && ibMax >= IB_MAJOR) rejectReasons.push("interbead");
+    if (kb && slagCount > 0) rejectReasons.push("slag");
     if (overflow > 0.3) rejectReasons.push("overflow");
     if (porosity > 3) rejectReasons.push("porosity");
     if (offPen >= OFF_MAJOR) rejectReasons.push("offAxis");
@@ -461,7 +555,8 @@
     const pm = [0,1.0,1.25,1.6,2.1,2.8][P.stars] || 1;
     const jm = joint === "pipe" ? 1.3 : joint === "fillet" ? 0.9 : 1.0;
     const mf = MATERIAL[bead][proc] || 1;
-    const pf = 1 + 0.18 * (passPlanArr.length - 1);
+    const nLay = kb ? beadPlan[beadPlan.length - 1].lay + 1 : passPlanArr.length;   // trudność od liczby WARSTW (jak dotąd)
+    const pf = 1 + 0.18 * (nLay - 1);
     const difficulty = mb * pm * jm * mf * pf;
 
     return { score, letter, iso, coverage, spdAcc, evenness, overflow, porosity, spatter, endGap, baked: baked.length, passes: passPlanArr.length, difficulty: +difficulty.toFixed(2), amps: ampRec && amps ? amps : ampRec, ampsWps: ampRec, ampPen: +ampF.pen.toFixed(2),
@@ -469,9 +564,15 @@
              angPen: +angPen.toFixed(2), offPen: +offPen.toFixed(2), filPen: +filPen.toFixed(2), filDabs: filCount, waDeg: +waDeg.toFixed(2), taDeg: +taDeg.toFixed(2),
              angW: +angW.toFixed(2), angT: +angT.toFixed(2), taIdeal: TA_IDEAL[proc] != null ? TA_IDEAL[proc] : 0,
              volts: arcTime ? +(arcVSum / arcTime).toFixed(2) : recommendedVolts(proc, thick),
-             hi: hiAct, hiWps, hiMax, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [] };
+             hi: hiAct, hiWps, hiMax, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [],
+             ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.7.0 — KOMBAJN: realna sekwencja ściegów (weldPlan), każdy ścieg na własnym TORZE w poprzek rowka,
+  //         lico musi przykryć krawędzie fazy (edgeCov; <0,6 = REJECT „edges", kara do 12 pkt), sąsiednie
+  //         ściegi muszą się zlać (szczelina ≥0,3·r = REJECT „interbead", 401), MMA: żużel zebrany przed
+  //         następnym ściegiem (zdarzenie `chip`; inaczej REJECT „slag", 301). Tylko rundy z flagą `kb` —
+  //         bez niej bit-w-bit jak 3.6.0. SCORING_VERSION 1.2.0.
   // 3.6.0 — ZA SZYBKI PRZEJAZD = REJECT „underfill" (patrz FAST_TOL). SCORING_VERSION 1.1.0.
   // 3.0.0 — KĄT ELEKTRODY z klawiatury: A/D kąt roboczy, W/S pochylenia (ciągnięcie ↔ pchanie).
   //         Mysz nie ma już wolnej osi — obie zajmuje pozycja, oba przyciski długość łuku — więc
@@ -510,7 +611,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, VERSION: "3.6.0", SCORING_VERSION: "1.1.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, VERSION: "3.7.0", SCORING_VERSION: "1.2.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
