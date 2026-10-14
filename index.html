@@ -2969,7 +2969,21 @@ function fitStage(){
     left=rEdge/2-(x0+x1)/2*s; top=(t0+b0)/2-(y0+y1)/2*s;
     tliftLow=touchLift&&top+(y1-py)*s+TOUCH_LIFT>bEdge;     // palec pod końcem szwu wypadłby na dolny pasek
     if(tliftLow) tliftLowHint();                            // od razu — palec na pasku i tak nie dojdzie do start()
-  } else tliftLow=false;
+  } else {
+    tliftLow=false;
+    // Komputer, szew pionowy (PF/PG, rura 5G/6G): pole jest wyśrodkowane, więc dolny koniec szwu lądował
+    // pod napisem „grawitacja jeziorka" (zgłoszenie usera). Podnosimy pole — tylko przesunięcie, skala bez
+    // zmian (mysz liczy względem prostokąta pola, nagranie zapisuje jego szerokość).
+    const g=document.querySelector(".grav"), tb=document.querySelector(".top");
+    if(seamPts.length&&g&&tb&&g.getBoundingClientRect().height>0){
+      let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+      for(const p of seamPts){ if(p.x<x0)x0=p.x; if(p.x>x1)x1=p.x; if(p.y<y0)y0=p.y; if(p.y>y1)y1=p.y; }
+      if(y1-y0>(x1-x0)/2){
+        const need=top+y1*s+16-g.getBoundingClientRect().top, room=top+y0*s-(tb.getBoundingClientRect().bottom+16);
+        if(need>0) top-=Math.min(need,Math.max(0,room));
+      }
+    }
+  }
   // Widoczny wycinek pola (logiczne px). Telefon przybliża przedmiot, więc ekran pokazuje ~40% canvasu,
   // a frame() malował co klatkę całe 2560×1440 (3 warstwy + przyłbica + winieta) — to był lag na iPhonie.
   // Rysowanie przycinamy do tego, co widać; poza ekranem i tak nic nie ma. Ocena/nagranie bez zmian.
