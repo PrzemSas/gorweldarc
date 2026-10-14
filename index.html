@@ -59,7 +59,7 @@
   .demo-badge { font-size:9px; font-weight:800; letter-spacing:1.8px; padding:3px 7px; border-radius:6px;
     color:#8b97a0; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
   .group { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  .lbl { font-size:10px; letter-spacing:1.5px; color:#5d6973; text-transform:uppercase; margin-right:2px; }
+  .lbl { font-size:11px; letter-spacing:1.5px; color:#8a97a0; text-transform:uppercase; margin-right:2px; }
 
   button { cursor:pointer; border:1px solid #2b333a; background:linear-gradient(180deg,#1a2228,#12181d); color:#b9c4cb;
     padding:7px 11px; border-radius:9px; font-size:12px; font-weight:600; letter-spacing:.3px; transition:border-color .15s,box-shadow .15s,color .15s,transform .1s; }
@@ -121,15 +121,16 @@
   @keyframes legendPulse { 0%,100%{box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 20px rgba(255,138,60,.12)} 50%{box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 36px rgba(255,138,60,.28)} }
   .info-card .v { color:#e9eef2; font-weight:700; }
   .info-card .hi-line { margin-top:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,.06); color:#6d7a84; }
-  .grav { position:fixed; left:50%; transform:translateX(-50%); bottom:12px; z-index:6; font-size:11px; color:#5d6973; text-align:center; pointer-events:none;
+  .grav { position:fixed; left:50%; transform:translateX(-50%); bottom:12px; z-index:6; font-size:11px; color:#8a97a0; text-align:center; pointer-events:none;
     padding:6px 12px; border-radius:10px; background:rgba(8,12,15,.45); border:1px solid rgba(255,255,255,.04); }
   .grav .arrow { font-size:22px; color:#ff7b3a; display:block; filter:drop-shadow(0 0 6px rgba(255,123,58,.4)); }
   .toolhud { position:fixed; left:12px; bottom:62px; z-index:6; font-size:12px; color:#9aa6ad; pointer-events:none; max-width:320px;
     padding:7px 11px; border-radius:10px; background:rgba(8,12,15,.55); border:1px solid rgba(255,255,255,.05); }
   .toolhud b { color:var(--amber); }
-  .rankbar { position:fixed; left:12px; bottom:14px; z-index:6; text-align:left; font-size:11px; color:#7d8990; pointer-events:none;
+  .rankbar { position:fixed; left:12px; bottom:14px; z-index:6; text-align:left; font-size:12px; color:#9aa6ad; pointer-events:none;
     padding:5px 10px; border-radius:9px; background:rgba(8,12,15,.4); border:1px solid rgba(255,255,255,.04); }
-  .rankbar b { color:var(--cyan); font-size:13px; }
+  .rankbar b { color:var(--cyan); font-size:14px; }
+  .modal a[href] { color:#ff9a3c; } .modal a[href]:hover { color:#ffc27a; }   /* domyslny niebieski ginal na czarnym */
 
   #toast { position:fixed; left:50%; top:84px; transform:translateX(-50%) translateY(-8px); z-index:8; font-weight:800; letter-spacing:2px; font-size:13px;
     opacity:0; transition:opacity .2s,transform .2s; pointer-events:none; padding:8px 16px; border-radius:10px;
@@ -219,6 +220,7 @@
     background:linear-gradient(135deg,#143238,#0e2226); border:1px solid var(--cyan); color:var(--cyan); font-size:11px; font-weight:800;
     display:flex; align-items:center; justify-content:center; }
   .tutsteps b { color:#e9eef2; }
+  .tutsteps ul { margin:6px 0 0; padding-left:16px; } .tutsteps li { margin:3px 0; }
   .qs-card { width:min(440px,92vw); }
   .qs-sub { font-size:12px; color:#8b97a0; margin:-6px 0 14px; letter-spacing:.5px; }
   .qs-opts { display:flex; flex-direction:column; gap:8px; }
@@ -230,7 +232,7 @@
   .qs-links { margin-top:12px; text-align:center; font-size:12px; color:#6b767e; }
   .qs-links button { background:none; border:none; padding:2px 4px; color:#9aa6ad; text-decoration:underline; font-size:12px; letter-spacing:0; text-transform:none; cursor:pointer; box-shadow:none; }
   body.is-mobile .qs-links button { min-height:44px; padding:2px 8px; } /* palec: linki okna startowego min. 44 px */
-  #watermark { position:fixed; right:14px; bottom:14px; z-index:5; pointer-events:none; font-size:9px; letter-spacing:2.5px; color:rgba(93,105,115,.45); font-weight:700; }
+  #watermark { position:fixed; right:14px; bottom:14px; z-index:5; pointer-events:none; font-size:10px; letter-spacing:2.5px; color:rgba(154,166,173,.6); font-weight:700; }
   .xpbar > div { transition:width .6s cubic-bezier(.2,.9,.3,1); position:relative; overflow:hidden; }
   .xpbar > div::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent); animation:xpShine 2.2s ease-in-out infinite; }
   @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
@@ -289,11 +291,15 @@
     .top .brand span:not(.demo-badge){ display:none; }
     .top .brand img{ height:26px; width:26px; }
     .wal{ font-size:11px; padding:6px 9px; flex-shrink:0; }
-    .lbl{ font-size:9px; width:100%; margin-bottom:2px; }
+    .lbl{ font-size:10px; width:100%; margin-bottom:2px; }
     .proc,.joint,.bead,.thk,.lng,.pos,.amp,.ampmode{ padding:10px 12px; font-size:12px; min-height:44px; min-width:44px; }
     button{ min-height:44px; }
     .info-card,.grav,.rankbar,#watermark{ display:none !important; }
     .mob-hud{ display:block; }
+    body.is-mobile #setupBtn{ display:none; }   /* drugi ⚙️ — zostaje podpisany w dolnym pasku */
+    body.is-mobile .setup-sheet #ampAuto{ display:flex; flex-wrap:nowrap; width:100%; max-width:none; }
+    body.is-mobile .setup-sheet #ampAuto .amp{ flex:1; min-width:0; padding:10px 2px; }
+    body.is-mobile .lbl.lbl-ico{ width:auto; font-size:18px; letter-spacing:0; margin:0 6px 0 0; align-self:center; }
     .covbar{ top:78px; width:min(340px,92vw); }
     .toolhud{ left:8px; right:8px; top:100px; bottom:auto; font-size:11px; max-width:none; }
     #toast{ top:max(72px,env(safe-area-inset-top)); font-size:12px; max-width:92vw; white-space:normal; text-align:center; letter-spacing:1px; }
@@ -303,7 +309,9 @@
       width:auto; max-height:none; overflow:visible; border-radius:14px 14px 0 0; }
     body.is-mobile .bottom .group{ display:none !important; }
     body.is-mobile .bottom > button:not(.mob-actions){ display:none !important; }
-    body.is-mobile .mob-actions{ display:inline-flex; align-items:center; justify-content:center; min-width:48px; min-height:48px; padding:8px 10px; font-size:18px; flex:1; max-width:72px; }
+    body.is-mobile .mob-actions{ display:inline-flex; align-items:center; justify-content:center; min-width:48px; min-height:48px; padding:8px 10px; font-size:18px; flex:1; max-width:72px; flex-direction:column; gap:1px; padding:6px 1px; }
+    body.is-mobile .mob-actions small, body.is-mobile .setup-extras small{ display:block; font-size:9px; font-weight:600; letter-spacing:0; color:#9aa6ad; line-height:1.1; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    body.is-mobile .setup-extras button{ display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
     body.is-mobile .setup-sheet{
       display:flex; flex-direction:column; gap:10px; position:fixed; left:0; right:0; bottom:0; z-index:8;
       max-height:min(78vh,560px); overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -323,6 +331,7 @@
   @media (max-width:680px) and (orientation:landscape),(max-height:520px) and (orientation:landscape){
     body.is-mobile .setup-sheet{ max-height:85vh; }
     .mob-hud{ top:44px; }
+    body.is-mobile .mob-actions small{ display:none; }   /* kolumna 64 px — bez podpisow */
     .covbar{ top:68px; }
     /* Telefon w poziomie: pasek akcji jako kolumna przy prawej krawędzi. Na dole zabierał ~64 px
        z 390 — dolny koniec szwu PF/rury lądował tuż nad nim, a palec (łuk nad palcem: 56 px niżej)
@@ -384,8 +393,8 @@
       <button class="proc on" data-proc="MMA">MMA 111</button>
       <button class="proc" data-proc="MIG">MIG/MAG 135</button>
       <button class="proc" data-proc="TIG">TIG 141</button>
-      <button class="proc" data-proc="CUT">🔥 TLEN 81</button>
-      <button class="proc" data-proc="PLASMA">⚡ PLAZMA 83</button>
+      <button class="proc" data-proc="CUT">🔥 <span data-i18n="pr_cut">TLEN</span> 81</button>
+      <button class="proc" data-proc="PLASMA">⚡ <span data-i18n="pr_plasma">PLAZMA</span> 83</button>
     </div>
     <div class="group"><span class="lbl" data-i18n="joint">Joint</span>
       <button class="joint on" data-joint="butt" data-i18n="jt_butt">Butt V</button>
@@ -393,7 +402,7 @@
       <button class="joint" data-joint="pipe" data-i18n="jt_pipe">Pipe</button>
     </div>
     <div class="group" id="posWrap"><span class="lbl" data-i18n="position">Position</span></div>
-    <div class="group"><span class="lbl">🌐</span>
+    <div class="group"><span class="lbl lbl-ico">🌐</span>
       <button class="lng on" data-lng="pl">PL</button>
       <button class="lng" data-lng="en">EN</button>
       <button class="lng" data-lng="ru">RU</button>
@@ -443,19 +452,19 @@
     <button id="snd">🔊 ARC</button>
     <button id="inspect" data-i18n="btn_inspect">🔎 INSPECT</button>
     <button id="battleLaunch">⚔ BATTLE WELD</button>
-    <button id="battleLaunchMobile" class="mob-actions" type="button" title="BATTLE WELD">⚔</button>
+    <button id="battleLaunchMobile" class="mob-actions" type="button" title="BATTLE WELD"><span class="ic">⚔</span><small data-i18n="mc_battle">Battle</small></button>
     <button id="career" class="sec" data-i18n="btn_career">🎓 CAREER</button>
     <button id="help" class="sec" data-i18n="btn_help">❔ HOW TO</button>
     <button id="methods" class="sec" data-i18n="btn_methods">📖 METHODS</button>
     <button id="about" class="sec" data-i18n="btn_about">ℹ️ ABOUT</button>
     <button id="clear" class="sec" data-i18n="btn_clear">✕ CLEAR</button>
     <button id="music" class="sec" type="button" aria-pressed="false" data-i18n="btn_music">🎵 MUSIC</button>
-    <button id="mobHelmet" class="mob-actions on" type="button" title="Helmet">🥽</button>
-    <button id="mobSnd" class="mob-actions" type="button" title="Sound">🔊</button>
-    <button id="mobMusic" class="mob-actions" type="button" aria-pressed="false" title="Music">🎵</button>
-    <button id="mobClear" class="mob-actions" type="button" title="Clear">✕</button>
-    <button id="mobHelp" class="mob-actions" type="button" title="Help">❔</button>
-    <button id="mobSetup2" class="mob-actions" type="button" title="Settings">⚙️</button>
+    <button id="mobHelmet" class="mob-actions on" type="button" title="Helmet"><span class="ic">🥽</span><small data-i18n="mc_helmet">Helmet</small></button>
+    <button id="mobSnd" class="mob-actions" type="button" title="Sound"><span class="ic">🔊</span><small data-i18n="mc_sound">Sound</small></button>
+    <button id="mobMusic" class="mob-actions" type="button" aria-pressed="false" title="Music"><span class="ic">🎵</span><small data-i18n="mc_music">Music</small></button>
+    <button id="mobClear" class="mob-actions" type="button" title="Clear"><span class="ic">✕</span><small data-i18n="mc_clear">Clear</small></button>
+    <button id="mobHelp" class="mob-actions" type="button" title="Help"><span class="ic">❔</span><small data-i18n="mc_help">How to</small></button>
+    <button id="mobSetup2" class="mob-actions" type="button" title="Settings"><span class="ic">⚙️</span><small data-i18n="mc_setup">Settings</small></button>
   </div>
 
   <!-- BATTLE WELD — isolated visual shell; the ARC stage remains untouched beneath it. -->
@@ -724,7 +733,7 @@ let lang=(()=>{ const n=((navigator.languages&&navigator.languages[0])||navigato
   return n==="pl"?"pl":(["ru","uk","be"].includes(n)?"ru":"en"); })();
 try{ const l=localStorage.getItem('gorweld_lang'); if(l) lang=l; }catch(e){}
 const I18N={
- pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
+ pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", pr_cut:"TLEN", pr_plasma:"PLAZMA", mc_battle:"Battle", mc_helmet:"Przyłbica", mc_sound:"Dźwięk", mc_music:"Muzyka", mc_clear:"Zetrzyj", mc_help:"Jak grać", mc_setup:"Opcje", mc_career:"Kariera", mc_methods:"Metody", mc_about:"O ARC", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
   jt_butt:"Doczołowe V", jt_fillet:"Pachwinowe T", jt_pipe:"Rura", mat_steel:"Stal", mat_ss:"Nierdz.", mat_alu:"Alu",
   btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ ZETRZYJ",
   grav:"grawitacja<br>jeziorka", vset:"v zadane:", forA:"za A ≈",
@@ -751,17 +760,17 @@ const I18N={
   cd_incomplete:"Niedocięcie — rzaz nie przeszedł na wylot (%1%)", cd_wide:"Szeroki rzaz / nadtopienie krawędzi (za wolno)", cd_dross:"Żużel i grat na dole (za szybko)", cd_dev:"Odchył od linii — krzywy rzaz", cd_clean:"Czysty rzaz — gładkie, prostopadłe krawędzie",
   tut_title:"Jak spawać — 30 sekund", tut_skip:"POMIŃ", tut_start:"DO ROBOTY ⚡",
   tut1:"<b>1. Ustaw robotę.</b> Metoda · złącze · pozycja · grubość · materiał · <b>prąd</b>. Prąd startuje na wartości z WPS (zielona ramka): zejdziesz niżej — brak wtopienia, podbijesz — przepalenie i odpryski. Im trudniej, tym wyższa klasa roboty (gwiazdki = trudność).",
-  tut2:"<b>2. Zajarz łuk.</b> <b>LPM</b> dotyka blachy i zapala łuk — ale <b style='color:#ff5a4a'>nie trzymaj</b>, bo elektroda przywrze. Puść, a odjedzie sama, bo się topi. Dalej dogrywaj krótkimi kliknięciami <b>LPM</b>, a <b>PPM</b> odciąga. Pomarańczowy pasek na czubku to Twoja odległość od blachy — im dłuższy, tym dalej jesteś. <b>Kąt</b> ustawiasz drugą ręką: <b>W/S</b> pchanie ↔ ciągnięcie, <b>A/D</b> kąt roboczy. Zaczynasz dokładnie na kącie z WPS — jak nic nie ruszysz, nie tracisz ani punktu. <b>LPM+PPM naraz gasi łuk</b>, gdy chcesz skończyć ścieg w wybranym miejscu — to nie to samo co zerwanie, nie liczy się jako błąd. <b>TIG ma własne sterowanie:</b> LPM zapala łuk, <b>SPACJA</b> dokłada spoiwo drugą ręką, PPM gasi. Sam łuk tylko grzeje — <b>bez spoiwa nie ma spoiny</b>. <i>Na telefonie prościej: dotknij i ciągnij, łuk trzyma się sam, kąt stoi na WPS.</i>",
+  tut2:"<b>2. Zajarz łuk.</b><ul><li><b>LPM</b> dotyka blachy i zapala łuk — <b style='color:#ff5a4a'>nie trzymaj</b>, bo elektroda przywrze.</li><li>Elektroda się topi i odjeżdża: dogrywaj krótkimi kliknięciami <b>LPM</b>, <b>PPM</b> odciąga. Pomarańczowy pasek na czubku = odległość od blachy.</li><li><b>Kąt:</b> <b>W/S</b> pchanie ↔ ciągnięcie, <b>A/D</b> kąt roboczy. Startujesz na kącie z WPS — nic nie ruszysz, nic nie tracisz.</li><li><b>LPM+PPM</b> gasi łuk tam, gdzie chcesz — to nie zerwanie, bez kary.</li><li><b>TIG:</b> LPM zapala, <b>SPACJA</b> dokłada spoiwo, PPM gasi. Bez spoiwa nie ma spoiny.</li><li><i>Telefon: dotknij i ciągnij — łuk trzyma się sam, kąt stoi na WPS.</i></li></ul>",
   tut3:"<b>3. Trzymaj tempo.</b> Ciągnij wzdłuż grani — dopóki <b style='color:#5fe08a'>nic nie wyskakuje</b>, tempo jest dobre. Pod blachą zapali się <b style='color:#ff9a3c'>ZA SZYBKO</b> (zimny zakład) albo <b style='color:#ff9a3c'>ZA WOLNO</b> (przepalenie) dopiero gdy naprawdę zjedziesz.",
   tut4:"<b>4. Hełm i warstwy.</b> Bez hełmu łuk oślepia po 2 s. Grube blachy spawasz w kilku warstwach: <b>przetop → wypełnienie → lico</b>.",
-  tut5:"<b>5. Ocena.</b> Wyspawaj CAŁĄ łagę (pasek u góry) → automatyczna inspekcja (wzorowana na ISO 5817) → ocena i postęp kariery. Pochwal się kartą na X.",
+  tut5:"<b>5. Ocena.</b> Wyspawaj CAŁĄ łagę (pasek u góry) → automatyczna inspekcja (wzorowana na ISO 5817) → ocena i postęp kariery. Pochwal się kartą wyniku na X.",
   res_ok:"🏆 ŁAGA ZALICZONA", rew_zero:"💀 ŁAGA ODRZUCONA — dokończ całą spoinę (pokrycie ≥80%), min. ocena D",
   eco_free:"runda konkursowa", chal_wal:"KONKURS", chal_pass:"PRÓG ZALICZONY — skopiuj PROOF i wyślij zgłoszenie", chal_fail:"PONIŻEJ PROGU — spawaj dalej",
   tier_common:"PODSTAWOWA", tier_rare:"ŚREDNIA", tier_epic:"TRUDNA", tier_legendary:"MISTRZOWSKA",
   rank_helper:"Pomocnik", rank_tacker:"Sczepiacz", rank_welder:"Spawacz", rank_cert:"Spawacz doświadczony", rank_coded:"Spawacz ekspert", rank_master:"Mistrz Spawalnictwa",
   cardtext:"Wyspawałem łagę %1 — ocena %2, ≈ ISO 5817 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#welding #spawanie #GorWeld",
   cardtext_cut:"Przeciąłem %1 — ocena %2, ≈ ISO 9013 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#ciecie #spawanie #GorWeld" },
- en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_fast:"Travel too fast — %1 mm/s against %2 mm/s on the WPS: underfilled groove and lack of sidewall fusion (ISO 5817: 511, 401) — reject regardless of how the face looks",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
+ en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_fast:"Travel too fast — %1 mm/s against %2 mm/s on the WPS: underfilled groove and lack of sidewall fusion (ISO 5817: 511, 401) — reject regardless of how the face looks",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", pr_cut:"OXY", pr_plasma:"PLASMA", mc_battle:"Battle", mc_helmet:"Helmet", mc_sound:"Sound", mc_music:"Music", mc_clear:"Clear", mc_help:"How to", mc_setup:"Settings", mc_career:"Career", mc_methods:"Methods", mc_about:"About", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
   jt_butt:"Butt V", jt_fillet:"Fillet T", jt_pipe:"Pipe", mat_steel:"Steel", mat_ss:"Stainless", mat_alu:"Alu",
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"set v:", forA:"for A ≈",
@@ -788,17 +797,17 @@ const I18N={
   cd_incomplete:"Incomplete cut — didn't sever through (%1%)", cd_wide:"Wide kerf / edge melt (too slow)", cd_dross:"Dross on the underside (too fast)", cd_dev:"Off the cut line — crooked kerf", cd_clean:"Clean cut — smooth, square edges",
   tut_title:"How to weld — 30 seconds", tut_skip:"SKIP", tut_start:"LET'S WELD ⚡",
   tut1:"<b>1. Set the job.</b> Method · joint · position · thickness · material · <b>current</b>. Current starts at the WPS figure (green outline): go under and you lose fusion, go over and you burn through and spatter. Harder jobs rank higher (stars = difficulty).",
-  tut2:"<b>2. Strike the arc.</b> <b>Left button</b> touches the plate and lights the arc — but <b style='color:#ff5a4a'>don't hold it</b> or the electrode sticks. Let go and it drifts away as it melts. Feed it back with short <b>left</b> clicks; <b>right</b> pulls it off. The orange bar at the tip is your distance from the plate — the longer it gets, the further you are. Set the <b>angle</b> with your other hand: <b>W/S</b> push ↔ drag, <b>A/D</b> work angle. You start exactly on the WPS angle — touch nothing and you lose nothing. <b>LMB+RMB together puts the arc out</b> when you want to end the bead where you choose — that is not the same as breaking it and costs you no penalty. <b>TIG has its own controls:</b> LMB lights the arc, <b>SPACE</b> dabs filler with your other hand, RMB puts it out. The arc alone only heats — <b>no filler, no weld</b>. <i>On a phone it is simpler: touch and drag, the arc holds itself and the angle sits on WPS.</i>",
+  tut2:"<b>2. Strike the arc.</b><ul><li><b>Left button</b> touches the plate and lights the arc — <b style='color:#ff5a4a'>don't hold it</b> or the electrode sticks.</li><li>The electrode melts and drifts away: feed it back with short <b>left</b> clicks, <b>right</b> pulls it off. The orange bar at the tip = distance from the plate.</li><li><b>Angle:</b> <b>W/S</b> push ↔ drag, <b>A/D</b> work angle. You start on the WPS angle — touch nothing, lose nothing.</li><li><b>LMB+RMB</b> puts the arc out where you choose — not a break, no penalty.</li><li><b>TIG:</b> LMB lights, <b>SPACE</b> adds filler, RMB puts it out. No filler, no weld.</li><li><i>Phone: touch and drag — the arc holds itself, the angle stays on WPS.</i></li></ul>",
   tut3:"<b>3. Keep the pace.</b> Drag along the groove — as long as <b style='color:#5fe08a'>nothing pops up</b>, you're on target. <b style='color:#ff9a3c'>TOO FAST</b> (cold lap) or <b style='color:#ff9a3c'>TOO SLOW</b> (burn-through) shows under the plate only once you really drift.",
   tut4:"<b>4. Helmet & layers.</b> No helmet and the arc blinds you after 2 s. Thick plate is welded in several layers: <b>root → fill → cap</b>.",
-  tut5:"<b>5. Grade.</b> Weld the WHOLE bead (top bar) → automatic inspection (modelled on ISO 5817) → grade and career progress. Brag with a card on X.",
+  tut5:"<b>5. Grade.</b> Weld the WHOLE bead (top bar) → automatic inspection (modelled on ISO 5817) → grade and career progress. Share your result card on X.",
   res_ok:"🏆 PASS ACCEPTED", rew_zero:"💀 PASS REJECTED — finish the whole pass (coverage ≥80%), min grade D",
   eco_free:"challenge run", chal_wal:"CHALLENGE", chal_pass:"BAR CLEARED — copy the PROOF and submit", chal_fail:"BELOW THE BAR — keep welding",
   tier_common:"BASIC", tier_rare:"MEDIUM", tier_epic:"HARD", tier_legendary:"MASTER",
   rank_helper:"Helper", rank_tacker:"Tacker", rank_welder:"Welder", rank_cert:"Skilled welder", rank_coded:"Expert welder", rank_master:"Welding Master",
   cardtext:"Welded a %1 pass — grade %2, ≈ ISO 5817 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#welding #GorWeld",
   cardtext_cut:"Cut %1 — grade %2, ≈ ISO 9013 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#cutting #welding #GorWeld" },
- ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_fast:"Слишком быстрое ведение — %1 мм/с при %2 мм/с по WPS: незаполненная разделка и несплавление кромок (ISO 5817: 511, 401) — брак независимо от вида валика",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ", tlift:"☝ Дуга над пальцем", tlift_on:"ВКЛ", tlift_off:"ВЫКЛ", t_tlift_hint:"☝ Дуга горит над пальцем, чтобы был виден зазор — отключается в ⚙️", t_tlift_low:"☝ Конец шва слишком низко для дуги над пальцем — поверни телефон вертикально или отключи её в ⚙️",
+ ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_fast:"Слишком быстрое ведение — %1 мм/с при %2 мм/с по WPS: незаполненная разделка и несплавление кромок (ISO 5817: 511, 401) — брак независимо от вида валика",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", pr_cut:"ГАЗ", pr_plasma:"ПЛАЗМА", mc_battle:"Battle", mc_helmet:"Маска", mc_sound:"Звук", mc_music:"Музыка", mc_clear:"Стереть", mc_help:"Помощь", mc_setup:"Опции", mc_career:"Карьера", mc_methods:"Методы", mc_about:"Об ARC", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ", tlift:"☝ Дуга над пальцем", tlift_on:"ВКЛ", tlift_off:"ВЫКЛ", t_tlift_hint:"☝ Дуга горит над пальцем, чтобы был виден зазор — отключается в ⚙️", t_tlift_low:"☝ Конец шва слишком низко для дуги над пальцем — поверни телефон вертикально или отключи её в ⚙️",
   jt_butt:"Стыковое V", jt_fillet:"Тавровое T", jt_pipe:"Труба", mat_steel:"Сталь", mat_ss:"Нерж.", mat_alu:"Алюм.",
   btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"задан. v:", forA:"за A ≈",
@@ -825,7 +834,7 @@ const I18N={
   cd_incomplete:"Недорез — не прошло насквозь (%1%)", cd_wide:"Широкий рез / оплавление кромки (медленно)", cd_dross:"Грат снизу (слишком быстро)", cd_dev:"Уход от линии — кривой рез", cd_clean:"Чистый рез — гладкие, прямые кромки",
   tut_title:"Как варить — 30 секунд", tut_skip:"ПРОПУСТИТЬ", tut_start:"ЗА РАБОТУ ⚡",
   tut1:"<b>1. Задай работу.</b> Метод · соединение · позиция · толщина · материал · <b>ток</b>. Ток стоит на значении из WPS (зелёная рамка): занизишь — непровар, завысишь — прожог и брызги. Чем сложнее — тем выше класс работы (звёзды = сложность).",
-  tut2:"<b>2. Зажги дугу.</b> <b>ЛКМ</b> касается пластины и зажигает дугу — но <b style='color:#ff5a4a'>не удерживай</b>, электрод прилипнет. Отпусти — он отойдёт сам, потому что плавится. Дальше подавай короткими нажатиями <b>ЛКМ</b>, а <b>ПКМ</b> оттягивает. Оранжевая полоска на кончике — расстояние до пластины. <b>Угол</b> задаёшь второй рукой: <b>W/S</b> толкание ↔ волочение, <b>A/D</b> рабочий угол. Стартуешь ровно на угле из WPS — ничего не трогаешь, ничего не теряешь. <b>ЛКМ+ПКМ вместе гасят дугу</b>, когда хочешь закончить шов в выбранном месте — это не обрыв и штрафа не даёт. <b>У TIG своё управление:</b> ЛКМ зажигает дугу, <b>ПРОБЕЛ</b> подаёт присадку второй рукой, ПКМ гасит. Сама дуга только греет — <b>без присадки шва нет</b>. <i>На телефоне проще: коснись и веди, дуга держится сама, угол стоит на WPS.</i>",
+  tut2:"<b>2. Зажги дугу.</b><ul><li><b>ЛКМ</b> касается пластины и зажигает дугу — <b style='color:#ff5a4a'>не удерживай</b>, электрод прилипнет.</li><li>Электрод плавится и отходит: подавай короткими нажатиями <b>ЛКМ</b>, <b>ПКМ</b> оттягивает. Оранжевая полоска на кончике = расстояние до пластины.</li><li><b>Угол:</b> <b>W/S</b> толкание ↔ волочение, <b>A/D</b> рабочий угол. Старт на угле из WPS — ничего не трогаешь, ничего не теряешь.</li><li><b>ЛКМ+ПКМ</b> гасят дугу в выбранном месте — это не обрыв, без штрафа.</li><li><b>TIG:</b> ЛКМ зажигает, <b>ПРОБЕЛ</b> подаёт присадку, ПКМ гасит. Без присадки шва нет.</li><li><i>Телефон: коснись и веди — дуга держится сама, угол стоит на WPS.</i></li></ul>",
   tut3:"<b>3. Держи темп.</b> Веди вдоль шва — пока <b style='color:#5fe08a'>ничего не всплывает</b>, темп верный. <b style='color:#ff9a3c'>СЛИШКОМ БЫСТРО</b> (непровар) или <b style='color:#ff9a3c'>СЛИШКОМ МЕДЛЕННО</b> (прожог) появится под пластиной, только если реально собьёшься.",
   tut4:"<b>4. Маска и слои.</b> Без маски дуга слепит через 2 с. Толстый металл варят в несколько слоёв: <b>корень → заполнение → облицовка</b>.",
   tut5:"<b>5. Оценка.</b> Завари ВЕСЬ шов (полоса сверху) → авто-контроль (по образцу ISO 5817) → оценка и прогресс карьеры. Похвались картой в X.",
@@ -1848,7 +1857,20 @@ function updateToolHud(){
   updateMobHud();
 }
 function updateMobHud(){
-  const el=document.getElementById("mobHud"); if(!el||!isMob()) return;
+  const el=document.getElementById("mobHud"), cb=document.getElementById("covbar"), th=document.getElementById("toolhud");
+  const reset=()=>{ for(const x of [el,cb,th]) if(x){ x.style.top=""; x.style.left=""; x.style.right=""; x.style.zIndex=""; } };
+  if(!el||!isMob()){ reset(); return; }
+  // Gorna belka na telefonie ma ~70 px (przyciski 44 px), a pasek info stal na sztywno na 52/44 px i chowal
+  // sie pod nia. Pion: info → pokrycie → elektroda liczone od belki. Poziom (pasek akcji kolumna z prawej):
+  // info wchodzi w pusta czesc belki obok 🔎 — kazdy piksel wysokosci idzie na pole (PF/rura).
+  const tb=document.querySelector(".top"), ins=document.getElementById("mobInspect"), br=document.querySelector(".bottom")?.getBoundingClientRect();
+  reset();
+  if(tb&&cb&&th&&ins){ const r=tb.getBoundingClientRect();
+    if(br&&br.height>br.width){ const ir=ins.getBoundingClientRect();
+      el.style.left=Math.ceil(ir.right+10)+"px"; el.style.right=Math.ceil(innerWidth-r.right+10)+"px"; el.style.zIndex="21";
+      el.style.top=Math.round(r.top+(r.height-(el.offsetHeight||25))/2)+"px"; }
+    else { const y=Math.max(44,Math.ceil(r.bottom)+8);
+      el.style.top=y+"px"; cb.style.top=(y+(el.offsetHeight||22)+6)+"px"; th.style.top=(y+(el.offsetHeight||22)+6+(cb.offsetHeight||26)+6)+"px"; } }
   const P=POSITIONS[posKey], spd=(targetPx/PX_PER_MM).toFixed(1);
   el.innerHTML='<b>'+PROCESS[proc].name[lang]+'</b> · '+P.name[lang]+' · '+thick+'mm · '+spd+' mm/s';
 }
@@ -2713,7 +2735,8 @@ function syncMobileLayout(){
       top.querySelectorAll(".group").forEach(g=>{ setupSlots.top.push(g); sheet.appendChild(g); });
       bottom.querySelectorAll(".group").forEach(g=>{ setupSlots.bottom.push(g); sheet.appendChild(g); });
       const ex=document.createElement("div"); ex.className="group setup-extras";
-      ex.innerHTML='<button type="button" id="mobCareer">🎓</button><button type="button" id="mobMethods">📖</button><button type="button" id="mobAbout">ℹ️</button>';
+      ex.innerHTML=[["mobCareer","🎓","mc_career"],["mobMethods","📖","mc_methods"],["mobAbout","ℹ️","mc_about"]]
+        .map(([id,ic,k])=>'<button type="button" id="'+id+'">'+ic+'<small data-i18n="'+k+'">'+t(k)+'</small></button>').join("");
       sheet.appendChild(ex);
       document.getElementById("mobCareer").onclick=()=>{ toggleSetup(false); openCareer(); };
       document.getElementById("mobMethods").onclick=()=>{ toggleSetup(false); fillMethods(); openModal("methodsModal"); };
@@ -2736,11 +2759,11 @@ document.getElementById("mobSetup2").onclick=()=>toggleSetup();
 document.getElementById("setupBackdrop").onclick=()=>toggleSetup(false);
 document.getElementById("mobInspect").onclick=inspect;
 document.getElementById("mobHelmet").onclick=()=>document.getElementById("helmet").click();
-document.getElementById("mobSnd").onclick=()=>{ document.getElementById("snd").click(); document.getElementById("mobSnd").textContent=soundOn?"🔊":"🔇"; };
+document.getElementById("mobSnd").onclick=()=>{ document.getElementById("snd").click(); document.querySelector("#mobSnd .ic").textContent=soundOn?"🔊":"🔇"; };
 document.getElementById("mobClear").onclick=()=>document.getElementById("clear").click();
 document.getElementById("mobHelp").onclick=openTut;
 document.getElementById("helmet").addEventListener("click",()=>{ const m=document.getElementById("mobHelmet"); if(m) m.classList.toggle("on",helmetOn); });
-document.getElementById("snd").addEventListener("click",()=>{ const m=document.getElementById("mobSnd"); if(m) m.textContent=soundOn?"🔊":"🔇"; });
+document.getElementById("snd").addEventListener("click",()=>{ const m=document.querySelector("#mobSnd .ic"); if(m) m.textContent=soundOn?"🔊":"🔇"; });
 
 // ── Glossary: wszystkie metody fachu (spawanie + cięcie) ──
 const GLOSSARY=[
@@ -2895,11 +2918,11 @@ function cutInspect(){
   const passed=isChallenge()?coverage>=0.8&&score>=45:verdict.passed; // konkurs bez zmiany reguł
   if(!isChallenge()) jobSettled=true;
   // ISO 9013 to norma dla CIECIA TERMICZNEGO; 5817 dotyczy spoin i na karcie z rzazu bylaby klamstwem
-  lastReport={score,letter,iso,std:"ISO 9013",procLbl:(proc==="PLASMA"?"PLAZMA":"TLEN"),cut:true,proc,posKey,thick,coverage,spdAcc,evenness:straight,avgV,diff,passed,material:MATERIAL[bead].name[lang]};
+  lastReport={score,letter,iso,std:"ISO 9013",procLbl:t(proc==="PLASMA"?"pr_plasma":"pr_cut"),cut:true,proc,posKey,thick,coverage,spdAcc,evenness:straight,avgV,diff,passed,material:MATERIAL[bead].name[lang]};
   const letEl2=document.getElementById("rLetter"); letEl2.textContent=letter; letEl2.style.color=col;
   letEl2.classList.remove("pop"); void letEl2.offsetWidth; letEl2.classList.add("pop");
   const isoEl=document.getElementById("rIso"); isoEl.textContent="≈ ISO 9013 · "+iso; isoEl.style.background=isoCol+"22"; isoEl.style.color=isoCol;
-  document.getElementById("rPct").textContent=score+"% · "+(proc==="PLASMA"?"PLAZMA":"TLEN")+" · "+t("cut_word")+" · "+thick+"mm";
+  document.getElementById("rPct").textContent=score+"% · "+t(proc==="PLASMA"?"pr_plasma":"pr_cut")+" · "+t("cut_word")+" · "+thick+"mm";
   renderStat("rCov", coverage*100, Math.round(coverage*100)+"%");
   renderStat("rSpd", spdAcc*100, Math.round(spdAcc*100)+"% ("+(avgV/PX_PER_MM).toFixed(1)+"/"+(targetPx/PX_PER_MM).toFixed(1)+" mm/s)", spdAcc<0.5);
   document.getElementById("rHi").innerHTML='<b>—</b>';
