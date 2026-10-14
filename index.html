@@ -1187,8 +1187,7 @@ function drawFilletPlate(P,matTint){
 function drawButtPlate(P,matTint){
   const A=seamPts[0], B=seamPts[seamPts.length-1], len=Math.hypot(B.x-A.x,B.y-A.y)||1;
   const dx=(B.x-A.x)/len, dy=(B.y-A.y)/len, nx=-dy, ny=dx, ph=plateHalf();
-  const g=Math.max(1.5,grooveHalf*0.45);                   // połowa szczeliny w grani
-  const bw=grooveHalf+bevelW;                               // gdzie skos wychodzi na wierzch blachy
+  const vg=visGroove(), g=vg.gap, bw=vg.bevelTop;          // wizualna szczelina i krawędź fazy
   const T=Math.min(14,Math.max(6,thick*PX_PER_MM*0.45));     // grubość widoczna na krawędzi (z limitem — 12 mm nie może być „skrzynką")
   const pt=(base,s,d,k=0)=>({x:base.x+nx*s*d+dx*k, y:base.y+ny*s*d+dy*k});
   const poly=(c,ps)=>{ c.beginPath(); c.moveTo(ps[0].x,ps[0].y); for(let i=1;i<ps.length;i++) c.lineTo(ps[i].x,ps[i].y); c.closePath(); };
@@ -1208,10 +1207,12 @@ function drawButtPlate(P,matTint){
     poly(pctx,band(s,bw,ph)); pctx.fill();
     // skos (faza): płaska pochyła ścianka, ciemnieje w stronę grani
     const L=lit(s), hi=L>0 ? "rgba(215,228,236,"+(0.22+0.20*L)+")" : "rgba(160,175,185,"+(0.10+0.06*(1+L))+")";
-    pctx.fillStyle="#3c454c"; poly(pctx,band(s,g,bw)); pctx.fill();
-    pctx.fillStyle=lin(s,bw,g,[[0,hi],[1,"rgba(0,0,0,.55)"]]); poly(pctx,band(s,g,bw)); pctx.fill();
-    // ostra krawędź skos/wierzch — łapie światło
-    pctx.fillStyle=L>0?"rgba(235,244,250,.55)":"rgba(200,214,222,.28)"; poly(pctx,band(s,bw-0.8,bw+0.8)); pctx.fill();
+    if(bw>g+0.5){
+      pctx.fillStyle="#3c454c"; poly(pctx,band(s,g,bw)); pctx.fill();
+      pctx.fillStyle=lin(s,bw,g,[[0,hi],[1,"rgba(0,0,0,.55)"]]); poly(pctx,band(s,g,bw)); pctx.fill();
+      // ostra krawędź skos/wierzch — łapie światło
+      pctx.fillStyle=L>0?"rgba(235,244,250,.55)":"rgba(200,214,222,.28)"; poly(pctx,band(s,bw-0.8,bw+0.8)); pctx.fill();
+    }
     // przód: przekrój blachy (wierzch → faza → grań), ucięty równo
     const face=[ep(s,bw,0),ep(s,ph,0),ep(s,ph,T),ep(s,g,T),ep(s,g,T*0.82)];
     pctx.fillStyle="#56616a"; poly(pctx,face); pctx.fill();                       // cięta krawędź — jaśniejsza, żeby było widać wycięcie V
@@ -1237,7 +1238,7 @@ function drawButtPlate(P,matTint){
 function drawPipe(P,matTint){
   const cx=W/2, cy=workCY(), r=Math.min(W,H)*0.30, yS=P.pipe==="flat"?0.40:P.pipe==="wall"?1.0:0.6;
   const tl=(P.tilt||0)*Math.PI/180, ux=Math.cos(tl), uy=Math.sin(tl), ax=-uy, ay=ux;   // u = wzdłuż szwu, a = oś rury
-  const ph=plateHalf(), g=Math.max(1.5,grooveHalf*0.45), bw=grooveHalf+bevelW;
+  const ph=plateHalf(), vg=visGroove(), g=vg.gap, bw=vg.bevelTop;
   const wall=Math.min(r*0.12,Math.max(10,thick*PX_PER_MM*0.45));
   const ell=(c,s,rr,ry)=>{ c.beginPath(); c.ellipse(cx+ax*s,cy+ay*s,Math.max(1,rr),Math.max(1,ry),tl,0,Math.PI*2); };
   const ring=(c,s,r0,r1,col,yk=yS)=>{ c.beginPath();                                     // pierścień między elipsami r0…r1
@@ -1405,6 +1406,13 @@ let eyeBurn=0, lastFrameT=0, eyeWarned=false;
 function gVec(){ return POSITIONS[posKey].g; }
 function nearestSeam(x,y){ let d=1e18,px=x,py=y; for(const p of seamPts){ const dd=(p.x-x)**2+(p.y-y)**2; if(dd<d){d=dd;px=p.x;py=p.y;} } return {d:Math.sqrt(d),x:px,y:py}; }
 function plateHalf(){ return grooveHalf+bevelW+75; }                 // half width of the coupon plate
+// Wymiary przygotowania widoczne na ekranie — osobne od grooveHalf/bevelW,
+// które pozostają wejściami oceny. gap i bevelTop są połówkami szerokości rowka.
+function visGroove(){
+  const gap=Math.max(1.5,grooveHalf*0.45);
+  const bevelTop=thick<=3 ? gap : grooveHalf*1.25*0.85;
+  return {gap,bevelTop};
+}
 // 3.5.0 (1:1 z sim.js): za koncem szwu prostego nie ma blachy — luk gasnie na krawedzi, nie ~90 px dalej.
 function pastSeamEnd(x,y){ if(isCut()||POSITIONS[posKey].pipe||seamPts.length<2) return false;
   const a=seamPts[0],b=seamPts[seamPts.length-1],dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy;
