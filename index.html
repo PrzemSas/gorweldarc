@@ -1574,7 +1574,7 @@ function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.l
     if(i<vb.d0) vb.d0=i; if(i>vb.d1) vb.d1=i; }
   if(vb.tip>=0&&j!==vb.tip){ const st=j>vb.tip?1:-1, dd=Math.abs(j-vb.tip)*sl; if(Math.abs(j-vb.tip)<=s*3){ if(st===vb.dir){ vb.prog+=dd; vb.back=0; } else { vb.back=(vb.back||0)+dd; if(vb.back>ww*2.5){ vb.dir=st; vb.back=0; } } } }   /* kierunek zmienia się dopiero po wyraźnym cofnięciu — wahadło nie odwraca łuski */
   // łuska co ~0,45 szerokości lica wzdłuż szwu (MIG rzadziej, TIG z kropli spoiwa); szybciej = rzadziej
-  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.3:proc==="MMA"?bh*0.27:bh*0.62)*(proc==="TIG"?1:proc==="MIG"?0.85+Math.random()*0.3:0.9+Math.random()*0.2)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
+  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.5:proc==="MMA"?bh*0.46:bh*0.62)*(proc==="TIG"?1:proc==="MIG"?0.85+Math.random()*0.3:0.9+Math.random()*0.2)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
   if(!vb.ge) vb.ge=rip;   /* stały odstęp na cały ścieg — zastygające w różnych chwilach kawałki liczą ten sam rytm */
   if(proc!=="TIG"&&vb.prog>=rip){ const nk=Math.min(6,Math.floor(vb.prog/rip)); for(let q=nk-1;q>=0;q--) vbAddRipS(vb.S[j]-vb.dir*q*rip); vb.rp[j]=1; vb.prog=0; }   /* duży skok: brakujące łuski po kolei */
   vb.tip=j; vb.ww=ww; }
@@ -1636,7 +1636,7 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
     (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
   const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.72:0.85, rough=proc==="MMA"?0.09:proc==="MIG"?0.08:0.05;
-  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.15:0.055, Hc=proc==="TIG"?0.62:proc==="MIG"?0.5:0.44, Hp=proc==="TIG"?0.65:0.9, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.08:0.06;   /* MAG/MMA: płaskie lico (wypukłość ~13–18% szer.), łagodna stopka (wzorce Grok) */
+  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.3:0.16, Hc=proc==="TIG"?0.62:proc==="MIG"?0.5:0.44, Hp=proc==="TIG"?0.65:0.9, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.08:0.06;   /* MAG/MMA: płaskie lico (wypukłość ~13–18% szer.), łagodna stopka (wzorce Grok) */
   // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
   // Brzegi wygładzone wzdłuż szwu (średnia z sąsiadów) i interpolowane gładko — skokowa szerokość punkt-po-punkcie
   // (wahadło) dawała płaskie fasetki = pionowe pasy w cieniowaniu. Sama krawędź łatki (lo/hi) zostaje bez zmian.
@@ -1660,8 +1660,8 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
       if(a!==undefined&&(b===undefined||Math.abs(b-a)>Math.max(half*3.2,ge*2.5))) b=a+vb.dir*ge*Math.max(1,Math.ceil(Math.abs(sv-a)/ge));
       if(a===undefined&&b!==undefined) a=b-vb.dir*ge*Math.max(1,Math.ceil(Math.abs(b-sv)/ge));
       if(a!==undefined&&b!==undefined&&Math.abs(b-a)>ge*1.5){ const m=Math.floor(Math.abs(sv-a)/ge); a=a+vb.dir*ge*m; b=a+vb.dir*ge; }
-      if(a!==undefined&&b!==undefined){ const ph=Math.min(1,Math.abs(sv-a)/Math.abs(b-a)), e2=Math.min(0.5,(proc==="MIG"?1.3:0.9)/Math.abs(b-a)), vr=proc==="TIG"?1:0.6+0.8*vbNoise(a*0.21,3.7);
-        const st=ph<e2?ph/e2:1; h+=vr*half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:proc==="MMA"?4.0:1.5)*st*(proc==="MIG"?1-0.7*c:0.35+0.65*c); phO=ph;
+      if(a!==undefined&&b!==undefined){ const ph=Math.min(1,Math.abs(sv-a)/Math.abs(b-a)), e2=Math.min(0.5,(proc==="MIG"?2.0:0.9)/Math.abs(b-a)), vr=proc==="TIG"?1:0.6+0.8*vbNoise(a*0.21,3.7);
+        const st=ph<e2?ph/e2:1; h+=vr*half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:proc==="MMA"?4.0:1.5)*st*(proc==="MIG"?(0.55+0.3*(1-c))*Math.min(1,Math.min(uc,1-uc)/0.16):0.35+0.65*c); phO=ph;
         if(proc==="TIG") h+=half*0.025*Math.sin(ph*Math.PI*7)*c; }   // drobne prążki krzepnięcia w „monecie”
       else h+=half*ripA*0.35*c; }
     h+=(vbNoise(px*0.7,py*0.7)-0.5)*rough+(vbNoise(px*2.2,py*2.2)-0.5)*rough*0.25;
