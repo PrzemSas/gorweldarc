@@ -1520,8 +1520,9 @@ function depositBead(x,y,w){
   // Do pctx, czyli POD ścieg — trwały ślad ciepła na blasze. Wizualne, `baked` bez zmian.
   pctx.save();
   let hz=pctx.createRadialGradient(x,y,w*1.05,x,y,w*3.4);
-  hz.addColorStop(0,"rgba(155,98,38,0.050)"); hz.addColorStop(0.42,"rgba(118,66,96,0.038)");
-  hz.addColorStop(0.72,"rgba(58,96,152,0.032)"); hz.addColorStop(1,"rgba(0,0,0,0)");
+  const hzK=bead==="ss"?(proc==="TIG"?2.8:2.0):bead==="alu"?0.25:proc==="TIG"?1.5:1;   // nierdzewka: wyraźna tęcza przy stopkach (zdjęcia), alu prawie bez nalotu
+  hz.addColorStop(0,`rgba(176,128,46,${0.05*hzK})`); hz.addColorStop(0.42,`rgba(124,66,110,${0.038*hzK})`);
+  hz.addColorStop(0.72,`rgba(58,96,168,${0.032*hzK})`); hz.addColorStop(1,"rgba(0,0,0,0)");
   pctx.fillStyle=hz; pctx.beginPath(); pctx.arc(x,y,w*3.4,0,7); pctx.fill();
   let hb=pctx.createRadialGradient(x,y,w*0.75,x,y,w*1.65);
   hb.addColorStop(0,"rgba(16,12,8,0.11)"); hb.addColorStop(1,"rgba(0,0,0,0)");
@@ -1530,31 +1531,10 @@ function depositBead(x,y,w){
   // fusion toe — seats the bead into the plate (slight shadow ring)
   // Pozycja kształtuje lico (tylko rysunek): PC/PB/2G — ciekły metal ścieka, dolna stopka pełniejsza
   // (brzuch w dół ekranu); PE/PD — jeziorko wisi, lico płaskie i matowe; PA — symetryczne.
-  // Lico jako CIĄGŁA taśma (3.8.0, tylko rysunek): każdy odcinek od poprzedniej kropli to kapsuła z gradientem
-  // W POPRZEK osi ściegu (stopka ciemna → korona jasna po stronie światła). Sąsiednie odcinki mają ten sam
-  // profil w tym samym miejscu, więc zlewają się w jedno lico — wcześniej każda kropla była osobną kulką
-  // z własnym odblaskiem i cieniem, a ścieg wyglądał jak sznur korali. Cień stopki idzie na blachę (pctx).
-  const bs=beadShape(), sagY=ww*bs.sag, cy=y+sagY*0.5;
-  let ax=x-ux*ww*0.5, ay=cy-uy*ww*0.5, cont=false, bw=ww*(1+bs.sag*0.15);
-  if(bodyPrev&&bodyPrev.pass===passIndex&&Math.hypot(x-bodyPrev.x,cy-bodyPrev.y)<ww*1.6){ ax=bodyPrev.x; ay=bodyPrev.y; cont=true; bw=bodyPrev.bw*0.88+bw*0.12; }   // szerokość płynie, nie skacze
-  let tx=x-ax, ty=cy-ay; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
-  const gx=-ty, gy=tx;                                                      // normalna geometryczna (brzegi taśmy)
-  let nx=gx, ny=gy; if(nx+ny>0){ nx=-nx; ny=-ny; }                          // n → strona światła (lewa-góra)
-  pctx.save(); pctx.strokeStyle="rgba(10,8,6,0.10)"; pctx.lineCap=cont?"butt":"round"; pctx.lineWidth=ww*2.5;   // butt: półprzezroczysty cień nie ciemnieje na łączeniach
-  pctx.beginPath(); pctx.moveTo(ax,ay); pctx.lineTo(x,cy); pctx.stroke(); pctx.restore();
-  const gb=sctx.createLinearGradient(x+nx*bw,cy+ny*bw,x-nx*bw,cy-ny*bw), hi=Math.min(1,PROCESS[proc].crown*bs.crown);
-  gb.addColorStop(0,"#1a1e22"); gb.addColorStop(0.1,c.dark); gb.addColorStop(0.3,c.solid);
-  gb.addColorStop(0.4,hi>0.8?"#fffef4":c.high); gb.addColorStop(0.5,c.high); gb.addColorStop(0.72,c.solid);
-  gb.addColorStop(0.9,c.dark); gb.addColorStop(1,"#15181b");
-  // Ciągła taśma: czworobok od brzegów poprzedniego odcinka do brzegów bieżącego (szerokość zmienia się
-  // płynnie, bez „kiełbasek” z okrągłych końców); okrągły tylko początek ściegu.
-  sctx.save(); sctx.fillStyle=gb; sctx.beginPath();
-  if(cont){ const pb=bodyPrev.bw, pgx=bodyPrev.gx, pgy=bodyPrev.gy, bx=ax-tx*0.6, by=ay-ty*0.6;   // 0,6 px zakładki = bez szwów antyaliasingu
-    sctx.moveTo(bx+pgx*pb,by+pgy*pb); sctx.lineTo(x+gx*bw,cy+gy*bw); sctx.lineTo(x-gx*bw,cy-gy*bw); sctx.lineTo(bx-pgx*pb,by-pgy*pb); sctx.closePath(); }
-  else sctx.arc(x,cy,bw,0,7);
-  sctx.fill(); sctx.restore();
-  bodyPrev={x,y:cy,pass:passIndex,bw,gx,gy};
-  flushRipples(x,cy,bw);
+  // Lico budowane WZDŁUŻ SZWU (tylko rysunek): kropla poszerza lico tam, gdzie leży w poprzek osi, a łuska
+  // powstaje dopiero, gdy metal zakrzepnie za jeziorkiem. Wahadło/zakosy dają więc jedno szerokie lico
+  // na całą szerokość ruchu ręki — jak w realu — a nie zygzak „węża” po śladzie kursora.
+  vbHit(x,y,ww);
   if(PROCESS[proc].slag){ sctx.globalAlpha=0.1; sctx.fillStyle="#16110d";
     for(let i=0;i<2;i++) sctx.fillRect(x-ww*0.4+Math.random()*ww*0.8,y-ww*0.4+Math.random()*ww*0.8,1.6,1.6); sctx.globalAlpha=1; }
   if(secE&&Math.hypot(x-secE.x,y-secE.y)<grooveHalf*1.7) secHitCur=true;   // przekrój na czole: ta warstwa doszła do końca
@@ -1570,12 +1550,127 @@ function beadShape(){ const P=POSITIONS[posKey]||{}, k=posKey;
   if(k==="PC"||k==="PB"||k==="P2G") return {sag:Math.min(0.22,P.g*1.3),crown:0.85,bow:1};
   if(k==="P5G"||k==="HL045") return {sag:0.06,crown:0.8,bow:1.15};
   return {sag:0,crown:1,bow:1}; }
-// Łuska czeka w kolejce, aż czoło taśmy odjedzie dalej niż jej promień — inaczej okrągły początek następnego
-// odcinka lica zamalowałby ją od razu (tylko rysunek). flushRipples(null) = narysuj wszystko (koniec ściegu).
-let ripQ=[];
-function queueRipple(x,y,w,dx,dy){ ripQ.push([x,y,w,dx,dy]); if(ripQ.length>24) drawRipple(...ripQ.shift()); }   // TIG w miejscu: kolejka nie rośnie bez końca
-function flushRipples(tx,ty,bw){ if(!ripQ.length) return;
-  const keep=[]; for(const r of ripQ){ if(tx==null||Math.hypot(r[0]-tx,r[1]-ty)>bw*1.15+r[2]*0.3) drawRipple(...r); else keep.push(r); } ripQ=keep; }
+// ── LICO W UKŁADZIE SZWU (3.8.0, tylko rysunek — ocena, baked i srng bez zmian) ─────────────────────────
+// lo/hi[i] = zasięg metalu w poprzek osi w punkcie szwu i (px, wzdłuż seamNrm). Czoło (tip) = ostatni punkt
+// trafiony kroplą; wszystko dalej niż długość jeziorka za czołem krzepnie (frozen) — wtedy i tylko wtedy
+// rysujemy łuskę. Ponowne przetopienie (powrót łukiem) zdejmuje zakrzepnięcie i łuska powstaje od nowa.
+let vb=null;
+function vbReset(){ vb=null; }
+function vbInit(){ const n=seamPts.length; vb={pass:passIndex,lo:new Float32Array(n).fill(1e9),hi:new Float32Array(n).fill(-1e9),
+  fz:new Uint8Array(n),rp:new Uint8Array(n),dab:new Uint8Array(n),d0:n,d1:-1,tip:-1,dir:1,prog:0,ww:4,lastRip:-1,S:new Float32Array(n),rl:[]};
+  for(let i=1;i<n;i++) vb.S[i]=vb.S[i-1]+Math.hypot(seamPts[i].x-seamPts[i-1].x,seamPts[i].y-seamPts[i-1].y); }
+function vbAddRip(j){ const v=vb.S[j], a=vb.rl; let k=a.length; while(k>0&&a[k-1]>v) k--; if(a[k-1]===v) return; a.splice(k,0,v); }
+function vbOK(){ return seamPts.length>2&&seamNrm.length===seamPts.length&&!isCut(); }
+function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.length!==seamPts.length) vbInit();
+  const j=nearestIdx(x,y), n=seamNrm[j], so=(x-seamPts[j].x)*n.x+(y-seamPts[j].y)*n.y, sl=Math.max(0.5,segLen), EL=2.4*ww, s=Math.ceil(EL/sl);   // jeziorko wydłużone wzdłuż szwu → gładkie brzegi przy wahadle
+  for(let i=Math.max(0,j-s);i<=Math.min(seamPts.length-1,j+s);i++){ const ap=(i-j)*sl, cov=vb.hi[i]>=vb.lo[i], a=cov?ap/EL:ap/ww, ch=ww*Math.sqrt(Math.max(0,1-a*a)); /* wydłużone tylko po metalu, który już leży — koniec/krater zostaje okrągły */ if(ch<=0) continue;
+    if(vb.fz[i]&&Math.abs(ap)>=ww) continue;   // zakrzepłego nie ruszamy wygładzaniem — tylko realne przetopienie (w promieniu kropli)
+    if(so-ch<vb.lo[i]) vb.lo[i]=so-ch; if(so+ch>vb.hi[i]) vb.hi[i]=so+ch; vb.fz[i]=0;
+    if(i<vb.d0) vb.d0=i; if(i>vb.d1) vb.d1=i; }
+  if(vb.tip>=0&&j!==vb.tip){ const st=j>vb.tip?1:-1; if(Math.abs(j-vb.tip)<=s*3){ if(st===vb.dir) vb.prog+=Math.abs(j-vb.tip)*sl; else vb.dir=st; } }
+  // łuska co ~0,45 szerokości lica wzdłuż szwu (MIG rzadziej, TIG z kropli spoiwa); szybciej = rzadziej
+  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=bh*0.62*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
+  if(proc!=="TIG"&&vb.prog>=rip){ vb.rp[j]=1; vbAddRip(j); vb.prog=0; }
+  vb.tip=j; vb.ww=ww; }
+function vbDab(x,y){ if(!vbOK()||!vb) return; const j=nearestIdx(x,y); vb.dab[j]=1; vbAddRip(j); }
+// Rysuje odcinki lica i zamraża to, co zostało za jeziorkiem. all=true: łuk zgasł / koniec ściegu — krzepnie wszystko.
+function vbFlush(all){ if(!vb) return; const N=seamPts.length;
+  if(vb.d1>=vb.d0){ for(let i=Math.max(0,vb.d0-1);i<=Math.min(N-2,vb.d1);i++) vbSeg(i); vb.d0=N; vb.d1=-1; }
+  const lag=Math.ceil(vb.ww*2.4/Math.max(0.5,segLen));
+  for(let i=0;i<N;i++){ if(vb.fz[i]||vb.hi[i]<vb.lo[i]) continue;
+    if(all||vb.tip<0||(vb.dir>0?i<vb.tip-lag:i>vb.tip+lag)){ vb.fz[i]=1; vbFreeze(i); } } }
+function vbSeg(i){ if(vb.fz[i]&&vb.fz[i+1]) return; let lo0=vb.lo[i],hi0=vb.hi[i],lo1=vb.lo[i+1],hi1=vb.hi[i+1]; if(hi0<lo0&&hi1<lo1) return;
+  let A=seamPts[i],B=seamPts[i+1],na=seamNrm[i],nb=seamNrm[i+1];
+  // przy zakrzepłym końcu rysujemy tylko połowę odcinka — druga połowa należy do wyrenderowanej łatki
+  if(vb.fz[i]&&hi0>=lo0&&hi1>=lo1){ A={x:(A.x+B.x)/2,y:(A.y+B.y)/2}; lo0=(lo0+lo1)/2; hi0=(hi0+hi1)/2; }
+  if(vb.fz[i+1]&&hi0>=lo0&&hi1>=lo1){ B={x:(A.x+B.x)/2,y:(A.y+B.y)/2}; lo1=(lo0+lo1)/2; hi1=(hi0+hi1)/2; }
+  const e0=hi0<lo0, e1=hi1<lo1;   // koniec ściegu: okrągły (krater), nie klin
+  const l0=e0?lo1:lo0, h0=e0?hi1:hi0, l1=e1?lo0:lo1, h1=e1?hi0:hi1;
+  const c=BEADS[bead], mx=(A.x+B.x)/2, my=(A.y+B.y)/2, ml=(l0+l1)/2, mh=(h0+h1)/2, nx=(na.x+nb.x)/2, ny=(na.y+nb.y)/2;
+  const lightLo=(nx+ny)>0;   // strona lo leży bliżej lewej-góry → tam połysk
+  const g=sctx.createLinearGradient(mx+nx*ml,my+ny*ml,mx+nx*mh,my+ny*mh), bs=beadShape(), hiPos=lightLo?0.32:0.68, P=PROCESS[proc];
+  const sh=Math.min(0.9,P.crown*bs.crown);
+  const sd=lightLo?1:0;   // strona cienia (daleko od światła)
+  g.addColorStop(0,c.dark); g.addColorStop(0.06,lightLo?c.solid:c.dark); g.addColorStop(Math.max(0.1,hiPos-0.18),c.solid);
+  g.addColorStop(hiPos,sh>0.6?c.high:c.solid); g.addColorStop(Math.min(0.9,hiPos+0.2),c.solid);
+  g.addColorStop(0.94,lightLo?c.dark:c.solid); g.addColorStop(1,c.dark);
+  sctx.fillStyle=g; sctx.beginPath();
+  if(e0||e1){ const P0=e0?B:A, nn=e0?nb:na, l=e0?l1:l0, h=e0?h1:h0, m=(l+h)/2; sctx.arc(P0.x+nn.x*m,P0.y+nn.y*m,Math.max(0.5,(h-l)/2),0,7); sctx.fill(); return; }
+  sctx.moveTo(A.x+na.x*l0-(B.x-A.x)*0.15,A.y+na.y*l0-(B.y-A.y)*0.15); sctx.lineTo(B.x+nb.x*l1+(B.x-A.x)*0.15,B.y+nb.y*l1+(B.y-A.y)*0.15);
+  sctx.lineTo(B.x+nb.x*h1+(B.x-A.x)*0.15,B.y+nb.y*h1+(B.y-A.y)*0.15); sctx.lineTo(A.x+na.x*h0-(B.x-A.x)*0.15,A.y+na.y*h0-(B.y-A.y)*0.15); sctx.closePath(); sctx.fill(); }
+// Zakrzepnięcie punktu i = RENDER lica w tym kawałku szwu: mapa wysokości (wypukły profil w poprzek, łuska jako
+// schodek krzepnięcia — ostry próg na tylnym brzegu „monety”, łagodny spadek ku przodowi, chropowatość) i światło
+// per piksel (rozproszone + odblask Blinna-Phonga, kolor materiału i nalotu). Wzorce: TIG nierdzewka „stack of
+// dimes”, MIG stal matowo-srebrna z nalotem, MMA po zbiciu żużla matowa i chropowata. Tylko rysunek.
+const VB_MAT={
+  steel:{MIG:[146,149,152,0.6,20],MMA:[120,123,126,0.22,9],TIG:[172,175,179,1.0,30]},
+  ss:{MIG:[172,164,146,0.6,24],MMA:[150,147,140,0.25,10],TIG:[200,162,98,1.1,28]},
+  alu:{MIG:[200,204,209,0.35,12],MMA:[190,194,198,0.2,8],TIG:[206,210,214,0.55,16]} };
+const VB_L=(()=>{ const l=[-0.42,-0.55,0.72], m=Math.hypot(...l); return l.map(v=>v/m); })(), VB_H=(()=>{ const h=[VB_L[0],VB_L[1],VB_L[2]+1], m=Math.hypot(...h); return h.map(v=>v/m); })();
+let vbPatch=null, vbPctx=null;
+function vbNoise(x,y){ const xi=Math.floor(x), yi=Math.floor(y), fx=x-xi, fy=y-yi;
+  const h=(a,b)=>{ let n=(a*374761393+b*668265263)|0; n=(n^(n>>>13))*1274126177|0; return ((n^(n>>>16))>>>0)/4294967295; };
+  const sx=fx*fx*(3-2*fx), sy=fy*fy*(3-2*fy), a=h(xi,yi), b=h(xi+1,yi), c=h(xi,yi+1), d=h(xi+1,yi+1);
+  return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy; }
+function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.lo[i], hi=vb.hi[i];
+  const B=seamPts[Math.min(N-1,i+1)], A0=seamPts[Math.max(0,i-1)]; let tx=B.x-A0.x, ty=B.y-A0.y; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
+  // cień stopki na blasze (raz na punkt)
+  pctx.save(); pctx.fillStyle="rgba(8,7,6,0.05)"; for(const v of [lo,hi]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,1.6,0,7); pctx.fill(); } pctx.restore();
+  const sl=Math.max(0.5,segLen), sp=i>0?vb.S[i]-vb.S[i-1]:sl, sn=i<N-1?vb.S[i+1]-vb.S[i]:sl;
+  const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
+  const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
+    (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
+  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.4:0.5, rough=proc==="MMA"?0.32:proc==="MIG"?0.12:0.05;
+  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.3:0.24, Hc=0.62, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.32:0.12;
+  // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
+  function edges(s){ const nb=s<0?i-1:i+1, f=Math.abs(s)/(s<0?sp:sn);
+    if(has(nb)){ return [lo+(vb.lo[nb]-lo)*f, hi+(vb.hi[nb]-hi)*f]; }
+    const m=(lo+hi)/2, r=half0, q=1-(s/Math.max(0.5,r))**2; if(q<=0) return null; const hh=r*Math.sqrt(q); return [m-hh,m+hh]; }
+  const rl=vb.rl;
+  function height(px,py){ const dx=px-A.x, dy=py-A.y, s=dx*tx+dy*ty, t=dx*n.x+dy*n.y; const e=edges(s); if(!e) return null;
+    const L=e[0], H=e[1], w=Math.max(0.5,H-L), u=(t-L)/w; if(u<-0.08||u>1.08) return null;
+    const uc=Math.min(1,Math.max(0,u)), c=1-(2*uc-1)**2, half=w/2;
+    let h=half*Hc*Math.pow(c,0.65);
+    // łuska: przesunięcie frontu krzepnięcia (wypukły do tyłu) i faza między frontami
+    if(rl.length){ const sg=vb.S[i]+s, sv=sg-k*half*bowK*c*1.15; let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
+      const prev=rl[lo2-1], next=rl[lo2]; let a,b;
+      if(vb.dir>0){ a=prev; b=next; } else { a=next; b=prev; }
+      if(a!==undefined&&b!==undefined&&Math.abs(b-a)<half*3.2){ const ph=Math.abs(sv-a)/Math.abs(b-a), e2=Math.min(0.5,0.9/Math.abs(b-a));
+        const st=ph<e2?ph/e2:1; h+=half*ripA*Math.pow(1-ph,1.5)*st*(0.35+0.65*c);
+        if(proc==="TIG") h+=half*0.025*Math.sin(ph*Math.PI*7)*c; }   // drobne prążki krzepnięcia w „monecie”
+      else h+=half*ripA*0.35*c; }
+    h+=(vbNoise(px*0.7,py*0.7)-0.5)*rough+(vbNoise(px*2.2,py*2.2)-0.5)*rough*0.25;
+    return {h,u,t,L,H}; }
+  // ramka łatki (logiczne px) i render w pikselach urządzenia
+  const cs=[[s0,lo-1.2],[s0,hi+1.2],[s1,lo-1.2],[s1,hi+1.2]].map(([s,t])=>[A.x+tx*s+n.x*t,A.y+ty*s+n.y*t]);
+  for(const nb of [i-1,i+1]) if(has(nb)) for(const v of [vb.lo[nb]-1.2,vb.hi[nb]+1.2]) cs.push([A.x+n.x*v,A.y+n.y*v]);
+  const x0=Math.floor(Math.min(...cs.map(c=>c[0]))), y0=Math.floor(Math.min(...cs.map(c=>c[1]))), x1=Math.ceil(Math.max(...cs.map(c=>c[0]))), y1=Math.ceil(Math.max(...cs.map(c=>c[1])));
+  const D=Math.min(2,Math.max(1,DPR||1)), pw=Math.max(1,Math.ceil((x1-x0)*D)), ph2=Math.max(1,Math.ceil((y1-y0)*D)); if(pw*ph2>40000) return;
+  if(!vbPatch){ vbPatch=document.createElement("canvas"); vbPctx=vbPatch.getContext("2d"); }
+  if(vbPatch.width<pw||vbPatch.height<ph2){ vbPatch.width=Math.max(pw,vbPatch.width,64); vbPatch.height=Math.max(ph2,vbPatch.height,64); }
+  const img=vbPctx.createImageData(pw,ph2), d=img.data, ep=0.5/D;
+  const tint=bead==="ss"?(proc==="TIG"?0.7:0.4):bead==="steel"?(proc==="TIG"?0.4:proc==="MIG"?0.22:0):0.05;
+  for(let yy=0;yy<ph2;yy++) for(let xx=0;xx<pw;xx++){ const px=x0+(xx+0.5)/D, py=y0+(yy+0.5)/D;
+    const dxs=px-A.x, dys=py-A.y, s=dxs*tx+dys*ty; if(s<s0||s>s1) continue;
+    const c0=height(px,py); if(!c0) continue;
+    const cx=height(px+ep,py), cy=height(px,py+ep), hx=cx?(cx.h-c0.h)/ep:0, hy=cy?(cy.h-c0.h)/ep:0;
+    let nx=-hx, ny=-hy, nz=1; const nm=Math.hypot(nx,ny,nz); nx/=nm; ny/=nm; nz/=nm;
+    const dif=Math.max(0,nx*VB_L[0]+ny*VB_L[1]+nz*VB_L[2]), spc=Math.pow(Math.max(0,nx*VB_H[0]+ny*VB_H[1]+nz*VB_H[2]),mat[4])*mat[3];
+    let r=mat[0], g=mat[1], b=mat[2];
+    // nalot: przy stopkach niebieski/fioletowy (nierdzewka, TIG), na MIG-u stali brązowe plamy
+    const eu=Math.min(c0.u,1-c0.u), te=Math.max(0,1-eu/0.26)*tint, tp=Math.max(0,1-Math.abs(eu-0.2)/0.1)*tint*0.6;
+    if(te>0){ r+=(70-r)*te; g+=(88-g)*te; b+=(160-b)*te; }
+    if(tp>0){ r+=(140-r)*tp; g+=(82-g)*tp; b+=(130-b)*tp; }   // pas fioletowy przed niebieskim
+    if(bead==="steel"&&proc==="MIG"){ const ox=vbNoise(px*0.3,py*0.3); if(ox>0.7){ const f=Math.min(0.28,(ox-0.7)*1.4); r+=(112-r)*f; g+=(92-g)*f; b+=(70-b)*f; } }
+    if(bead==="ss"&&proc==="TIG"){ const cu=1-Math.abs(2*c0.u-1); r+=(222-r)*cu*0.25; g+=(186-g)*cu*0.25; b+=(118-b)*cu*0.2; }   // środek złoty, słomkowy
+    const amb=0.26, lit=amb+0.7*dif, Ry=2*nz*ny, sky=Math.max(0,0.55-0.6*Ry)*envK;   // odbicie otoczenia: metal odbija jaśniejszą „górę”
+    let R=r*(lit+sky)+spc*235, G=g*(lit+sky)+spc*238, Bc=b*(lit+sky)+spc*242;
+    const edge=Math.min(c0.t-c0.L,c0.H-c0.t), al=Math.max(0,Math.min(1,edge*D+0.6));
+    const o=(yy*pw+xx)*4; d[o]=R>255?255:R; d[o+1]=G>255?255:G; d[o+2]=Bc>255?255:Bc; d[o+3]=al*255; }
+  vbPctx.putImageData(img,0,0); sctx.drawImage(vbPatch,0,0,pw,ph2,x0,y0,pw/D,ph2/D);
+  if(proc==="MIG"&&bead==="steel"&&Math.random()<0.03){ const v=lo+(hi-lo)*(0.25+Math.random()*0.5);   // wysepka krzemianów (szklisty żużel)
+    sctx.save(); sctx.globalAlpha=0.6; sctx.fillStyle="#4e3519"; sctx.beginPath(); sctx.ellipse(A.x+n.x*v,A.y+n.y*v,1.1+Math.random()*1.4,0.8+Math.random()*0.8,Math.random()*3,0,7); sctx.fill(); sctx.restore(); }
+}
 function drawRipple(x,y,w,dx,dy){
   const c=BEADS[bead],P=PROCESS[proc],px=-dy,py=dx;
   const irr = proc==="MMA" ? (Math.random()*0.25+0.85) : 1;
@@ -1599,7 +1694,6 @@ function beadWidth(){
   else w=idealHalf;
   return w*ampF.w*arcWFac()*angWFac();  // prąd, długość łuku i kąt razem robią szerokość jeziorka
 }
-let bodyPrev=null;   // ostatni punkt taśmy lica (tylko rysunek)
 let fbGood=false;
 const HI_FB_MIN_S=0.5;   // HUD-only: ile sekund ściegu, zanim średnia bieżąca HI ma prawo głosu
 function feedback(){
@@ -1778,7 +1872,7 @@ function move(e){ if(isCut())return cutMove(e);
       // dostaje dawny automat co 150 ms i liczy się dokładnie jak przed 3.3.0.
       const dab = tigLive ? filPend : (now-lastDab>150);
       if(dab && onPlate(p.x+aox,p.y+aoy)){ const dw=Math.max(idealHalf, w*0.95); const pl=depositBead(p.x+aox,p.y+aoy,dw);
-        molten.push({x:pl.x,y:pl.y,r:dw,t:now}); queueRipple(pl.x,pl.y,dw,ux,uy); lastDab=now; dipT=now;
+        molten.push({x:pl.x,y:pl.y,r:dw,t:now}); vbDab(pl.x,pl.y); lastDab=now; dipT=now;
         if(tigLive){ if(lastDabPos){ const gap=Math.hypot(pl.x-lastDabPos.x,pl.y-lastDabPos.y);
             filPenAcc+=filPenNow(gap/Math.max(1e-6,targetPx*FIL_DT)); filCount++; }
           lastDabPos={x:pl.x,y:pl.y}; } }
@@ -1804,7 +1898,7 @@ function move(e){ if(isCut())return cutMove(e);
             break; } }
         const pl=depositBead(x,y,w);
         molten.push({x:pl.x,y:pl.y,r:w,t:now}); distAcc+=step;
-        const rip=w*0.45*(1+vEMA*0.004)/Math.sqrt(PROCESS[proc].rippleK); /* łuska gęsto jak dachówka (tylko rysunek); szybciej = rzadziej */ if(distAcc>=rip){ queueRipple(pl.x,pl.y,w,ux,uy); distAcc=0; } }
+        const rip=w*0.45*(1+vEMA*0.004)/Math.sqrt(PROCESS[proc].rippleK); /* łuska gęsto jak dachówka (tylko rysunek); szybciej = rzadziej */ if(distAcc>=rip){ distAcc=0; } }   /* łuska: vbHit/vbFreeze (wzdłuż szwu) */
     }
     // odpryski do OCENY liczone po czasie łuku (1:1 z sim.js) — spawnSparks robi już tylko grafikę
     // 1.4.0: tempo poza oknem = rozprysk. Przedtem kara była STAŁA dla danego proc/thick, więc
@@ -1828,7 +1922,7 @@ function end(e){ if(e&&uiHit(e)) return;
   // odciągnięciem za daleko. Bez tego nie da się oderwać elektrody od blachy po zajarzeniu.
   if(e&&e.type==="pointerup"&&welding&&arcLive){ btnMask=e.buttons|0; return; }
   if(e&&e.pointerId!==undefined) try{ stage.releasePointerCapture(e.pointerId); }catch(err){}
-  if(isCut())return cutEnd(); if(welding&&last) recEv('up',last.x,last.y,performance.now()); welding=false; last=null; speedFb=""; arcOff(); cursor.seen=false; flushRipples(null);   // taśmy nie zrywamy: ponowne zajarzenie przy czole ściegu ją kontynuuje
+  if(isCut())return cutEnd(); if(welding&&last) recEv('up',last.x,last.y,performance.now()); welding=false; last=null; speedFb=""; arcOff(); cursor.seen=false; vbFlush(true);   // łuk zgasł: jeziorko krzepnie (krater); ponowne zajarzenie przetopi je i pociągnie lico dalej
   if(baked.length>=10 && coverageNow()>=0.9){               // full layer covered
     if(passIndex < passPlanArr.length-1) bankPass();        // more layers to go → freeze this one, weld the next
     else inspect();                                         // last layer done → grade the whole joint
@@ -2352,6 +2446,7 @@ function updateCovBar(now){
 }
 // ── Render ────────────────────────────────────────────────────────
 function frame(now){
+  if(vb) vbFlush(false);   // lico: dorysuj odcinki i zamroź to, co zostało za jeziorkiem
   const dtf=lastFrameT?Math.min(0.05,(now-lastFrameT)/1000):0; lastFrameT=now;
   if(welding&&!helmetOn) eyeBurn+=dtf; else eyeBurn=Math.max(0,eyeBurn-dtf*0.6); // eyes recover when you stop / put helmet on
   ctx.clearRect(0,0,W,H);
@@ -2503,7 +2598,7 @@ function passMetrics(){
 }
 // freeze the finished layer underneath and arm the next one
 function bankPass(){
-  flushRipples(null);
+  vbFlush(true); vbReset();
   recEv('bank',0,0,performance.now());
   passLog.push(passMetrics());
   const bDone=beadPlan&&beadPlan[passIndex];
@@ -2974,7 +3069,7 @@ function clearWeld(seedOverride){
   // grubości albo pozycji zostawiała `welding=true` przy świeżym, pustym nagraniu: gra odkładałaby
   // ścieg bez zdarzenia zajarzenia, a `sim.js` pomijałby te ruchy (`!last`) — czysty rozjazd.
   if(welding){ welding=false; last=null; speedFb=""; arcOff(); }
-  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; bodyPrev=null; ripQ=[]; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
+  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; vbReset(); speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
