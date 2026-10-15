@@ -1559,7 +1559,8 @@ function vbReset(){ vb=null; }
 function vbInit(){ const n=seamPts.length; vb={pass:passIndex,lo:new Float32Array(n).fill(1e9),hi:new Float32Array(n).fill(-1e9),
   fz:new Uint8Array(n),rp:new Uint8Array(n),dab:new Uint8Array(n),d0:n,d1:-1,tip:-1,dir:1,prog:0,ww:4,lastRip:-1,S:new Float32Array(n),rl:[]};
   for(let i=1;i<n;i++) vb.S[i]=vb.S[i-1]+Math.hypot(seamPts[i].x-seamPts[i-1].x,seamPts[i].y-seamPts[i-1].y); }
-function vbAddRip(j){ const v=vb.S[j], a=vb.rl; let k=a.length; while(k>0&&a[k-1]>v) k--; if(a[k-1]===v) return; a.splice(k,0,v); }
+function vbAddRip(j){ const v=vb.S[j], a=vb.rl; let k=a.length; while(k>0&&a[k-1]>v) k--; if(a[k-1]===v) return; a.splice(k,0,v);
+  const nb=a[k-1]!==undefined?v-a[k-1]:a[k+1]!==undefined?a[k+1]-v:0; if(nb>0.5&&nb<40) vb.ge=vb.ge?vb.ge*0.8+nb*0.2:nb; }   // typowy odstęp łuski — do ciągnięcia rytmu przy kraterze
 function vbOK(){ return seamPts.length>2&&seamNrm.length===seamPts.length&&!isCut(); }
 function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.length!==seamPts.length) vbInit();
   const j=nearestIdx(x,y), n=seamNrm[j], so=(x-seamPts[j].x)*n.x+(y-seamPts[j].y)*n.y, sl=Math.max(0.5,segLen), EL=2.4*ww, s=Math.ceil(EL/sl);   // jeziorko wydłużone wzdłuż szwu → gładkie brzegi przy wahadle
@@ -1569,7 +1570,7 @@ function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.l
     if(i<vb.d0) vb.d0=i; if(i>vb.d1) vb.d1=i; }
   if(vb.tip>=0&&j!==vb.tip){ const st=j>vb.tip?1:-1; if(Math.abs(j-vb.tip)<=s*3){ if(st===vb.dir) vb.prog+=Math.abs(j-vb.tip)*sl; else vb.dir=st; } }
   // łuska co ~0,45 szerokości lica wzdłuż szwu (MIG rzadziej, TIG z kropli spoiwa); szybciej = rzadziej
-  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=bh*0.62*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
+  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.2:bh*0.62)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
   if(proc!=="TIG"&&vb.prog>=rip){ vb.rp[j]=1; vbAddRip(j); vb.prog=0; }
   vb.tip=j; vb.ww=ww; }
 function vbDab(x,y){ if(!vbOK()||!vb) return; const j=nearestIdx(x,y); vb.dab[j]=1; vbAddRip(j); }
@@ -1615,13 +1616,18 @@ function vbNoise(x,y){ const xi=Math.floor(x), yi=Math.floor(y), fx=x-xi, fy=y-y
 function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.lo[i], hi=vb.hi[i];
   const B=seamPts[Math.min(N-1,i+1)], A0=seamPts[Math.max(0,i-1)]; let tx=B.x-A0.x, ty=B.y-A0.y; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
   // cień stopki na blasze (raz na punkt)
-  pctx.save(); pctx.fillStyle="rgba(8,7,6,0.05)"; for(const v of [lo,hi]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,1.6,0,7); pctx.fill(); } pctx.restore();
+  pctx.save(); pctx.fillStyle="rgba(8,7,6,0.05)"; for(const v of [lo,hi]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,1.6,0,7); pctx.fill(); }
+  if(proc==="MIG"){ pctx.fillStyle="rgba(14,12,10,0.07)"; for(const v of [lo-2.2,hi+2.2]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,2.6,0,7); pctx.fill(); }   // okopcony pas przy stopkach
+    if(Math.random()<0.09){ const side=Math.random()<0.5?lo-2-Math.random()*(hi-lo)*0.9:hi+2+Math.random()*(hi-lo)*0.9, sx=A.x+n.x*side+tx*(Math.random()-0.5)*3, sy=A.y+n.y*side+ty*(Math.random()-0.5)*3, rr=0.6+Math.random()*1.1;
+      const gg=pctx.createRadialGradient(sx-rr*0.35,sy-rr*0.4,rr*0.1,sx,sy,rr); gg.addColorStop(0,"#9aa0a4"); gg.addColorStop(0.5,"#4a4e52"); gg.addColorStop(1,"#1a1c1e");   // kulka odprysku
+      pctx.fillStyle="rgba(0,0,0,0.25)"; pctx.beginPath(); pctx.arc(sx+0.5,sy+0.6,rr,0,7); pctx.fill(); pctx.fillStyle=gg; pctx.beginPath(); pctx.arc(sx,sy,rr,0,7); pctx.fill(); } }
+  pctx.restore();
   const sl=Math.max(0.5,segLen), sp=i>0?vb.S[i]-vb.S[i-1]:sl, sn=i<N-1?vb.S[i+1]-vb.S[i]:sl;
   const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
   const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
     (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
-  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.4:0.5, rough=proc==="MMA"?0.32:proc==="MIG"?0.12:0.05;
-  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.3:0.24, Hc=0.62, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.32:0.12;
+  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.72:0.5, rough=proc==="MMA"?0.32:proc==="MIG"?0.12:0.05;
+  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.14:0.24, Hc=0.62, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.32:0.12;
   // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
   function edges(s){ const nb=s<0?i-1:i+1, f=Math.abs(s)/(s<0?sp:sn);
     if(has(nb)){ return [lo+(vb.lo[nb]-lo)*f, hi+(vb.hi[nb]-hi)*f]; }
@@ -1635,11 +1641,16 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     if(rl.length){ const sg=vb.S[i]+s, sv=sg-k*half*bowK*c*1.15; let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
       const prev=rl[lo2-1], next=rl[lo2]; let a,b;
       if(vb.dir>0){ a=prev; b=next; } else { a=next; b=prev; }
-      if(a!==undefined&&b!==undefined&&Math.abs(b-a)<half*3.2){ const ph=Math.abs(sv-a)/Math.abs(b-a), e2=Math.min(0.5,0.9/Math.abs(b-a));
-        const st=ph<e2?ph/e2:1; h+=half*ripA*Math.pow(1-ph,1.5)*st*(0.35+0.65*c);
+      const ge=vb.ge||half*0.6;   // brak sąsiedniego frontu (krater, zgaszenie) albo za duża przerwa → rytm z typowego odstępu
+      if(a!==undefined&&(b===undefined||Math.abs(b-a)>Math.max(half*3.2,ge*2.5))) b=a+vb.dir*ge*Math.max(1,Math.ceil(Math.abs(sv-a)/ge));
+      if(a===undefined&&b!==undefined) a=b-vb.dir*ge*Math.max(1,Math.ceil(Math.abs(b-sv)/ge));
+      if(a!==undefined&&b!==undefined&&Math.abs(b-a)>ge*1.5){ const m=Math.floor(Math.abs(sv-a)/ge); a=a+vb.dir*ge*m; b=a+vb.dir*ge; }
+      if(a!==undefined&&b!==undefined){ const ph=Math.min(1,Math.abs(sv-a)/Math.abs(b-a)), e2=Math.min(0.5,0.9/Math.abs(b-a));
+        const st=ph<e2?ph/e2:1; h+=half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:1.5)*st*(0.35+0.65*c);
         if(proc==="TIG") h+=half*0.025*Math.sin(ph*Math.PI*7)*c; }   // drobne prążki krzepnięcia w „monecie”
       else h+=half*ripA*0.35*c; }
     h+=(vbNoise(px*0.7,py*0.7)-0.5)*rough+(vbNoise(px*2.2,py*2.2)-0.5)*rough*0.25;
+    if(proc==="MIG") h+=(vbNoise(px*0.18,py*0.18)-0.5)*half*0.12;   // MAG: lekko faliste lico
     return {h,u,t,L,H}; }
   // ramka łatki (logiczne px) i render w pikselach urządzenia
   const cs=[[s0,lo-1.2],[s0,hi+1.2],[s1,lo-1.2],[s1,hi+1.2]].map(([s,t])=>[A.x+tx*s+n.x*t,A.y+ty*s+n.y*t]);
@@ -1661,7 +1672,8 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     const eu=Math.min(c0.u,1-c0.u), te=Math.max(0,1-eu/0.26)*tint, tp=Math.max(0,1-Math.abs(eu-0.2)/0.1)*tint*0.6;
     if(te>0){ r+=(70-r)*te; g+=(88-g)*te; b+=(160-b)*te; }
     if(tp>0){ r+=(140-r)*tp; g+=(82-g)*tp; b+=(130-b)*tp; }   // pas fioletowy przed niebieskim
-    if(bead==="steel"&&proc==="MIG"){ const ox=vbNoise(px*0.3,py*0.3); if(ox>0.7){ const f=Math.min(0.28,(ox-0.7)*1.4); r+=(112-r)*f; g+=(92-g)*f; b+=(70-b)*f; } }
+    if(proc==="MIG"&&bead!=="alu"){ const hue=vbNoise(px*0.12+7,py*0.12), f=(bead==="ss"?0.38:0.2)*(0.4+0.6*vbNoise(px*0.25,py*0.25+3));   // opalizujący nalot MAG
+      const tc=hue<0.4?[196,150,70]:hue<0.62?[150,80,140]:[80,100,170]; r+=(tc[0]-r)*f; g+=(tc[1]-g)*f; b+=(tc[2]-b)*f; }
     if(bead==="ss"&&proc==="TIG"){ const cu=1-Math.abs(2*c0.u-1); r+=(222-r)*cu*0.25; g+=(186-g)*cu*0.25; b+=(118-b)*cu*0.2; }   // środek złoty, słomkowy
     const amb=0.26, lit=amb+0.7*dif, Ry=2*nz*ny, sky=Math.max(0,0.55-0.6*Ry)*envK;   // odbicie otoczenia: metal odbija jaśniejszą „górę”
     let R=r*(lit+sky)+spc*235, G=g*(lit+sky)+spc*238, Bc=b*(lit+sky)+spc*242;
