@@ -142,13 +142,18 @@
   // Pachwina: a≈0,7·t; PB/PD/PG ściegami prostymi (MAG mniej), PF/PA (korytko) wahadłem.
   // Ścieg: k (root|fill|cap), lay (nr warstwy), n (ściegów w warstwie), lane (-1…1 w poprzek rowka),
   // wm (szerokość względem warstwy: 1, z wahadłem 1,2, przy n ściegach 1,2/n — sąsiednie zachodzą ~20%), wv (wahadło).
-  function weldPlan(joint, thick, pos, proc) {
+  function weldPlan(joint, thick, pos, proc, v = 1) {   // v = wersja planu = flaga kb nagrania: 1 → 3.7.0, 2 → 3.8.0
     const p = { P1G: "PA", P2G: "PC", P5G: "PF", HL045: "PC", PB: "PB", PD: "PD" }[pos] || pos;
     let L;
     if (joint === "fillet") {
       if (thick <= 5) L = [["cap", 1]];
       else if (p === "PF" || p === "PA") L = thick <= 8 ? [["cap", 1, 1]] : [["root", 1], ["cap", 1, 1]];
       else L = (thick <= 8 || proc === "MIG") ? [["root", 1], ["cap", 2]] : [["root", 1], ["fill", 2], ["cap", 3]];
+    } else if (v >= 2) {
+      // 3.8.0 (kb=2), wg praktyki spawacza: przetop prosty (szybki), wypełnienie i lico wahadłem/zakosami —
+      // we wszystkich pozycjach i metodach. ≤3 mm złącze I = 1 ścieg, ≤5 mm przetop + lico, >5 mm 3 warstwy
+      // (minimum ISO 9606-1 dla ≥12 mm). Pachwina bez zmian (piramida ściegów w PB/PD to praktyka).
+      L = thick <= 3 ? [["cap", 1]] : thick <= 5 ? [["root", 1], ["cap", 1, 1]] : [["root", 1], ["fill", 1, 1], ["cap", 1, 1]];
     } else {
       const T5 = { PA: [["root",1],["cap",1]], PC: [["root",1],["cap",2]], PE: [["root",1],["cap",2]], PF: [["root",1],["cap",1,1]], PG: [["root",1],["cap",1]] };
       const T8 = { PA: [["root",1],["fill",1],["cap",1,1]], PC: [["root",1],["fill",2],["cap",3]], PE: [["root",1],["fill",2],["cap",2]],
@@ -246,7 +251,7 @@
 
     // ── passy ──
     function passPlan() { if (thick <= 3) return ["cap"]; if (thick <= 5) return ["root","cap"]; return ["root","fill","cap"]; }
-    const beadPlan = kb ? weldPlan(joint, thick, posKey, proc) : null;
+    const beadPlan = kb ? weldPlan(joint, thick, posKey, proc, round.kb === 2 ? 2 : 1) : null;   // 3.8.0: kb=2 → plan „przetop prosty, wypełnienie i lico wahadłem”
     const passPlanArr = kb ? beadPlan.map(b => b.k) : passPlan();
     const bwm = i => kb ? beadPlan[i].wm : 1;
     let passIndex = 0, passMul = PASS_W[passPlanArr[0]] * bwm(0);
@@ -568,6 +573,10 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.8.0 — PLAN ŚCIEGÓW WG PRAKTYKI (flaga `kb: 2`): doczołowe i rura — przetop prosty, wypełnienie i lico
+  //         po JEDNYM ściegu z wahadłem/zakosami we wszystkich pozycjach i metodach (>5 mm 3 warstwy, ≤5 mm 2,
+  //         ≤3 mm 1). Do 3.7.0 12 mm miało 4–13 ściegów prostych (np. MMA PC 10, MAG PE 7). Rundy z `kb: 1`
+  //         liczą się bit-w-bit jak 3.7.0 (zamrożony sim-3.7.0.js, test kb2.js). SCORING_VERSION 1.3.0.
   // 3.7.0 — KOMBAJN: realna sekwencja ściegów (weldPlan), każdy ścieg na własnym TORZE w poprzek rowka,
   //         lico musi przykryć krawędzie fazy (edgeCov; <0,6 = REJECT „edges", kara do 12 pkt), sąsiednie
   //         ściegi muszą się zlać (szczelina ≥0,3·r = REJECT „interbead", 401), MMA: żużel zebrany przed
@@ -611,7 +620,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, VERSION: "3.7.0", SCORING_VERSION: "1.2.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, VERSION: "3.8.0", SCORING_VERSION: "1.3.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);

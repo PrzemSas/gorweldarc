@@ -659,7 +659,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.7.0"></script>
+<script src="sim.js?v=3.8.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -727,7 +727,7 @@ let rec=null;
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
-  kb:1,                           // 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
+  kb:2,                           // 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
   rw:Math.round((()=>{try{return stage.getBoundingClientRect().width;}catch(e){return 0;}})()),  // szerokość renderu → krok kwantyzacji kursora
   events:[]}; }
 function recEv(type,x,y,now,b,k){ if(!rec) return;
@@ -1047,13 +1047,18 @@ function passPlan(){ if(thick<=3) return ["cap"]; if(thick<=5) return ["root","c
 // Pachwina: a≈0,7·t; PB/PD/PG ściegami prostymi (MAG mniej), PF/PA (korytko) wahadłem.
 // Ścieg: k (root|fill|cap), lay (nr warstwy), n (ściegów w warstwie), lane (-1…1 w poprzek rowka),
 // wm (szerokość względem warstwy: 1, z wahadłem 1,2, przy n ściegach 1,2/n — sąsiednie zachodzą ~20%), wv (wahadło).
-function weldPlan(joint, thick, pos, proc) {
+function weldPlan(joint, thick, pos, proc, v = 1) {   // v = wersja planu = flaga kb nagrania: 1 → 3.7.0, 2 → 3.8.0
   const p = { P1G: "PA", P2G: "PC", P5G: "PF", HL045: "PC", PB: "PB", PD: "PD" }[pos] || pos;
   let L;
   if (joint === "fillet") {
     if (thick <= 5) L = [["cap", 1]];
     else if (p === "PF" || p === "PA") L = thick <= 8 ? [["cap", 1, 1]] : [["root", 1], ["cap", 1, 1]];
     else L = (thick <= 8 || proc === "MIG") ? [["root", 1], ["cap", 2]] : [["root", 1], ["fill", 2], ["cap", 3]];
+  } else if (v >= 2) {
+    // 3.8.0 (kb=2), wg praktyki spawacza: przetop prosty (szybki), wypełnienie i lico wahadłem/zakosami —
+    // we wszystkich pozycjach i metodach. ≤3 mm złącze I = 1 ścieg, ≤5 mm przetop + lico, >5 mm 3 warstwy
+    // (minimum ISO 9606-1 dla ≥12 mm). Pachwina bez zmian (piramida ściegów w PB/PD to praktyka).
+    L = thick <= 3 ? [["cap", 1]] : thick <= 5 ? [["root", 1], ["cap", 1, 1]] : [["root", 1], ["fill", 1, 1], ["cap", 1, 1]];
   } else {
     const T5 = { PA: [["root",1],["cap",1]], PC: [["root",1],["cap",2]], PE: [["root",1],["cap",2]], PF: [["root",1],["cap",1,1]], PG: [["root",1],["cap",1]] };
     const T8 = { PA: [["root",1],["fill",1],["cap",1,1]], PC: [["root",1],["fill",2],["cap",3]], PE: [["root",1],["fill",2],["cap",2]],
@@ -1081,10 +1086,10 @@ function bevelEdgePx(thick, gh) {
   const k = gh * 1.25 / capHalfMm, gap = Math.max(1, gapMm / 2 * k);
   return thin ? gap : gap + (thick - rfMm) * tan30 * k;
 }
-// Stan torów (3.7.0) — 1:1 z sim.js. Gra spawa ZAWSZE wg weldPlan (nagranie ma `kb:1`).
+// Stan torów (3.7.0) — 1:1 z sim.js. Gra spawa ZAWSZE wg weldPlan v2 (nagranie ma `kb:2`, od 3.8.0).
 const EDGE_OK=0.85, EDGE_MAJOR=0.6, EDGE_PEN=20, EDGE_PEN_CAP=12, IB_MAJOR=0.3;
 let beadPlan=null, laneOff=0, lanePts=[], seamNrm=[], capMin=null, capMax=null, segLen=1, beadStats=[], bSo=0, bR=0, bN=0, needChip=false, slagCount=0;
-function setupBeads(){ beadPlan=weldPlan(joint,thick,posKey,proc); passPlanArr=beadPlan.map(b=>b.k); passIndex=0; passMul=PASS_W[passPlanArr[0]]*beadPlan[0].wm; }
+function setupBeads(){ beadPlan=weldPlan(joint,thick,posKey,proc,2); passPlanArr=beadPlan.map(b=>b.k); passIndex=0; passMul=PASS_W[passPlanArr[0]]*beadPlan[0].wm; }
 function layerCount(){ return beadPlan?beadPlan[beadPlan.length-1].lay+1:passPlan().length; }
 function seamGeom(){ seamNrm=seamPts.map((p,i)=>{ const a=seamPts[Math.max(0,i-1)], b=seamPts[Math.min(seamPts.length-1,i+1)];
     const dx=b.x-a.x, dy=b.y-a.y, l=Math.hypot(dx,dy)||1; return {x:-dy/l,y:dx/l}; });
@@ -1525,16 +1530,31 @@ function depositBead(x,y,w){
   // fusion toe — seats the bead into the plate (slight shadow ring)
   // Pozycja kształtuje lico (tylko rysunek): PC/PB/2G — ciekły metal ścieka, dolna stopka pełniejsza
   // (brzuch w dół ekranu); PE/PD — jeziorko wisi, lico płaskie i matowe; PA — symetryczne.
-  const bs=beadShape(), sagY=ww*bs.sag;
-  sctx.save(); sctx.shadowColor="rgba(0,0,0,.45)"; sctx.shadowBlur=Math.max(2,ww*0.4);
-  // convex bead body, light from upper-left → crown sheen, dark toes
-  let g=sctx.createRadialGradient(x-ww*0.38,y-ww*0.48+sagY*0.5,ww*0.05, x,y+sagY*0.5,ww*(1+bs.sag*0.3));
-  g.addColorStop(0,"#fffef8"); g.addColorStop(0.18,c.high); g.addColorStop(0.5,c.solid); g.addColorStop(0.88,c.dark); g.addColorStop(1,"#1a1e22");
-  sctx.fillStyle=g; sctx.beginPath(); sctx.ellipse(x,y+sagY*0.5,ww,ww*(1+bs.sag*0.3),0,0,7); sctx.fill(); sctx.restore();
-  sctx.save(); sctx.globalAlpha=Math.min(0.62,PROCESS[proc].crown*0.48*bs.crown);
-  const sg=sctx.createLinearGradient(x-ww,y-ww,x+ww,y+ww);
-  sg.addColorStop(0,"rgba(255,255,250,.7)"); sg.addColorStop(0.5,c.high); sg.addColorStop(1,"rgba(255,255,250,0)");
-  sctx.fillStyle=sg; sctx.beginPath(); sctx.ellipse(x-ww*0.24,y-ww*0.3, ww*0.38, ww*0.17, Math.atan2(uy,ux), 0,7); sctx.fill(); sctx.restore();
+  // Lico jako CIĄGŁA taśma (3.8.0, tylko rysunek): każdy odcinek od poprzedniej kropli to kapsuła z gradientem
+  // W POPRZEK osi ściegu (stopka ciemna → korona jasna po stronie światła). Sąsiednie odcinki mają ten sam
+  // profil w tym samym miejscu, więc zlewają się w jedno lico — wcześniej każda kropla była osobną kulką
+  // z własnym odblaskiem i cieniem, a ścieg wyglądał jak sznur korali. Cień stopki idzie na blachę (pctx).
+  const bs=beadShape(), sagY=ww*bs.sag, cy=y+sagY*0.5;
+  let ax=x-ux*ww*0.5, ay=cy-uy*ww*0.5, cont=false, bw=ww*(1+bs.sag*0.15);
+  if(bodyPrev&&bodyPrev.pass===passIndex&&Math.hypot(x-bodyPrev.x,cy-bodyPrev.y)<ww*1.6){ ax=bodyPrev.x; ay=bodyPrev.y; cont=true; bw=bodyPrev.bw*0.88+bw*0.12; }   // szerokość płynie, nie skacze
+  let tx=x-ax, ty=cy-ay; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
+  const gx=-ty, gy=tx;                                                      // normalna geometryczna (brzegi taśmy)
+  let nx=gx, ny=gy; if(nx+ny>0){ nx=-nx; ny=-ny; }                          // n → strona światła (lewa-góra)
+  pctx.save(); pctx.strokeStyle="rgba(10,8,6,0.10)"; pctx.lineCap=cont?"butt":"round"; pctx.lineWidth=ww*2.5;   // butt: półprzezroczysty cień nie ciemnieje na łączeniach
+  pctx.beginPath(); pctx.moveTo(ax,ay); pctx.lineTo(x,cy); pctx.stroke(); pctx.restore();
+  const gb=sctx.createLinearGradient(x+nx*bw,cy+ny*bw,x-nx*bw,cy-ny*bw), hi=Math.min(1,PROCESS[proc].crown*bs.crown);
+  gb.addColorStop(0,"#1a1e22"); gb.addColorStop(0.1,c.dark); gb.addColorStop(0.3,c.solid);
+  gb.addColorStop(0.4,hi>0.8?"#fffef4":c.high); gb.addColorStop(0.5,c.high); gb.addColorStop(0.72,c.solid);
+  gb.addColorStop(0.9,c.dark); gb.addColorStop(1,"#15181b");
+  // Ciągła taśma: czworobok od brzegów poprzedniego odcinka do brzegów bieżącego (szerokość zmienia się
+  // płynnie, bez „kiełbasek” z okrągłych końców); okrągły tylko początek ściegu.
+  sctx.save(); sctx.fillStyle=gb; sctx.beginPath();
+  if(cont){ const pb=bodyPrev.bw, pgx=bodyPrev.gx, pgy=bodyPrev.gy, bx=ax-tx*0.6, by=ay-ty*0.6;   // 0,6 px zakładki = bez szwów antyaliasingu
+    sctx.moveTo(bx+pgx*pb,by+pgy*pb); sctx.lineTo(x+gx*bw,cy+gy*bw); sctx.lineTo(x-gx*bw,cy-gy*bw); sctx.lineTo(bx-pgx*pb,by-pgy*pb); sctx.closePath(); }
+  else sctx.arc(x,cy,bw,0,7);
+  sctx.fill(); sctx.restore();
+  bodyPrev={x,y:cy,pass:passIndex,bw,gx,gy};
+  flushRipples(x,cy,bw);
   if(PROCESS[proc].slag){ sctx.globalAlpha=0.1; sctx.fillStyle="#16110d";
     for(let i=0;i<2;i++) sctx.fillRect(x-ww*0.4+Math.random()*ww*0.8,y-ww*0.4+Math.random()*ww*0.8,1.6,1.6); sctx.globalAlpha=1; }
   if(secE&&Math.hypot(x-secE.x,y-secE.y)<grooveHalf*1.7) secHitCur=true;   // przekrój na czole: ta warstwa doszła do końca
@@ -1550,6 +1570,12 @@ function beadShape(){ const P=POSITIONS[posKey]||{}, k=posKey;
   if(k==="PC"||k==="PB"||k==="P2G") return {sag:Math.min(0.22,P.g*1.3),crown:0.85,bow:1};
   if(k==="P5G"||k==="HL045") return {sag:0.06,crown:0.8,bow:1.15};
   return {sag:0,crown:1,bow:1}; }
+// Łuska czeka w kolejce, aż czoło taśmy odjedzie dalej niż jej promień — inaczej okrągły początek następnego
+// odcinka lica zamalowałby ją od razu (tylko rysunek). flushRipples(null) = narysuj wszystko (koniec ściegu).
+let ripQ=[];
+function queueRipple(x,y,w,dx,dy){ ripQ.push([x,y,w,dx,dy]); if(ripQ.length>24) drawRipple(...ripQ.shift()); }   // TIG w miejscu: kolejka nie rośnie bez końca
+function flushRipples(tx,ty,bw){ if(!ripQ.length) return;
+  const keep=[]; for(const r of ripQ){ if(tx==null||Math.hypot(r[0]-tx,r[1]-ty)>bw*1.15+r[2]*0.3) drawRipple(...r); else keep.push(r); } ripQ=keep; }
 function drawRipple(x,y,w,dx,dy){
   const c=BEADS[bead],P=PROCESS[proc],px=-dy,py=dx;
   const irr = proc==="MMA" ? (Math.random()*0.25+0.85) : 1;
@@ -1573,6 +1599,7 @@ function beadWidth(){
   else w=idealHalf;
   return w*ampF.w*arcWFac()*angWFac();  // prąd, długość łuku i kąt razem robią szerokość jeziorka
 }
+let bodyPrev=null;   // ostatni punkt taśmy lica (tylko rysunek)
 let fbGood=false;
 const HI_FB_MIN_S=0.5;   // HUD-only: ile sekund ściegu, zanim średnia bieżąca HI ma prawo głosu
 function feedback(){
@@ -1751,7 +1778,7 @@ function move(e){ if(isCut())return cutMove(e);
       // dostaje dawny automat co 150 ms i liczy się dokładnie jak przed 3.3.0.
       const dab = tigLive ? filPend : (now-lastDab>150);
       if(dab && onPlate(p.x+aox,p.y+aoy)){ const dw=Math.max(idealHalf, w*0.95); const pl=depositBead(p.x+aox,p.y+aoy,dw);
-        molten.push({x:pl.x,y:pl.y,r:dw,t:now}); drawRipple(pl.x,pl.y,dw,ux,uy); lastDab=now; dipT=now;
+        molten.push({x:pl.x,y:pl.y,r:dw,t:now}); queueRipple(pl.x,pl.y,dw,ux,uy); lastDab=now; dipT=now;
         if(tigLive){ if(lastDabPos){ const gap=Math.hypot(pl.x-lastDabPos.x,pl.y-lastDabPos.y);
             filPenAcc+=filPenNow(gap/Math.max(1e-6,targetPx*FIL_DT)); filCount++; }
           lastDabPos={x:pl.x,y:pl.y}; } }
@@ -1777,7 +1804,7 @@ function move(e){ if(isCut())return cutMove(e);
             break; } }
         const pl=depositBead(x,y,w);
         molten.push({x:pl.x,y:pl.y,r:w,t:now}); distAcc+=step;
-        const rip=w*(1.5+vEMA*0.012)/PROCESS[proc].rippleK; if(distAcc>=rip){ drawRipple(pl.x,pl.y,w,ux,uy); distAcc=0; } }
+        const rip=w*0.45*(1+vEMA*0.004)/Math.sqrt(PROCESS[proc].rippleK); /* łuska gęsto jak dachówka (tylko rysunek); szybciej = rzadziej */ if(distAcc>=rip){ queueRipple(pl.x,pl.y,w,ux,uy); distAcc=0; } }
     }
     // odpryski do OCENY liczone po czasie łuku (1:1 z sim.js) — spawnSparks robi już tylko grafikę
     // 1.4.0: tempo poza oknem = rozprysk. Przedtem kara była STAŁA dla danego proc/thick, więc
@@ -1801,7 +1828,7 @@ function end(e){ if(e&&uiHit(e)) return;
   // odciągnięciem za daleko. Bez tego nie da się oderwać elektrody od blachy po zajarzeniu.
   if(e&&e.type==="pointerup"&&welding&&arcLive){ btnMask=e.buttons|0; return; }
   if(e&&e.pointerId!==undefined) try{ stage.releasePointerCapture(e.pointerId); }catch(err){}
-  if(isCut())return cutEnd(); if(welding&&last) recEv('up',last.x,last.y,performance.now()); welding=false; last=null; speedFb=""; arcOff(); cursor.seen=false;
+  if(isCut())return cutEnd(); if(welding&&last) recEv('up',last.x,last.y,performance.now()); welding=false; last=null; speedFb=""; arcOff(); cursor.seen=false; flushRipples(null);   // taśmy nie zrywamy: ponowne zajarzenie przy czole ściegu ją kontynuuje
   if(baked.length>=10 && coverageNow()>=0.9){               // full layer covered
     if(passIndex < passPlanArr.length-1) bankPass();        // more layers to go → freeze this one, weld the next
     else inspect();                                         // last layer done → grade the whole joint
@@ -2476,6 +2503,7 @@ function passMetrics(){
 }
 // freeze the finished layer underneath and arm the next one
 function bankPass(){
+  flushRipples(null);
   recEv('bank',0,0,performance.now());
   passLog.push(passMetrics());
   const bDone=beadPlan&&beadPlan[passIndex];
@@ -2946,7 +2974,7 @@ function clearWeld(seedOverride){
   // grubości albo pozycji zostawiała `welding=true` przy świeżym, pustym nagraniu: gra odkładałaby
   // ścieg bez zdarzenia zajarzenia, a `sim.js` pomijałby te ruchy (`!last`) — czysty rozjazd.
   if(welding){ welding=false; last=null; speedFb=""; arcOff(); }
-  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
+  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; bodyPrev=null; ripQ=[]; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
