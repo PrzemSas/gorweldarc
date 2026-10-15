@@ -668,7 +668,8 @@ const stage=document.getElementById("stage"), ctx=stage.getContext("2d");
 const flashEl=document.getElementById("flash"), toast=document.getElementById("toast");
 const plate=document.createElement("canvas"), pctx=plate.getContext("2d");
 const seam =document.createElement("canvas"), sctx=seam.getContext("2d");
-const slagCv=document.createElement("canvas"), slgctx=slagCv.getContext("2d"), slagFx={on:false,fade:0};   // 3.7.0: skorupa żużla MMA na świeżym ściegu
+const slagCv=document.createElement("canvas"), slgctx=slagCv.getContext("2d"), slagFx={on:false,fade:0};
+const slagLive=document.createElement("canvas"), slvctx=slagLive.getContext("2d"); let slagLiveOn=false, slagLiveFade=0;   // MMA: skorupa narasta za jeziorkiem bieżącego ściegu (tylko rysunek)   // 3.7.0: skorupa żużla MMA na świeżym ściegu
 const weldbg=document.createElement("canvas"), wbctx=weldbg.getContext("2d"); // banked lower passes (root/fill) sit under the live bead
 let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2),VIEW=null;   // VIEW: widoczny wycinek pola, patrz fitStage()
 const PX_PER_MM=16;
@@ -1570,7 +1571,7 @@ function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.l
     if(i<vb.d0) vb.d0=i; if(i>vb.d1) vb.d1=i; }
   if(vb.tip>=0&&j!==vb.tip){ const st=j>vb.tip?1:-1; if(Math.abs(j-vb.tip)<=s*3){ if(st===vb.dir) vb.prog+=Math.abs(j-vb.tip)*sl; else vb.dir=st; } }
   // łuska co ~0,45 szerokości lica wzdłuż szwu (MIG rzadziej, TIG z kropli spoiwa); szybciej = rzadziej
-  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.2:bh*0.62)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
+  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.2:proc==="MMA"?bh*0.36:bh*0.62)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
   if(proc!=="TIG"&&vb.prog>=rip){ vb.rp[j]=1; vbAddRip(j); vb.prog=0; }
   vb.tip=j; vb.ww=ww; }
 function vbDab(x,y){ if(!vbOK()||!vb) return; const j=nearestIdx(x,y); vb.dab[j]=1; vbAddRip(j); }
@@ -1604,8 +1605,8 @@ function vbSeg(i){ if(vb.fz[i]&&vb.fz[i+1]) return; let lo0=vb.lo[i],hi0=vb.hi[i
 // per piksel (rozproszone + odblask Blinna-Phonga, kolor materiału i nalotu). Wzorce: TIG nierdzewka „stack of
 // dimes”, MIG stal matowo-srebrna z nalotem, MMA po zbiciu żużla matowa i chropowata. Tylko rysunek.
 const VB_MAT={
-  steel:{MIG:[146,149,152,0.6,20],MMA:[120,123,126,0.22,9],TIG:[172,175,179,1.0,30]},
-  ss:{MIG:[172,164,146,0.6,24],MMA:[150,147,140,0.25,10],TIG:[200,162,98,1.1,28]},
+  steel:{MIG:[146,149,152,0.6,20],MMA:[172,175,179,0.7,16],TIG:[172,175,179,1.0,30]},
+  ss:{MIG:[172,164,146,0.6,24],MMA:[176,170,158,0.6,18],TIG:[200,162,98,1.1,28]},
   alu:{MIG:[200,204,209,0.35,12],MMA:[190,194,198,0.2,8],TIG:[206,210,214,0.55,16]} };
 const VB_L=(()=>{ const l=[-0.42,-0.55,0.72], m=Math.hypot(...l); return l.map(v=>v/m); })(), VB_H=(()=>{ const h=[VB_L[0],VB_L[1],VB_L[2]+1], m=Math.hypot(...h); return h.map(v=>v/m); })();
 let vbPatch=null, vbPctx=null;
@@ -1617,8 +1618,8 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const B=seamPts[Math.min(N-1,i+1)], A0=seamPts[Math.max(0,i-1)]; let tx=B.x-A0.x, ty=B.y-A0.y; const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
   // cień stopki na blasze (raz na punkt)
   pctx.save(); pctx.fillStyle="rgba(8,7,6,0.05)"; for(const v of [lo,hi]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,1.6,0,7); pctx.fill(); }
-  if(proc==="MIG"){ pctx.fillStyle="rgba(14,12,10,0.07)"; for(const v of [lo-2.2,hi+2.2]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,2.6,0,7); pctx.fill(); }   // okopcony pas przy stopkach
-    if(Math.random()<0.09){ const side=Math.random()<0.5?lo-2-Math.random()*(hi-lo)*0.9:hi+2+Math.random()*(hi-lo)*0.9, sx=A.x+n.x*side+tx*(Math.random()-0.5)*3, sy=A.y+n.y*side+ty*(Math.random()-0.5)*3, rr=0.6+Math.random()*1.1;
+  if(proc==="MIG"||proc==="MMA"){ pctx.fillStyle=proc==="MMA"?"rgba(18,15,12,0.09)":"rgba(14,12,10,0.07)"; for(const v of [lo-2.2,hi+2.2]){ pctx.beginPath(); pctx.arc(A.x+n.x*v,A.y+n.y*v,2.6,0,7); pctx.fill(); }   // okopcony pas przy stopkach
+    if(Math.random()<(proc==="MMA"?0.07:0.09)){ const side=Math.random()<0.5?lo-2-Math.random()*(hi-lo)*0.9:hi+2+Math.random()*(hi-lo)*0.9, sx=A.x+n.x*side+tx*(Math.random()-0.5)*3, sy=A.y+n.y*side+ty*(Math.random()-0.5)*3, rr=0.6+Math.random()*1.1;
       const gg=pctx.createRadialGradient(sx-rr*0.35,sy-rr*0.4,rr*0.1,sx,sy,rr); gg.addColorStop(0,"#9aa0a4"); gg.addColorStop(0.5,"#4a4e52"); gg.addColorStop(1,"#1a1c1e");   // kulka odprysku
       pctx.fillStyle="rgba(0,0,0,0.25)"; pctx.beginPath(); pctx.arc(sx+0.5,sy+0.6,rr,0,7); pctx.fill(); pctx.fillStyle=gg; pctx.beginPath(); pctx.arc(sx,sy,rr,0,7); pctx.fill(); } }
   pctx.restore();
@@ -1626,19 +1627,20 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
   const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
     (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
-  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.72:0.5, rough=proc==="MMA"?0.32:proc==="MIG"?0.12:0.05;
-  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.14:0.24, Hc=0.62, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.32:0.12;
+  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.72:0.5, rough=proc==="MMA"?0.13:proc==="MIG"?0.12:0.05;
+  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.14:0.26, Hc=0.62, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.32:0.12;
   // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
   function edges(s){ const nb=s<0?i-1:i+1, f=Math.abs(s)/(s<0?sp:sn);
     if(has(nb)){ return [lo+(vb.lo[nb]-lo)*f, hi+(vb.hi[nb]-hi)*f]; }
     const m=(lo+hi)/2, r=half0, q=1-(s/Math.max(0.5,r))**2; if(q<=0) return null; const hh=r*Math.sqrt(q); return [m-hh,m+hh]; }
   const rl=vb.rl;
-  function height(px,py){ const dx=px-A.x, dy=py-A.y, s=dx*tx+dy*ty, t=dx*n.x+dy*n.y; const e=edges(s); if(!e) return null;
+  let phO=0;
+  function height(px,py){ phO=0; const dx=px-A.x, dy=py-A.y, s=dx*tx+dy*ty, t=dx*n.x+dy*n.y; const e=edges(s); if(!e) return null;
     const L=e[0], H=e[1], w=Math.max(0.5,H-L), u=(t-L)/w; if(u<-0.08||u>1.08) return null;
     const uc=Math.min(1,Math.max(0,u)), c=1-(2*uc-1)**2, half=w/2;
     let h=half*Hc*Math.pow(c,0.65);
     // łuska: przesunięcie frontu krzepnięcia (wypukły do tyłu) i faza między frontami
-    if(rl.length){ const sg=vb.S[i]+s, sv=sg-k*half*bowK*c*1.15; let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
+    if(rl.length){ const sg=vb.S[i]+s, shp=proc==="MMA"?0.55*(1-Math.abs(2*uc-1))+0.45*c:c, sv=sg-k*half*bowK*shp*1.15; /* MMA: łuska w jodełkę (V) */ let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
       const prev=rl[lo2-1], next=rl[lo2]; let a,b;
       if(vb.dir>0){ a=prev; b=next; } else { a=next; b=prev; }
       const ge=vb.ge||half*0.6;   // brak sąsiedniego frontu (krater, zgaszenie) albo za duża przerwa → rytm z typowego odstępu
@@ -1646,12 +1648,12 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
       if(a===undefined&&b!==undefined) a=b-vb.dir*ge*Math.max(1,Math.ceil(Math.abs(b-sv)/ge));
       if(a!==undefined&&b!==undefined&&Math.abs(b-a)>ge*1.5){ const m=Math.floor(Math.abs(sv-a)/ge); a=a+vb.dir*ge*m; b=a+vb.dir*ge; }
       if(a!==undefined&&b!==undefined){ const ph=Math.min(1,Math.abs(sv-a)/Math.abs(b-a)), e2=Math.min(0.5,0.9/Math.abs(b-a));
-        const st=ph<e2?ph/e2:1; h+=half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:1.5)*st*(0.35+0.65*c);
+        const st=ph<e2?ph/e2:1; h+=half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:proc==="MMA"?2.2:1.5)*st*(0.35+0.65*c); phO=ph;
         if(proc==="TIG") h+=half*0.025*Math.sin(ph*Math.PI*7)*c; }   // drobne prążki krzepnięcia w „monecie”
       else h+=half*ripA*0.35*c; }
     h+=(vbNoise(px*0.7,py*0.7)-0.5)*rough+(vbNoise(px*2.2,py*2.2)-0.5)*rough*0.25;
     if(proc==="MIG") h+=(vbNoise(px*0.18,py*0.18)-0.5)*half*0.12;   // MAG: lekko faliste lico
-    return {h,u,t,L,H}; }
+    return {h,u,t,L,H,ph:phO}; }
   // ramka łatki (logiczne px) i render w pikselach urządzenia
   const cs=[[s0,lo-1.2],[s0,hi+1.2],[s1,lo-1.2],[s1,hi+1.2]].map(([s,t])=>[A.x+tx*s+n.x*t,A.y+ty*s+n.y*t]);
   for(const nb of [i-1,i+1]) if(has(nb)) for(const v of [vb.lo[nb]-1.2,vb.hi[nb]+1.2]) cs.push([A.x+n.x*v,A.y+n.y*v]);
@@ -1659,7 +1661,7 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const D=Math.min(2,Math.max(1,DPR||1)), pw=Math.max(1,Math.ceil((x1-x0)*D)), ph2=Math.max(1,Math.ceil((y1-y0)*D)); if(pw*ph2>40000) return;
   if(!vbPatch){ vbPatch=document.createElement("canvas"); vbPctx=vbPatch.getContext("2d"); }
   if(vbPatch.width<pw||vbPatch.height<ph2){ vbPatch.width=Math.max(pw,vbPatch.width,64); vbPatch.height=Math.max(ph2,vbPatch.height,64); }
-  const img=vbPctx.createImageData(pw,ph2), d=img.data, ep=0.5/D;
+  const img=vbPctx.createImageData(pw,ph2), d=img.data, ep=0.5/D, mma=proc==="MMA", simg=mma?vbPctx.createImageData(pw,ph2):null, sd=simg?simg.data:null;
   const tint=bead==="ss"?(proc==="TIG"?0.7:0.4):bead==="steel"?(proc==="TIG"?0.4:proc==="MIG"?0.22:0):0.05;
   for(let yy=0;yy<ph2;yy++) for(let xx=0;xx<pw;xx++){ const px=x0+(xx+0.5)/D, py=y0+(yy+0.5)/D;
     const dxs=px-A.x, dys=py-A.y, s=dxs*tx+dys*ty; if(s<s0||s>s1) continue;
@@ -1675,11 +1677,19 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     if(proc==="MIG"&&bead!=="alu"){ const hue=vbNoise(px*0.12+7,py*0.12), f=(bead==="ss"?0.38:0.2)*(0.4+0.6*vbNoise(px*0.25,py*0.25+3));   // opalizujący nalot MAG
       const tc=hue<0.4?[196,150,70]:hue<0.62?[150,80,140]:[80,100,170]; r+=(tc[0]-r)*f; g+=(tc[1]-g)*f; b+=(tc[2]-b)*f; }
     if(bead==="ss"&&proc==="TIG"){ const cu=1-Math.abs(2*c0.u-1); r+=(222-r)*cu*0.25; g+=(186-g)*cu*0.25; b+=(118-b)*cu*0.2; }   // środek złoty, słomkowy
+    if(mma){ const sr=vbNoise(px*0.9,py*0.9); let f=0; if(eu<0.08&&sr>0.38) f=0.72; else if(c0.ph>0.8&&sr>0.8) f=0.5;   // resztki żużla przy stopkach i w zagłębieniach łuski
+      if(f){ r+=(46-r)*f; g+=(35-g)*f; b+=(26-b)*f; } }
     const amb=0.26, lit=amb+0.7*dif, Ry=2*nz*ny, sky=Math.max(0,0.55-0.6*Ry)*envK;   // odbicie otoczenia: metal odbija jaśniejszą „górę”
     let R=r*(lit+sky)+spc*235, G=g*(lit+sky)+spc*238, Bc=b*(lit+sky)+spc*242;
     const edge=Math.min(c0.t-c0.L,c0.H-c0.t), al=Math.max(0,Math.min(1,edge*D+0.6));
-    const o=(yy*pw+xx)*4; d[o]=R>255?255:R; d[o+1]=G>255?255:G; d[o+2]=Bc>255?255:Bc; d[o+3]=al*255; }
+    const o=(yy*pw+xx)*4; d[o]=R>255?255:R; d[o+1]=G>255?255:G; d[o+2]=Bc>255?255:Bc; d[o+3]=al*255;
+    if(sd){ // skorupa żużla: szklista, ciemnobrązowa, wygładzona łuska lica, spękania i jaśniejsze płaty
+      const snx=nx*0.6, sny=ny*0.6, snz=Math.sqrt(Math.max(0.01,1-snx*snx-sny*sny)), sdif=Math.max(0,snx*VB_L[0]+sny*VB_L[1]+snz*VB_L[2]);
+      const sspc=Math.pow(Math.max(0,snx*VB_H[0]+sny*VB_H[1]+snz*VB_H[2]),46)*0.9, cr=Math.abs(vbNoise(px*0.55,py*0.55)-0.5)<0.014, pt=vbNoise(px*0.16+11,py*0.16), mx=Math.max(0,pt-0.55)*1.2;
+      let sr2=56+mx*40, sg2=38+mx*34, sb2=24+mx*30; if(cr){ sr2=18; sg2=13; sb2=9; }
+      const sl=0.3+0.75*sdif; sd[o]=Math.min(255,sr2*sl+sspc*230); sd[o+1]=Math.min(255,sg2*sl+sspc*215); sd[o+2]=Math.min(255,sb2*sl+sspc*190); sd[o+3]=Math.min(1,al*1.1)*245; } }
   vbPctx.putImageData(img,0,0); sctx.drawImage(vbPatch,0,0,pw,ph2,x0,y0,pw/D,ph2/D);
+  if(simg){ vbPctx.clearRect(0,0,pw,ph2); vbPctx.putImageData(simg,0,0); slvctx.drawImage(vbPatch,0,0,pw,ph2,x0,y0,pw/D,ph2/D); slagLiveOn=true; slagLiveFade=0; }
   if(proc==="MIG"&&bead==="steel"&&Math.random()<0.03){ const v=lo+(hi-lo)*(0.25+Math.random()*0.5);   // wysepka krzemianów (szklisty żużel)
     sctx.save(); sctx.globalAlpha=0.6; sctx.fillStyle="#4e3519"; sctx.beginPath(); sctx.ellipse(A.x+n.x*v,A.y+n.y*v,1.1+Math.random()*1.4,0.8+Math.random()*0.8,Math.random()*3,0,7); sctx.fill(); sctx.restore(); }
 }
@@ -2467,6 +2477,7 @@ function frame(now){
   ctx.drawImage(weldbg,0,0,W,H);   // banked lower passes
   if(slagFx.on){ const a=slagFx.fade?Math.max(0,1-(now-slagFx.fade)/380):1; if(a<=0){ slagFx.on=false; slagFx.fade=0; } else { ctx.globalAlpha=a; ctx.drawImage(slagCv,0,0,W,H); ctx.globalAlpha=1; } }
   ctx.drawImage(seam,0,0,W,H);     // live pass on top
+  if(slagLiveOn){ const a=slagLiveFade?Math.max(0,1-(now-slagLiveFade)/380):1; if(a<=0){ slagLiveOn=false; slagLiveFade=0; slvctx.clearRect(0,0,W,H); } else { ctx.globalAlpha=a; ctx.drawImage(slagLive,0,0,W,H); ctx.globalAlpha=1; } }
   drawWeldSection(ctx,now);        // przekrój na czole blachy — warstwy, które doszły do końca
   drawSeamGuide(now);
   updateCovBar(now);
@@ -2618,11 +2629,8 @@ function bankPass(){
   bSo=0; bR=0; bN=0;
   // MMA: świeży ścieg pod skorupą żużla — leży, dopóki gracz go nie zbije (C / przycisk). 1:1 z sim.js.
   if(slagFx.on&&!slagFx.fade){ wbctx.drawImage(slagCv,0,0,W,H); }   // niezebrany żużel z poprzedniego ściegu zostaje w spoinie (301)
-  if(proc==="MMA"){ needChip=true; slgctx.clearRect(0,0,W,H); slgctx.save(); slgctx.drawImage(seam,0,0,W,H); slgctx.globalCompositeOperation="source-in";
-    const sg=slgctx.createLinearGradient(0,0,W,H); sg.addColorStop(0,"rgba(92,72,50,.93)"); sg.addColorStop(0.5,"rgba(70,56,40,.93)"); sg.addColorStop(1,"rgba(98,80,58,.93)");
-    slgctx.fillStyle=sg; slgctx.fillRect(0,0,W,H); slgctx.globalCompositeOperation="source-atop"; slgctx.fillStyle="rgba(150,120,85,.35)";
-    for(let i=0;i<900;i++) slgctx.fillRect(Math.random()*W,Math.random()*H,1.4,1.4);
-    slgctx.restore(); slagFx.on=true; slagFx.fade=0; } else { slagFx.on=false; slagFx.fade=0; }
+  if(proc==="MMA"){ needChip=true; slgctx.clearRect(0,0,W,H); slgctx.save(); slgctx.setTransform(1,0,0,1,0,0); slgctx.drawImage(slagLive,0,0); slgctx.restore();   // skorupa wyrenderowana w trakcie spawania (vbFreeze)
+    slvctx.clearRect(0,0,W,H); slagLiveOn=false; slagLiveFade=0; slagFx.on=true; slagFx.fade=0; } else { slagFx.on=false; slagFx.fade=0; }
   // Zakryta warstwa ciemnieje i matowieje (już nie świeci, przykryje ją następna) — nowa kładzie się NA niej.
   wbctx.save(); wbctx.globalCompositeOperation="source-atop"; wbctx.fillStyle="rgba(8,10,12,.38)"; wbctx.fillRect(0,0,W,H); wbctx.restore();
   wbctx.drawImage(seam,0,0,W,H); sctx.clearRect(0,0,W,H);
@@ -2654,6 +2662,7 @@ function acceptanceText(score,verdict,defects){
   return fmt("accept_fail",[score,reason]);
 }
 function inspect(){
+  if(typeof slagLiveOn!=="undefined"&&slagLiveOn&&!slagLiveFade) slagLiveFade=performance.now();   // ostatni ścieg MMA: do oceny żużel zbity (typeof: test akceptacyjny woła inspect() w atrapie)
   if(battleTaskActive()&&battleState.roundInspected){ showToast(bt("inspectAgain"),"#ffae3c"); return; }
   if(baked.length<10){ showToast(t("t_layfirst"),"#ff9a3c"); return; }
   const K=seamPts.length;
@@ -3081,7 +3090,7 @@ function clearWeld(seedOverride){
   // grubości albo pozycji zostawiała `welding=true` przy świeżym, pustym nagraniu: gra odkładałaby
   // ścieg bez zdarzenia zajarzenia, a `sim.js` pomijałby te ruchy (`!last`) — czysty rozjazd.
   if(welding){ welding=false; last=null; speedFb=""; arcOff(); }
-  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; vbReset(); speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
+  reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; vbReset(); slvctx.clearRect(0,0,W,H); slagLiveOn=false; slagLiveFade=0; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
@@ -3436,8 +3445,8 @@ document.getElementById("tutSkip").onclick=dismissTut;
 function hideSplash(){ const s=document.getElementById("splash"); if(!s||s.classList.contains("hide")) return;
   s.classList.add("hide"); setTimeout(()=>s.remove(),550); }
 function resize(){ syncMobileLayout(); W=PLAY_W; H=PLAY_H; DPR=Math.min(devicePixelRatio||1,2);
-  for(const c of [stage,plate,seam,weldbg,slagCv]){ c.width=W*DPR; c.height=H*DPR; }
-  for(const c of [ctx,pctx,sctx,wbctx,slgctx]) c.setTransform(DPR,0,0,DPR,0,0);
+  for(const c of [stage,plate,seam,weldbg,slagCv,slagLive]){ c.width=W*DPR; c.height=H*DPR; }
+  for(const c of [ctx,pctx,sctx,wbctx,slgctx,slvctx]) c.setTransform(DPR,0,0,DPR,0,0);
   buildWorkpiece(); updateMobHud(); placeDeskPanel(); }
 // Desktop: prawy panel jest wyśrodkowany w pionie, a górny pasek na wąskim oknie (albo po rosyjsku)
 // zawija się w 2–3 wiersze — panel wchodził wtedy pod niego i chował przyciski metod. Zsuwamy go
