@@ -224,6 +224,7 @@
   const EDGE_OK = 0.85, EDGE_MAJOR = 0.6, EDGE_PEN = 20, EDGE_PEN_CAP = 12;   // lico zakrywa krawędzie fazy
   const IB_MAJOR = 0.3;                                                       // szczelina między ściegami / r → 401
   const BASE_REWARD = 50;
+  const ZONE_BW = 1.5;   // 3.11.0: strefa łuku = krawędź fazy + 1,5 × szerokość fazy od osi (1:1 z index.html)
   const ELEC_STUB = 0.16;
   const V_TAU = 0.045;            // stała czasowa wygładzania prędkości [s]
   const V_TICK = 0.016;           // referencyjny takt [s] — skala `instab`
@@ -279,7 +280,8 @@
     // Bez flagi wszystko idzie dawną ścieżką — bit-w-bit jak 3.6.0 (test kb.js na zamrożonym sim-3.6.0).
     const kb = !!round.kb;
     const phys = round.kb >= 3;    // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
-    const dz = round.kb >= 4 && proc === "MMA";   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
+    const dz = round.kb >= 4 && proc === "MMA";
+    const zoneOn = round.kb >= 5;   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -353,6 +355,10 @@
       if (!L2) return false; const t = ((x - a.x) * dx + (y - a.y) * dy) / L2, tol = 1.5 / Math.sqrt(L2);
       return t < -tol || t > 1 + tol; }
     function onPlate(x, y) { return nearestSeam(x, y).d <= plateHalf() && !pastSeamEnd(x, y); }
+    // 3.11.0: do 3.10.0 łuk palił się i kładł metal do ~75 px poza fazą — przeciągnięcie po blasze robiło „dywan" spoiny.
+    // Teraz zajarzenie, palenie i odkładanie tylko w strefie rowka: krawędź fazy + pół szerokości fazy zapasu.
+    function onZone(x, y) { return nearestSeam(x, y).d <= grooveHalf + bevelW * ZONE_BW && !pastSeamEnd(x, y); }
+    const onWeld = zoneOn ? onZone : onPlate;
 
     // ── stan rundy (jak globalne w grze) ──
     let baked = [], speedSum = 0, speedN = 0, vVarSum = 0, spatterCount = 0, distAcc = 0;
@@ -425,7 +431,8 @@
       if (ev.type === "chip") { if (kb) needChip = false; continue; }   // 3.7.0: żużel zebrany młotkiem
       if (ev.type === "amp") { if (dz && ampMan && !bN && !last && Number.isInteger(ev.a) && ev.a > 0 && ev.a <= 400) { manA = ev.a; beadElec(); } continue; }   // 3.10.0: RĘCZNIE — prąd przestawiony przed ściegiem
       if (ev.type === "dia") { if (dz && !bN && !last && DIAS.includes(ev.d)) { diaSel = ev.d; beadElec(); electrodeLeft = 1; replacing = false; } continue; }   // 3.10.0: nowa elektroda wybranej Ø
-      if (ev.type === "down") { if (kb && needChip) { slagCount++; needChip = false; }   // następny ścieg na niezebranym żużlu
+      if (ev.type === "down") { if (zoneOn && !onZone(ev.x, ev.y)) continue;   // 3.11.0: poza rowkiem łuk nie zajarzy (gra tego nie nagrywa)
+        if (kb && needChip) { slagCount++; needChip = false; }   // następny ścieg na niezebranym żużlu
         last = { x: ev.x, y: ev.y }; lastT = ev.t; vEMA = targetPx; lastDab = ev.t;
         btnMask = ev.b | 0; arcLen = 0; contactT = 0;   // dotyk blachy = zajarzenie
         trail = [{ t: ev.t, x: ev.x, y: ev.y }];
@@ -434,7 +441,7 @@
       if (ev.type === "bank") { bankReset(); continue; }
       if (ev.type !== "move" || !last) continue;
       const p = { x: ev.x, y: ev.y }, now = ev.t;
-      if (arcLive && !onPlate(p.x, p.y)) { last = null; continue; }   // zjazd z blachy gasi łuk (1:1 z grą)
+      if (arcLive && !onWeld(p.x, p.y)) { last = null; continue; }   // zjazd z blachy (od 3.11.0: z rowka) gasi łuk (1:1 z grą)
       const ddx = p.x - last.x, ddy = p.y - last.y, dist = Math.hypot(ddx, ddy);
       const dtS = Math.min(0.25, Math.max(0.001, (now - lastT) / 1000));
       if (tigLive) {
@@ -499,7 +506,7 @@
         // między zdarzeniami.
         // Bez `tig` (rundy sprzed 3.3.0) zostaje dawny automat co 150 ms.
         const dab = tigLive ? !!((ev.k | 0) & 16) : (now - lastDab > 150);
-        if (dab && onPlate(p.x + aox, p.y + aoy)) { const dw = Math.max(idealHalf, w * 0.95);
+        if (dab && onWeld(p.x + aox, p.y + aoy)) { const dw = Math.max(idealHalf, w * 0.95);
           const pl = depositBead(p.x + aox, p.y + aoy, dw); lastDab = now;
           if (tigLive) { if (lastDabPos) { const gap = Math.hypot(pl.x - lastDabPos.x, pl.y - lastDabPos.y);
               filPenAcc += filPenNow(gap / Math.max(1e-6, targetPx * FIL_DT)); filCount++; }
@@ -508,7 +515,7 @@
         const step = Math.max(2, w * 0.35); depCarry += dist;
         const n = Math.floor(depCarry / step); if (n > 0) depCarry -= n * step;
         for (let i = 1; i <= n; i++) { const x = last.x + ddx * (i / n) + aox, y = last.y + ddy * (i / n) + aoy;
-          if (!onPlate(x, y)) continue;
+          if (!onWeld(x, y)) continue;
           if (proc === "MMA") { if (replacing) break; electrodeLeft -= step / (arcLive ? ELEC_TRAVEL_ARC : 650);
             if (electrodeLeft <= ELEC_STUB) { replacing = true; break; } }
           depositBead(x, y, w); distAcc += step; }
@@ -644,6 +651,10 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.11.0 — ŁUK TYLKO W ROWKU (flaga `kb: 5`): zajarzenie, palenie i odkładanie metalu tylko w strefie
+  //         grooveHalf + bevelW × ZONE_BW od osi złącza (wcześniej cała blacha ±75 px — „dywan" spoiny po blasze).
+  //         Zjazd ze strefy gasi łuk jak dawniej zjazd z blachy. Rundy kb≤4 bit-w-bit jak 3.10.0
+  //         (zamrożony sim-3.10.0.js, test kb5.js). SCORING_VERSION 1.6.0.
   // 3.10.0 — ELEKTRODY (flaga `kb: 4`, tylko MMA): Ø wybierana przed każdym ściegiem (zdarzenie `dia`, domyślnie
   //         typowa), prąd z Ø (AMP_DIA × pozycja; RĘCZNIE `am` = ampery bezwzględne, przestawiane między ściegami
   //         zdarzeniem `amp`), L0 łuku = Ø, zła Ø = diaFit
@@ -699,7 +710,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.10.0", SCORING_VERSION: "1.5.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.11.0", SCORING_VERSION: "1.6.0", ZONE_BW };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
