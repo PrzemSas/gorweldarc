@@ -181,6 +181,23 @@
     const k = gh * 1.25 / capHalfMm, gap = Math.max(1, gapMm / 2 * k);
     return thin ? gap : gap + (thick - rfMm) * tan30 * k;
   }
+  // 3.9.0 (kb=3) — FIZYCZNA SKALA BLACHY: jedna skala VIS_K [px/mm] dla każdej grubości. Do 3.8.0 szerokość
+  // lica w px szła ze wzoru 3+0,7·t, więc skala rysunku wychodziła inna dla każdej blachy (2 mm 1,90, 3 mm 2,06,
+  // 5–12 mm ~1,65 px/mm) i 5 mm wyglądało prawie jak 3 mm. Teraz lico = realna szerokość (złącze I: szczelina + 2×2,5 mm,
+  // V60: rozwarcie fazy + 2×1,5 mm) × VIS_K, a bevelW rośnie w tej samej proporcji (tolerancje względem ściegu bez zmian).
+  // VIS_K = dawna skala 3 mm, więc 3 mm zostaje praktycznie jak było. 1:1 z index.html (grooveGeom).
+  const VIS_K = 2.06;
+  function capHalfMm(thick) {
+    const thin = thick <= 3, tan30 = Math.tan(Math.PI / 6);
+    const gapMm = thin ? Math.max(0.5, thick * 0.4) : 2, rfMm = thin ? thick : Math.min(1.5, thick * 0.15);
+    return thin ? gapMm / 2 + 2.5 : gapMm / 2 + (thick - rfMm) * tan30 + 1.5;
+  }
+  function grooveGeom(thick, phys) {
+    const gh0 = 3 + thick * 0.7, bw0 = 7 + thick * 1.3;
+    if (!phys) return { gh: gh0, bw: bw0 };
+    const gh = capHalfMm(thick) * VIS_K / 1.25;
+    return { gh, bw: bw0 * gh / gh0 };
+  }
   // Progi kontroli 3.7.0 (tylko rundy z flagą `kb`)
   const EDGE_OK = 0.85, EDGE_MAJOR = 0.6, EDGE_PEN = 20, EDGE_PEN_CAP = 12;   // lico zakrywa krawędzie fazy
   const IB_MAJOR = 0.3;                                                       // szczelina między ściegami / r → 401
@@ -243,6 +260,7 @@
     // 3.7.0 KOMBAJN: `kb` = runda spawana wg realnej sekwencji ściegów (tory, zakrycie fazy, 401, żużel).
     // Bez flagi wszystko idzie dawną ścieżką — bit-w-bit jak 3.6.0 (test kb.js na zamrożonym sim-3.6.0).
     const kb = !!round.kb;
+    const phys = round.kb === 3;   // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -251,7 +269,7 @@
 
     // ── passy ──
     function passPlan() { if (thick <= 3) return ["cap"]; if (thick <= 5) return ["root","cap"]; return ["root","fill","cap"]; }
-    const beadPlan = kb ? weldPlan(joint, thick, posKey, proc, round.kb === 2 ? 2 : 1) : null;   // 3.8.0: kb=2 → plan „przetop prosty, wypełnienie i lico wahadłem”
+    const beadPlan = kb ? weldPlan(joint, thick, posKey, proc, round.kb >= 2 ? 2 : 1) : null;   // 3.8.0: kb=2 → plan „przetop prosty, wypełnienie i lico wahadłem”
     const passPlanArr = kb ? beadPlan.map(b => b.k) : passPlan();
     const bwm = i => kb ? beadPlan[i].wm : 1;
     let passIndex = 0, passMul = PASS_W[passPlanArr[0]] * bwm(0);
@@ -259,7 +277,7 @@
     // ── geometria (recalc + buildWorkpiece, cy=H*0.66) ──
     let grooveHalf, bevelW, idealHalf, targetPx;
     function recalc() {
-      grooveHalf = 3 + thick * 0.7; bevelW = 7 + thick * 1.3;
+      const g = grooveGeom(thick, phys); grooveHalf = g.gh; bevelW = g.bw;
       idealHalf = grooveHalf * 1.25 * passMul; targetPx = SPEED[thick] * PX_PER_MM * PROCESS[proc].vMul;
     }
     recalc();
@@ -573,6 +591,9 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.9.0 — FIZYCZNA SKALA BLACHY (flaga `kb: 3`): szerokość lica, faza i tolerancje w px liczone z realnych mm
+  //         w jednej skali VIS_K dla wszystkich grubości (grooveGeom). Plan ściegów jak kb=2. Rundy kb=1/2 liczą się
+  //         bit-w-bit jak 3.8.0 (zamrożony sim-3.8.0.js, test kb3.js). SCORING_VERSION 1.4.0.
   // 3.8.0 — PLAN ŚCIEGÓW WG PRAKTYKI (flaga `kb: 2`): doczołowe i rura — przetop prosty, wypełnienie i lico
   //         po JEDNYM ściegu z wahadłem/zakosami we wszystkich pozycjach i metodach (>5 mm 3 warstwy, ≤5 mm 2,
   //         ≤3 mm 1). Do 3.7.0 12 mm miało 4–13 ściegów prostych (np. MMA PC 10, MAG PE 7). Rundy z `kb: 1`
@@ -620,7 +641,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, VERSION: "3.8.0", SCORING_VERSION: "1.3.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, VERSION: "3.9.0", SCORING_VERSION: "1.4.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);

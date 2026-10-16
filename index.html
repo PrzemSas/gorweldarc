@@ -659,7 +659,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.8.0"></script>
+<script src="sim.js?v=3.9.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -728,7 +728,7 @@ let rec=null;
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
-  kb:2,                           // 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
+  kb:3,                           // 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
   rw:Math.round((()=>{try{return stage.getBoundingClientRect().width;}catch(e){return 0;}})()),  // szerokość renderu → krok kwantyzacji kursora
   events:[]}; }
 function recEv(type,x,y,now,b,k){ if(!rec) return;
@@ -1079,6 +1079,15 @@ function weldPlan(joint, thick, pos, proc, v = 1) {   // v = wersja planu = flag
     out.push({ k, lay, n, lane, wm: n === 1 ? (wv ? 1.2 : 1) : 1.2 / n, wv: !!wv }); } });
   return out;
 }
+// 3.9.0 (nagranie kb:3) — FIZYCZNA SKALA BLACHY: jedna skala VIS_K [px/mm] dla każdej grubości (1:1 z sim.js).
+// Do 3.8.0 lico w px = 3+0,7·t, więc każda blacha miała inną skalę rysunku (3 mm 2,06, 5–12 mm ~1,65 px/mm).
+// Teraz lico = realne mm × VIS_K, bevelW w tej samej proporcji — 12 mm jest 4× grubsze od 3 mm, jak w realu.
+const VIS_K=2.06;
+function capHalfMm(thick){ const thin=thick<=3, tan30=Math.tan(Math.PI/6);
+  const gapMm=thin?Math.max(0.5,thick*0.4):2, rfMm=thin?thick:Math.min(1.5,thick*0.15);
+  return thin?gapMm/2+2.5:gapMm/2+(thick-rfMm)*tan30+1.5; }
+function grooveGeom(thick){ const gh0=3+thick*0.7, bw0=7+thick*1.3, gh=capHalfMm(thick)*VIS_K/1.25;
+  return {gh, bw:bw0*gh/gh0}; }
 // Krawędź fazy [px] — 1:1 z visGroove() w grze: lico ma ją przykryć (3.7.0). Złącze I: połowa szczeliny.
 function bevelEdgePx(thick, gh) {
   const thin = thick <= 3, tan30 = Math.tan(Math.PI / 6);
@@ -1087,7 +1096,7 @@ function bevelEdgePx(thick, gh) {
   const k = gh * 1.25 / capHalfMm, gap = Math.max(1, gapMm / 2 * k);
   return thin ? gap : gap + (thick - rfMm) * tan30 * k;
 }
-// Stan torów (3.7.0) — 1:1 z sim.js. Gra spawa ZAWSZE wg weldPlan v2 (nagranie ma `kb:2`, od 3.8.0).
+// Stan torów (3.7.0) — 1:1 z sim.js. Gra spawa ZAWSZE wg weldPlan v2 (nagranie ma `kb:3` od 3.9.0, `kb:2` od 3.8.0).
 const EDGE_OK=0.85, EDGE_MAJOR=0.6, EDGE_PEN=20, EDGE_PEN_CAP=12, IB_MAJOR=0.3;
 let beadPlan=null, laneOff=0, lanePts=[], seamNrm=[], capMin=null, capMax=null, segLen=1, beadStats=[], bSo=0, bR=0, bN=0, needChip=false, slagCount=0;
 function setupBeads(){ beadPlan=weldPlan(joint,thick,posKey,proc,2); passPlanArr=beadPlan.map(b=>b.k); passIndex=0; passMul=PASS_W[passPlanArr[0]]*beadPlan[0].wm; }
@@ -1111,7 +1120,7 @@ function updateWallet(){ const el=document.getElementById("wal"); if(!el) return
   el.hidden=!isChallenge();
   if(isChallenge()) el.innerHTML='🏁 <b>'+t("chal_wal")+'</b> · '+(CHALLENGE.minScore||90)+'%'; }
 
-function recalc(){ grooveHalf=3+thick*0.7; bevelW=7+thick*1.3; idealHalf=grooveHalf*1.25*passMul; targetPx=SPEED[thick]*PX_PER_MM*PROCESS[proc].vMul; updateAmpF(); }
+function recalc(){ const g=grooveGeom(thick); grooveHalf=g.gh; bevelW=g.bw; idealHalf=grooveHalf*1.25*passMul; targetPx=SPEED[thick]*PX_PER_MM*PROCESS[proc].vMul; updateAmpF(); }
 
 // ── Geometry ──────────────────────────────────────────────────────
 function isMob(){ return document.body.classList.contains("is-mobile"); }
@@ -2351,7 +2360,9 @@ function secModel(v,all){
       return {k:L.k,lay:L.lay,beads:L.beads,n:L.n,bands,pts:secPoly(L,v),zm:(Math.max(-v.reinf,L.z0)+Math.min(v.T,L.z1))/2,xm:ext}; }) }; }
 function drawSectionLens(c,now,v,F,all,st,live,at){
   const m=secModel(v,all), BW=300, wid=m.xR-m.xL, depth=m.zB-m.zT;
-  const S=Math.min((BW-125)/wid,120/depth), BH=Math.round(depth*S+58);
+  // Stała skala lupy w mm (3.9.0): 12 mm wypełnia lupę, cieńsza blacha jest w niej mniejsza — jak w realu.
+  // Wcześniej lupa sama dopasowywała powiększenie i przekrój 3 mm wyglądał tak samo jak 12 mm.
+  const S=Math.min((BW-125)/wid,120/depth,(joint==="fillet"?4.0:6.0)/v.k), BH=Math.round(depth*S+58);
   const lp=at||lensPlace(BW,BH,v,F); if(!lp) return; const bx=lp.x, by=lp.y;
   if(at){ const d=at.d||1; c.canvas.width=380*d; c.canvas.height=(BH+8)*d; c.canvas.style.width="380px"; c.setTransform(d,0,0,d,0,0); }   // raport: wysokość pod treść, ostro na retinie
   const ox=bx+12-m.xL*S, oz=by+36-m.zT*S, M=(x,z)=>[ox+x*S,oz+z*S];
