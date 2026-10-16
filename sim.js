@@ -135,6 +135,28 @@
     if (base == null) return null;
     return Math.round(base * (POS_AMP_MUL[POSITIONS[posK].stars] || 1));
   }
+  // ── ELEKTRODY (3.10.0, nagranie kb:4, tylko MMA) — 1:1 z index.html ──
+  // Do 3.9.0 jedna Ø na całą próbkę (z grubości) i prąd z grubości, nie z elektrody: grań 12 mm dostawała 170 A.
+  // Teraz gracz wybiera Ø przed KAŻDYM ściegiem (domyślnie typowa = podpowiedź z planu), prąd idzie z Ø
+  // (środek zakresu producenta × pozycja), łuk nominalny L0 = Ø. Zła Ø to wada sama w sobie (diaFit),
+  // a w AUTO dodatkowo inny prąd → inny HI (za gruba na stali = odrzut, jeśli nie przyspieszysz).
+  // Zdarzenie `dia` (d = Ø×10) przyjmowane tylko przed pierwszym kroplą ściegu — w trakcie Ø stoi.
+  const DIAS = [20, 25, 32, 40];
+  const AMP_DIA = { 20: 60, 25: 80, 32: 115, 40: 160 };   // 2,0: 50–70 · 2,5: 70–90 · 3,2: 100–130 · 4,0: 140–180 A
+  function elecTyp(k, thick) { return thick <= 2 ? 20 : thick <= 3 || k === "root" ? 25 : thick > 8 && k === "fill" ? 40 : 32; }
+  function diaAmps(d, posK) { return Math.round(AMP_DIA[d] * (POS_AMP_MUL[POSITIONS[posK].stars] || 1)); }
+  // s = o ile rozmiarów od typowej. +1: szersze, gorętsze jeziorko; na grani doczołowej (warstwa 0) przepalenie = wada.
+  // −1: wąskie, zimne lico (gorzej kryje fazę). ±2 i więcej = wada (przepalenie / brak wtopienia).
+  function diaFit(sel, typ, lay) { const s = DIAS.indexOf(sel) - DIAS.indexOf(typ);
+    if (!s) return { s, w: 1, pen: 0, sev: null, spatAdd: 0 };
+    const big = Math.abs(s) >= 2;
+    if (s > 0) return { s, w: big ? 1.3 : 1.15, pen: big ? 18 : 6, sev: big || lay === 0 ? "major" : "minor", spatAdd: big ? 0.8 : 0.4 };
+    return { s, w: big ? 0.75 : 0.88, pen: big ? 18 : 6, sev: big ? "major" : "minor", spatAdd: 0 }; }
+  function ampFOf(ar) { return { ar, w: Math.pow(ar, 0.55),
+    pen: ar < 1 ? Math.min(30, (1 - ar) * 70) : Math.min(30, (ar - 1) * 50),
+    sev: ar === 1 ? null : (Math.abs(ar - 1) >= 0.25 ? "major" : "minor"),
+    spatAdd: ar > 1 ? (ar - 1) * 2 : 0,
+    por: ar < 0.85 ? Math.round((0.85 - ar) * 6) : 0 }; }
   // ── KOMBAJN (3.7.0): realna sekwencja ściegów — wspólna tabela gry i weryfikatora (1:1 z index.html) ──
   // Doczołowe wg ISO 9692-1 (do 3 mm złącze I, od 5 mm V 60°), liczba warstw i ściegów jak w praktyce WPS:
   // PC/PE — dużo ściegów prostych, PF — mało, z wahadłem, PA — pośrodku. MAG ma większe stopiwo (o warstwę
@@ -233,15 +255,11 @@
     // liczy bit-w-bit jak 1.4.0. Rundy sprzed 1.5.0 (bez pola `amps`) replayują się identycznie.
     const ampRec = recommendedAmps(proc, thick, posKey);
     const ampAr = (ampRec && amps) ? amps / ampRec : 1;
-    const ampF = { ar: ampAr, w: Math.pow(ampAr, 0.55),
-                   pen: ampAr < 1 ? Math.min(30, (1 - ampAr) * 70) : Math.min(30, (ampAr - 1) * 50),
-                   sev: ampAr === 1 ? null : (Math.abs(ampAr - 1) >= 0.25 ? "major" : "minor"),
-                   spatAdd: ampAr > 1 ? (ampAr - 1) * 2 : 0,
-                   por: ampAr < 0.85 ? Math.round((0.85 - ampAr) * 6) : 0 };
+    let ampF = ampFOf(ampAr);
 
     // ── łuk (2.0.0) ──
     const arcLive = !!arc;
-    const arcL0 = ELEC_DIA[thick] || 2.5;
+    let arcL0 = ELEC_DIA[thick] || 2.5;
     let arcLen = 0, btnMask = 0, stickCount = 0, arcBroke = 0, contactT = 0;
     let arcPenAcc = 0, arcTime = 0, arcVSum = 0, arcPorAcc = 0, arcRSum = 0;
 
@@ -260,7 +278,8 @@
     // 3.7.0 KOMBAJN: `kb` = runda spawana wg realnej sekwencji ściegów (tory, zakrycie fazy, 401, żużel).
     // Bez flagi wszystko idzie dawną ścieżką — bit-w-bit jak 3.6.0 (test kb.js na zamrożonym sim-3.6.0).
     const kb = !!round.kb;
-    const phys = round.kb === 3;   // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
+    const phys = round.kb >= 3;    // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
+    const dz = round.kb >= 4 && proc === "MMA";   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -303,6 +322,18 @@
       const Wl = grooveHalf * 1.25 * PASS_W[b.k]; laneOff = b.lane * (Wl - Wl * b.wm);
       lanePts = laneOff ? seamPts.map((p, i) => ({ x: p.x + nrm[i].x * laneOff, y: p.y + nrm[i].y * laneOff })) : seamPts; }
     setLane();
+    // ── elektroda ściegu (3.10.0) ──
+    const ampK = (ampRec && amps) ? amps / ampRec : 1, ampMan = !!round.am;   // AUTO: krotność pokrętła; RĘCZNIE (`am`): ampery bezwzględne
+    let manA = amps;                                                          // RĘCZNIE: pokrętło przekręcone między ściegami (zdarzenie `amp`)
+    let diaSel = 0, diaTyp = 0, fitF = { w: 1, pen: 0, sev: null, spatAdd: 0 }, beadAmps = 0, beadBase = 0, arcVb = 0, arcTb = 0;
+    const elecLog = [];
+    function beadElec() { if (!dz) return; const b = beadPlan[passIndex] || beadPlan[beadPlan.length - 1];
+      diaTyp = elecTyp(b.k, thick); if (!diaSel) diaSel = diaTyp;
+      beadBase = diaAmps(diaSel, posKey); beadAmps = (ampMan && manA) ? manA : Math.round(beadBase * ampK);
+      ampF = ampFOf(beadAmps / beadBase); fitF = diaFit(diaSel, diaTyp, joint === "fillet" ? -1 : b.lay); arcL0 = diaSel / 10; }
+    function elecEntry(m) { return { d: diaSel, typ: diaTyp, amps: beadAmps, ref: diaAmps(diaTyp, posKey), pen: ampF.pen, sev: ampF.sev, ar: ampF.ar,
+      fit: fitF, avgV: m.avgV, u: arcTb ? arcVb / arcTb : null }; }
+    beadElec();
     const EDGE = bevelEdgePx(thick, grooveHalf);
     const capMin = kb ? seamPts.map(() => 1e9) : null, capMax = kb ? seamPts.map(() => -1e9) : null;
     let segLen = 0; for (let i = 1; i < seamPts.length; i++) segLen += Math.hypot(seamPts[i].x - seamPts[i - 1].x, seamPts[i].y - seamPts[i - 1].y);
@@ -338,7 +369,7 @@
       else if (sr > 1.3) w = Math.max(idealHalf * 0.42, idealHalf * Math.pow(1.3 / sr, 0.7));
       else w = idealHalf;
       const arcW = arcLive ? Math.min(1.6, Math.max(0.62, Math.pow(Math.max(0.15, arcLen / arcL0), 0.35))) : 1;
-      return w * ampF.w * arcW * (angLive ? angWFac(taDeg) : 1); }   // 1:1 z arcWFac()/angWFac() w index.html
+      return w * ampF.w * fitF.w * arcW * (angLive ? angWFac(taDeg) : 1); }   // 1:1 z arcWFac()/angWFac() w index.html
     function depositBead(x, y, w) { const ns = kb ? nearestLane(x, y) : nearestSeam(x, y);
       if (ns.d < grooveHalf + bevelW) { x += (ns.x - x) * 0.4; y += (ns.y - y) * 0.4; }
       const jit = proc === "MMA" ? (rng() * 0.18 - 0.09) * w : 0;   // jedyny pobór z rng (jak w grze)
@@ -381,16 +412,19 @@
       let endGap = 0; for (const e of [lanePts[0], lanePts[K - 1]]) { let d = 1e18; for (const b of baked) { const dd = (b.x - e.x) ** 2 + (b.y - e.y) ** 2; if (dd < d) d = dd; } if (Math.sqrt(d) > grooveHalf * 1.7) endGap++; }
       return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen };
     }
-    function bankReset() { passLog.push(passMetrics());
+    function bankReset() { const pm = passMetrics(); passLog.push(pm);
+      if (dz) { elecLog.push(elecEntry(pm)); arcVb = 0; arcTb = 0; diaSel = 0; }
       if (kb) { const b = beadPlan[passIndex]; if (b) beadStats.push({ lay: b.lay, lane: b.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
         bSo = 0; bR = 0; bN = 0; if (proc === "MMA") needChip = true; }
       baked = []; speedSum = 0; speedN = 0; vVarSum = 0; spatterCount = 0; distAcc = 0;
       vSumT = 0; vTimeS = 0; passWeldMs = 0; depCarry = 0; tickAcc = 0; vTickRef = vEMA;
-      passIndex++; passMul = (PASS_W[passPlanArr[passIndex]] || 1) * (kb && beadPlan[passIndex] ? beadPlan[passIndex].wm : 1); recalc(); setLane(); }
+      passIndex++; passMul = (PASS_W[passPlanArr[passIndex]] || 1) * (kb && beadPlan[passIndex] ? beadPlan[passIndex].wm : 1); recalc(); setLane(); beadElec(); }
 
     // ── replay zdarzeń ──
     for (const ev of events) {
       if (ev.type === "chip") { if (kb) needChip = false; continue; }   // 3.7.0: żużel zebrany młotkiem
+      if (ev.type === "amp") { if (dz && ampMan && !bN && !last && Number.isInteger(ev.a) && ev.a > 0 && ev.a <= 400) { manA = ev.a; beadElec(); } continue; }   // 3.10.0: RĘCZNIE — prąd przestawiony przed ściegiem
+      if (ev.type === "dia") { if (dz && !bN && !last && DIAS.includes(ev.d)) { diaSel = ev.d; beadElec(); electrodeLeft = 1; replacing = false; } continue; }   // 3.10.0: nowa elektroda wybranej Ø
       if (ev.type === "down") { if (kb && needChip) { slagCount++; needChip = false; }   // następny ścieg na niezebranym żużlu
         last = { x: ev.x, y: ev.y }; lastT = ev.t; vEMA = targetPx; lastDab = ev.t;
         btnMask = ev.b | 0; arcLen = 0; contactT = 0;   // dotyk blachy = zajarzenie
@@ -421,7 +455,8 @@
         if (arcLen >= arcL0 * ARC_MAX_MUL) { arcLen = arcL0 * ARC_MAX_MUL; arcBroke++; last = null; continue; }  // zerwany łuk
         const r = arcLen / arcL0;
         arcPenAcc += arcPenNow(r) * dtS; arcTime += dtS; arcRSum += r * dtS;
-        arcVSum += (recommendedVolts(proc, thick) + ARC_V_SLOPE * (arcLen - arcL0)) * dtS;
+        const uNow = recommendedVolts(proc, thick) + ARC_V_SLOPE * (arcLen - arcL0);
+        arcVSum += uNow * dtS; if (dz) { arcVb += uNow * dtS; arcTb += dtS; }
         if (r > ARC_HI) arcPorAcc += (r - ARC_HI) * dtS;
         if (proc === "MMA" && !replacing) { electrodeLeft -= dtS / ARC_BURN_S;   // łuk zjada elektrodę w czasie
           if (electrodeLeft <= ELEC_STUB) { replacing = true; last = null; continue; } }
@@ -481,7 +516,7 @@
       // 1.4.0: tempo poza oknem = rozprysk (1:1 z index.html). Kara przestała być stałą dla
       // danego proc/thick — idealny przebieg nie płaci za nic, zły płaci do 2×.
       let spatFac = Math.min(2, Math.abs(vEMA / targetPx - 1) / 0.30);
-      if (ampF.spatAdd) spatFac = Math.min(2.6, spatFac + ampF.spatAdd);
+      const spA = ampF.spatAdd + fitF.spatAdd; if (spA) spatFac = Math.min(2.6, spatFac + spA);
       if (arcLive) { const rr = arcLen / arcL0; if (rr > ARC_HI) spatFac = Math.min(3.2, spatFac + (rr - ARC_HI) * 1.2); }
       if (angLive) { const so = angOverT(taDeg); if (so > 0) spatFac = Math.min(3.2, spatFac + Math.min(0.8, so / 45)); }
       spatterCount += Math.round((3 + (thick >> 1)) * PROCESS[proc].sparks) * spatFac * (dtS * 1000 / 16); passWeldMs += dtS * 1000;
@@ -526,13 +561,29 @@
     const hiWps = (vWps != null && ampRec != null) ? heatInputKJmm(vWps, ampRec, targetPx / PX_PER_MM, effP) : null;
     const hiAct = (uAct != null && ampsUse != null) ? heatInputKJmm(uAct, ampsUse, cur.avgV / PX_PER_MM, effP) : null;
     const hiMax = hiWps != null ? Math.round(hiWps * HI_MAX_R * 1000) / 1000 : null;
-    const hiOver = !!(cvn && hiMax != null && hiAct != null && hiAct > hiMax);
+    let hiOver = !!(cvn && hiMax != null && hiAct != null && hiAct > hiMax);
+    // 3.10.0: każdy ścieg ma własną Ø, prąd i tempo → HI liczony PER ŚCIEG, referencja = prąd TYPOWEJ Ø z WPS.
+    // Do raportu idzie ścieg najbliżej sufitu (najgorszy). Kary prądu i Ø = średnia po ściegach, wada = najgorsza.
+    let ampPenT = ampF.pen, ampMajor = ampF.sev === "major", diaPen = 0, diaMajor = false, elec = null;
+    let hiR = hiAct, hiRW = hiWps, hiRM = hiMax, ampsR = ampsUse;
+    if (dz) {
+      const E = elecLog.concat([elecEntry(cur)]), tr = targetPx / PX_PER_MM;
+      ampPenT = 0; ampMajor = false; hiOver = false; let worst = -1;
+      for (const e of E) { ampPenT += e.pen; diaPen += e.fit.pen; if (e.sev === "major") ampMajor = true; if (e.fit.sev === "major") diaMajor = true;
+        e.hiW = vWps != null ? heatInputKJmm(vWps, e.ref, tr, effP) : null;
+        e.hiM = e.hiW != null ? Math.round(e.hiW * HI_MAX_R * 1000) / 1000 : null;
+        e.hi = vWps != null ? heatInputKJmm(e.u != null ? e.u : vWps, e.amps, e.avgV / PX_PER_MM, effP) : null;
+        if (e.hi != null && e.hiM != null) { const r = e.hi / e.hiM; if (r > worst) { worst = r; hiR = e.hi; hiRW = e.hiW; hiRM = e.hiM; ampsR = e.amps; }
+          if (cvn && e.hi > e.hiM) hiOver = true; } }
+      ampPenT /= E.length; diaPen /= E.length;
+      elec = E.map(e => ({ d: e.d, typ: e.typ, amps: e.amps, ref: e.ref, fit: e.fit.s, hi: e.hi, hiMax: e.hiM }));
+    }
     const fastR = Math.max.apply(null, all.map(m => m.avgV)) / targetPx, fastMax = 1 + FAST_TOL * MATERIAL[bead].tol;
     const tooFast = uf && fastR > fastMax;
 
     let score = coverage * 50 + spdAcc * 20 + evenness * 15 + (1 - overflow) * 15
               - porosity * 5 - Math.min(SPATTER_PEN_CAP, proc === "TIG" ? spatter * 3 : spatter * 0.5)
-              - ampF.pen - arcPen - Math.min(15, arcFails * 4) - angPen - offPen - filPen - edgePen;
+              - ampPenT - diaPen - arcPen - Math.min(15, arcFails * 4) - angPen - offPen - filPen - edgePen;
     score = Math.max(0, Math.min(100, Math.round(score)));
 
     // wady major (do oceny ISO / odrzutu) — te same progi co w grze
@@ -542,7 +593,7 @@
       (porosity > 3) ||
       (endGap > 1) ||
       (passPlanArr[0] === "root" && rootCov < 0.8) ||
-      (ampF.sev === "major") ||
+      (ampMajor) || (dz && diaMajor) ||
       (arcPen >= 12) || (arcFails > 2) ||
       (angPen >= 10) || (offPen >= OFF_MAJOR) || (filPen >= FIL_MAJOR) ||
       hiOver ||                     // poza zakresem kwalifikacji WPS — ocena lica tego nie ratuje
@@ -564,7 +615,8 @@
     if (overflow > 0.3) rejectReasons.push("overflow");
     if (porosity > 3) rejectReasons.push("porosity");
     if (offPen >= OFF_MAJOR) rejectReasons.push("offAxis");
-    if (ampF.sev === "major") rejectReasons.push("amps");
+    if (dz && diaMajor) rejectReasons.push("electrode");
+    if (ampMajor) rejectReasons.push("amps");
     if ((arcPen >= 12) || (arcFails > 2)) rejectReasons.push("arc");
     if (angPen >= 10) rejectReasons.push("angle");
     if (filPen >= FIL_MAJOR) rejectReasons.push("filler");
@@ -582,15 +634,21 @@
     const pf = 1 + 0.18 * (nLay - 1);
     const difficulty = mb * pm * jm * mf * pf;
 
-    return { score, letter, iso, coverage, spdAcc, evenness, overflow, porosity, spatter, endGap, baked: baked.length, passes: passPlanArr.length, difficulty: +difficulty.toFixed(2), amps: ampRec && amps ? amps : ampRec, ampsWps: ampRec, ampPen: +ampF.pen.toFixed(2),
+    return { score, letter, iso, coverage, spdAcc, evenness, overflow, porosity, spatter, endGap, baked: baked.length, passes: passPlanArr.length, difficulty: +difficulty.toFixed(2), amps: dz ? ampsR : ampRec && amps ? amps : ampRec, ampsWps: ampRec, ampPen: +ampPenT.toFixed(2),
              arcPen: +arcPen.toFixed(2), arcR: +arcR.toFixed(3), stickCount, arcBroke,
              angPen: +angPen.toFixed(2), offPen: +offPen.toFixed(2), filPen: +filPen.toFixed(2), filDabs: filCount, waDeg: +waDeg.toFixed(2), taDeg: +taDeg.toFixed(2),
              angW: +angW.toFixed(2), angT: +angT.toFixed(2), taIdeal: TA_IDEAL[proc] != null ? TA_IDEAL[proc] : 0,
              volts: arcTime ? +(arcVSum / arcTime).toFixed(2) : recommendedVolts(proc, thick),
-             hi: hiAct, hiWps, hiMax, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [],
+             hi: hiR, hiWps: hiRW, hiMax: hiRM, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [],
+             ...(dz ? { elec, diaPen: +diaPen.toFixed(2) } : {}),
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.10.0 — ELEKTRODY (flaga `kb: 4`, tylko MMA): Ø wybierana przed każdym ściegiem (zdarzenie `dia`, domyślnie
+  //         typowa), prąd z Ø (AMP_DIA × pozycja; RĘCZNIE `am` = ampery bezwzględne, przestawiane między ściegami
+  //         zdarzeniem `amp`), L0 łuku = Ø, zła Ø = diaFit
+  //         (±1 kara/drobna, na grani doczołowej +1 i ±2 = REJECT „electrode"), HI per ścieg. MIG/TIG z kb:4 i rundy
+  //         kb≤3 bit-w-bit jak 3.9.0 (zamrożony sim-3.9.0.js, test kb4.js). SCORING_VERSION 1.5.0.
   // 3.9.0 — FIZYCZNA SKALA BLACHY (flaga `kb: 3`): szerokość lica, faza i tolerancje w px liczone z realnych mm
   //         w jednej skali VIS_K dla wszystkich grubości (grooveGeom). Plan ściegów jak kb=2. Rundy kb=1/2 liczą się
   //         bit-w-bit jak 3.8.0 (zamrożony sim-3.8.0.js, test kb3.js). SCORING_VERSION 1.4.0.
@@ -641,7 +699,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, VERSION: "3.9.0", SCORING_VERSION: "1.4.0" };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.10.0", SCORING_VERSION: "1.5.0" };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);

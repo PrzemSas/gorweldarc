@@ -131,6 +131,15 @@
   .toolhud { position:fixed; left:12px; bottom:62px; z-index:6; font-size:12px; color:#9aa6ad; pointer-events:none; max-width:320px;
     padding:7px 11px; border-radius:10px; background:rgba(8,12,15,.55); border:1px solid rgba(255,255,255,.05); }
   .toolhud b { color:var(--amber); }
+  .toolhud .dia-row { display:inline-block; margin-top:4px; }
+  .toolhud .dia { pointer-events:auto; font:inherit; font-size:11px; color:#c9d2d7; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+    border-radius:6px; padding:2px 6px; margin:0 2px; cursor:pointer; min-width:34px; }
+  .toolhud .dia.typ { border-color:rgba(255,174,60,.45); }
+  .toolhud .dia.on { background:var(--amber); color:#111; border-color:var(--amber); font-weight:700; }
+  .toolhud .dia:disabled { cursor:default; opacity:.55; pointer-events:none; }   /* zablokowane (ścieg leży) = przepuszczają zajarzenie na blachę */
+  .toolhud .dia.on:disabled { opacity:.8; }
+  body.is-mobile .toolhud .dia { min-height:0; min-width:30px; height:24px; padding:0 5px; margin:0 1px; font-size:11px; }
+  body.is-mobile .toolhud .dia-row { margin-top:0; }
   .rankbar { position:fixed; left:12px; bottom:14px; z-index:6; text-align:left; font-size:12px; color:#9aa6ad; pointer-events:none;
     padding:5px 10px; border-radius:9px; background:rgba(8,12,15,.4); border:1px solid rgba(255,255,255,.04); }
   .rankbar b { color:var(--cyan); font-size:14px; }
@@ -659,7 +668,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.9.0"></script>
+<script src="sim.js?v=3.10.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -728,9 +737,11 @@ let rec=null;
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
-  kb:3,                           // 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
+  kb:4,                           // 3.10.0: elektrody MMA — Ø per ścieg (`dia`), prąd z Ø, RĘCZNIE `am` + `amp` między ściegami. 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
   rw:Math.round((()=>{try{return stage.getBoundingClientRect().width;}catch(e){return 0;}})()),  // szerokość renderu → krok kwantyzacji kursora
-  events:[]}; }
+  events:[]};
+  if(proc==="MMA"&&ampMode==="man"&&ampSet!=null) rec.am=1;   // 3.10.0: RĘCZNIE = ampery bezwzględne (AUTO = krotność, jak dotąd)
+  ampRecd=rec.amps; diaRec=0; }
 function recEv(type,x,y,now,b,k){ if(!rec) return;
   const ev={type,t:Math.round(now),x:Math.round(x*100)/100,y:Math.round(y*100)/100};
   if(b!==undefined) ev.b=b|0;                       // maska przycisków — bez niej replay nie odtworzy łuku
@@ -765,7 +776,7 @@ const I18N={
   cov_lbl:"Pokrycie", cov_layer:"Warstwa", cov_inspect:"⚡ auto-inspekcja", cov_done:"✅ PEŁNA ŁAGA — puść",
   pass_root:"przetop", pass_fill:"wypełnienie", pass_cap:"lico",
   t_passdone:"✅ WARSTWA %1 → teraz: %2", t_passlast:"⚡ OSTATNIA WARSTWA — lico",
-  cov_bead:"Ścieg", pg_thick:"PG (z góry) tylko do 5 mm — grubszą blachę spawa się PF (z dołu)", lane_n:"tor %1/%2", bead_weave:"wahadło", beads_n:"%1 ściegów", t_beadnext:"✅ ŚCIEG %1/%2 → teraz: %3", t_beadlast:"⚡ OSTATNI ŚCIEG — %1", t_chip:"🔨 OCZYŚĆ ŻUŻEL (C)", t_chipneed:"🔨 Najpierw zbij żużel — klawisz C albo przycisk", t_chipped:"✅ Żużel zebrany", t_slagleft:"⚠ Spawasz po żużlu — wtrącenie (301)", def_edges:"Lico nie przykryło krawędzi fazy na %1% długości — niewypełniony brzeg i brak wtopienia (ISO 5817: 511, 401)", def_interbead:"Brak wtopienia między ściegami — szczelina między sąsiednimi ściegami (ISO 5817: 401)", def_slag:"Wtrącenie żużla — następny ścieg poszedł po niezebranym żużlu %1× (ISO 5817: 301)", def_crater:"Krater / niewypełniony koniec ściegu", def_rootlack:"Słaby przetop w grani (warstwa przetopowa %1%)",
+  cov_bead:"Ścieg", pg_thick:"PG (z góry) tylko do 5 mm — grubszą blachę spawa się PF (z dołu)", lane_n:"tor %1/%2", bead_weave:"wahadło", beads_n:"%1 ściegów", t_beadnext:"✅ ŚCIEG %1/%2 → teraz: %3", t_beadlast:"⚡ OSTATNI ŚCIEG — %1", t_chip:"🔨 OCZYŚĆ ŻUŻEL (C)", t_chipneed:"🔨 Najpierw zbij żużel — klawisz C albo przycisk", t_chipped:"✅ Żużel zebrany", t_dialock:"Ø zmienisz przed następnym ściegiem — ten już leży", t_amplock:"Prąd przestawisz przed następnym ściegiem", dia_typ:"typowa Ø dla tego ściegu (WPS)", def_dia_small:"Za cienka elektroda — Ø%1 zamiast Ø%2 (%3): zimny ścieg, mało stopiwa, ryzyko braku wtopienia w brzegi (ISO 5817: 401)", def_dia_big:"Za gruba elektroda — Ø%1 zamiast Ø%2 (%3): za duże jeziorko, przegrzanie, szerokie lico", def_dia_root:"Za gruba elektroda na grań — Ø%1 zamiast Ø%2 (%3): przepalenie, nadmierny przetop (ISO 5817: 504, 510)", t_slagleft:"⚠ Spawasz po żużlu — wtrącenie (301)", def_edges:"Lico nie przykryło krawędzi fazy na %1% długości — niewypełniony brzeg i brak wtopienia (ISO 5817: 511, 401)", def_interbead:"Brak wtopienia między ściegami — szczelina między sąsiednimi ściegami (ISO 5817: 401)", def_slag:"Wtrącenie żużla — następny ścieg poszedł po niezebranym żużlu %1× (ISO 5817: 301)", def_crater:"Krater / niewypełniony koniec ściegu", def_rootlack:"Słaby przetop w grani (warstwa przetopowa %1%)",
   btn_help:"❔ JAK GRAĆ", btn_methods:"📖 METODY", btn_about:"ℹ️ O ARC", methods_title:"Metody — opis fachu", btn_close:"ZAMKNIJ",
   t_cut_steelonly:"🔥 Palnik tlenowy tnie TYLKO stal — nie nierdzewkę ani alu", t_cut_preheat:"🔥 Podgrzewaj przy starcie — trzymaj wolno aż przebije", t_cut_pierced:"✅ Przebite! Prowadź rzaz po linii", cut_word:"cięcie",
   cd_incomplete:"Niedocięcie — rzaz nie przeszedł na wylot (%1%)", cd_wide:"Szeroki rzaz / nadtopienie krawędzi (za wolno)", cd_dross:"Żużel i grat na dole (za szybko)", cd_dev:"Odchył od linii — krzywy rzaz", cd_clean:"Czysty rzaz — gładkie, prostopadłe krawędzie",
@@ -802,7 +813,7 @@ const I18N={
   cov_lbl:"Coverage", cov_layer:"Layer", cov_inspect:"⚡ auto-inspect", cov_done:"✅ FULL BEAD — release",
   pass_root:"root", pass_fill:"fill", pass_cap:"cap",
   t_passdone:"✅ LAYER %1 → now: %2", t_passlast:"⚡ LAST LAYER — cap",
-  cov_bead:"Bead", pg_thick:"PG (vertical down) only up to 5 mm — thicker plate is welded PF (vertical up)", lane_n:"lane %1/%2", bead_weave:"weave", beads_n:"%1 beads", t_beadnext:"✅ BEAD %1/%2 → now: %3", t_beadlast:"⚡ LAST BEAD — %1", t_chip:"🔨 CHIP THE SLAG (C)", t_chipneed:"🔨 Chip the slag first — key C or the button", t_chipped:"✅ Slag removed", t_slagleft:"⚠ Welding over slag — inclusion (301)", def_edges:"Cap did not cover the bevel edges on %1% of the length — unfilled edge and lack of fusion (ISO 5817: 511, 401)", def_interbead:"Lack of fusion between beads — a gap between neighbouring beads (ISO 5817: 401)", def_slag:"Slag inclusion — the next bead went over unremoved slag %1× (ISO 5817: 301)", def_crater:"Crater / unfilled bead end", def_rootlack:"Poor root penetration (root pass %1%)",
+  cov_bead:"Bead", pg_thick:"PG (vertical down) only up to 5 mm — thicker plate is welded PF (vertical up)", lane_n:"lane %1/%2", bead_weave:"weave", beads_n:"%1 beads", t_beadnext:"✅ BEAD %1/%2 → now: %3", t_beadlast:"⚡ LAST BEAD — %1", t_chip:"🔨 CHIP THE SLAG (C)", t_chipneed:"🔨 Chip the slag first — key C or the button", t_chipped:"✅ Slag removed", t_dialock:"Change Ø before the next bead — this one is already laid", t_amplock:"Change the current before the next bead", dia_typ:"typical Ø for this bead (WPS)", def_dia_small:"Electrode too thin — Ø%1 instead of Ø%2 (%3): cold bead, little deposit, risk of lack of sidewall fusion (ISO 5817: 401)", def_dia_big:"Electrode too thick — Ø%1 instead of Ø%2 (%3): oversized pool, overheating, wide cap", def_dia_root:"Electrode too thick for the root — Ø%1 instead of Ø%2 (%3): burn-through, excess penetration (ISO 5817: 504, 510)", t_slagleft:"⚠ Welding over slag — inclusion (301)", def_edges:"Cap did not cover the bevel edges on %1% of the length — unfilled edge and lack of fusion (ISO 5817: 511, 401)", def_interbead:"Lack of fusion between beads — a gap between neighbouring beads (ISO 5817: 401)", def_slag:"Slag inclusion — the next bead went over unremoved slag %1× (ISO 5817: 301)", def_crater:"Crater / unfilled bead end", def_rootlack:"Poor root penetration (root pass %1%)",
   btn_help:"❔ HOW TO", btn_methods:"📖 METHODS", btn_about:"ℹ️ ABOUT", methods_title:"Methods — the trade", btn_close:"CLOSE",
   t_cut_steelonly:"🔥 Oxy torch cuts STEEL only — not stainless or aluminium", t_cut_preheat:"🔥 Preheat at the start — hold slow until it pierces", t_cut_pierced:"✅ Pierced! Run the cut along the line", cut_word:"cut",
   cd_incomplete:"Incomplete cut — didn't sever through (%1%)", cd_wide:"Wide kerf / edge melt (too slow)", cd_dross:"Dross on the underside (too fast)", cd_dev:"Off the cut line — crooked kerf", cd_clean:"Clean cut — smooth, square edges",
@@ -839,7 +850,7 @@ const I18N={
   cov_lbl:"Заполнение", cov_layer:"Слой", cov_inspect:"⚡ авто-контроль", cov_done:"✅ ШОВ ЦЕЛИКОМ — отпусти",
   pass_root:"корень", pass_fill:"заполнение", pass_cap:"облицовка",
   t_passdone:"✅ СЛОЙ %1 → теперь: %2", t_passlast:"⚡ ПОСЛЕДНИЙ СЛОЙ — облицовка",
-  cov_bead:"Валик", pg_thick:"PG (сверху вниз) только до 5 мм — толще варят PF (снизу вверх)", lane_n:"дорожка %1/%2", bead_weave:"колебания", beads_n:"%1 валиков", t_beadnext:"✅ ВАЛИК %1/%2 → теперь: %3", t_beadlast:"⚡ ПОСЛЕДНИЙ ВАЛИК — %1", t_chip:"🔨 ОТБЕЙ ШЛАК (C)", t_chipneed:"🔨 Сначала отбей шлак — клавиша C или кнопка", t_chipped:"✅ Шлак убран", t_slagleft:"⚠ Сваришь по шлаку — включение (301)", def_edges:"Облицовка не перекрыла кромки разделки на %1% длины — незаполненная кромка и несплавление (ISO 5817: 511, 401)", def_interbead:"Несплавление между валиками — зазор между соседними валиками (ISO 5817: 401)", def_slag:"Шлаковое включение — следующий валик пошёл по неубранному шлаку %1× (ISO 5817: 301)", def_crater:"Кратер / незаваренный конец шва", def_rootlack:"Слабый провар корня (корневой слой %1%)",
+  cov_bead:"Валик", pg_thick:"PG (сверху вниз) только до 5 мм — толще варят PF (снизу вверх)", lane_n:"дорожка %1/%2", bead_weave:"колебания", beads_n:"%1 валиков", t_beadnext:"✅ ВАЛИК %1/%2 → теперь: %3", t_beadlast:"⚡ ПОСЛЕДНИЙ ВАЛИК — %1", t_chip:"🔨 ОТБЕЙ ШЛАК (C)", t_chipneed:"🔨 Сначала отбей шлак — клавиша C или кнопка", t_chipped:"✅ Шлак убран", t_dialock:"Ø сменишь перед следующим валиком — этот уже лежит", t_amplock:"Ток переставишь перед следующим валиком", dia_typ:"типовой Ø для этого валика (WPS)", def_dia_small:"Слишком тонкий электрод — Ø%1 вместо Ø%2 (%3): холодный валик, мало наплавки, риск несплавления с кромками (ISO 5817: 401)", def_dia_big:"Слишком толстый электрод — Ø%1 вместо Ø%2 (%3): большая ванна, перегрев, широкая облицовка", def_dia_root:"Слишком толстый электрод для корня — Ø%1 вместо Ø%2 (%3): прожог, чрезмерный провар (ISO 5817: 504, 510)", t_slagleft:"⚠ Сваришь по шлаку — включение (301)", def_edges:"Облицовка не перекрыла кромки разделки на %1% длины — незаполненная кромка и несплавление (ISO 5817: 511, 401)", def_interbead:"Несплавление между валиками — зазор между соседними валиками (ISO 5817: 401)", def_slag:"Шлаковое включение — следующий валик пошёл по неубранному шлаку %1× (ISO 5817: 301)", def_crater:"Кратер / незаваренный конец шва", def_rootlack:"Слабый провар корня (корневой слой %1%)",
   btn_help:"❔ КАК ИГРАТЬ", btn_methods:"📖 МЕТОДЫ", btn_about:"ℹ️ ОБ ARC", methods_title:"Методы — ремесло", btn_close:"ЗАКРЫТЬ",
   t_cut_steelonly:"🔥 Кислородный резак режет ТОЛЬКО сталь — не нержавейку и не алюминий", t_cut_preheat:"🔥 Прогрев у старта — держи медленно до прожига", t_cut_pierced:"✅ Прожиг! Веди рез по линии", cut_word:"рез",
   cd_incomplete:"Недорез — не прошло насквозь (%1%)", cd_wide:"Широкий рез / оплавление кромки (медленно)", cd_dross:"Грат снизу (слишком быстро)", cd_dev:"Уход от линии — кривой рез", cd_clean:"Чистый рез — гладкие, прямые кромки",
@@ -952,6 +963,8 @@ function weldElectrics(posK){ if(isCut()) return null;
   const a=recommendedAmps(proc, thick, posK), v=recommendedVolts(proc, thick);
   if(a==null||v==null) return null;
   const eff=WELD_EFF[proc]||0.8, travel=targetPx/PX_PER_MM;
+  if(elecOn()&&beadBase){ const aW=diaAmps(diaTypNow(),posK);   // 3.10.0: WPS = prąd TYPOWEJ Ø ściegu, gracz = prąd SWOJEJ Ø
+    return {amps:aW, ampsUse:beadAmps, volts:v, travel, hi:heatInputKJmm(v,aW,travel,eff), hiUse:heatInputKJmm(v,beadAmps,travel,eff), eff, dia:curDia(), typ:diaTypNow()}; }
   const aUse=ampsSetFor(posK);
   // `hi` = referencja z WPS (do niej porównuje raport). `hiUse` = to, co gracz sobie nakręcił.
   return {amps:a, ampsUse:aUse, volts:v, travel, hi:heatInputKJmm(v,a,travel,eff), hiUse:heatInputKJmm(v,aUse,travel,eff), eff}; }
@@ -1027,13 +1040,45 @@ try{ const m=localStorage.getItem("gorweld_ampmode"); if(m==="man"||m==="auto") 
 const AMP_LO=r=>Math.max(5,Math.round(r*0.6)), AMP_HI=r=>Math.round(r*1.5);
 function ampsSetFor(posK){ const r=recommendedAmps(proc,thick,posK); if(r==null) return null;
   return (ampMode==="man"&&ampSet!=null) ? ampSet : Math.round(r*ampMul); }
-function updateAmpF(){ const r=recommendedAmps(proc,thick,posKey), a=ampsSetFor(posKey);
-  const ar=(r&&a)?a/r:1;
-  ampF={ar, w:Math.pow(ar,0.55),
+function ampFOf(ar){ return {ar, w:Math.pow(ar,0.55),
         pen: ar<1 ? Math.min(30,(1-ar)*70) : Math.min(30,(ar-1)*50),   // 0 dokładnie przy ar=1
         sev: ar===1 ? null : (Math.abs(ar-1)>=0.25 ? "major" : "minor"),
         spatAdd: ar>1 ? (ar-1)*2 : 0,
         por: ar<0.85 ? Math.round((0.85-ar)*6) : 0}; }
+// ── ELEKTRODY (3.10.0, nagranie kb:4, tylko MMA) — 1:1 z sim.js ──────────────
+// Gracz wybiera Ø przed KAŻDYM ściegiem (domyślnie typowa ★), prąd idzie z Ø (środek zakresu × pozycja),
+// łuk nominalny L0 = Ø. Zła Ø to wada (diaFit), a w AUTO dodatkowo inny prąd → inny HI.
+// Wybór trafia do nagrania jako `dia` tuż przed zajarzeniem — dopiero wtedy, bo wcześniej nic nie spawa,
+// a klik tam i z powrotem nie może zostawić śladu. Po pierwszej kropli ściegu Ø stoi (silnik ignoruje `dia`).
+// RĘCZNIE: pokrętło można przekręcić między ściegami (`amp`), bez kasowania rundy.
+const DIAS=[20,25,32,40];
+const AMP_DIA={20:60,25:80,32:115,40:160};   // 2,0: 50–70 · 2,5: 70–90 · 3,2: 100–130 · 4,0: 140–180 A
+function elecTyp(k,t){ return t<=2?20:t<=3||k==="root"?25:t>8&&k==="fill"?40:32; }
+function diaAmps(d,posK){ return Math.round(AMP_DIA[d]*(POS_AMP_MUL[POSITIONS[posK].stars]||1)); }
+function diaFit(sel,typ,lay){ const s=DIAS.indexOf(sel)-DIAS.indexOf(typ);
+  if(!s) return {s,w:1,pen:0,sev:null,spatAdd:0};
+  const big=Math.abs(s)>=2;
+  if(s>0) return {s,w:big?1.3:1.15,pen:big?18:6,sev:big||lay===0?"major":"minor",spatAdd:big?0.8:0.4};
+  return {s,w:big?0.75:0.88,pen:big?18:6,sev:big?"major":"minor",spatAdd:0}; }
+let diaPick=0, diaRec=0, ampRecd=null, fitF={s:0,w:1,pen:0,sev:null,spatAdd:0}, beadAmps=0, beadBase=0, arcVb=0, arcTb=0, elecLog=[];
+function elecOn(){ return proc==="MMA"; }
+function curBead(){ return beadPlan&&(beadPlan[passIndex]||beadPlan[beadPlan.length-1]); }
+function diaTypNow(){ const b=curBead(); return elecTyp(b?b.k:"cap",thick); }
+function curDia(){ return diaPick||diaTypNow(); }
+function fmtDia(d){ const v=(d/10).toFixed(1); return lang==="en"?v:v.replace(".",","); }
+function updateAmpF(){ const r=recommendedAmps(proc,thick,posKey), a=ampsSetFor(posKey);
+  if(elecOn()&&r&&a){ const b=curBead(), d=curDia();
+    beadBase=diaAmps(d,posKey); beadAmps=(ampMode==="man"&&ampSet!=null)?ampSet:Math.round(beadBase*(a/r));
+    ampF=ampFOf(beadAmps/beadBase); fitF=diaFit(d,diaTypNow(),joint==="fillet"?-1:(b?b.lay:0)); return; }
+  beadBase=0; fitF={s:0,w:1,pen:0,sev:null,spatAdd:0};
+  const ar=(r&&a)?a/r:1; ampF=ampFOf(ar); }
+function elecEntry(m){ return {d:curDia(),typ:diaTypNow(),amps:beadAmps,ref:diaAmps(diaTypNow(),posKey),pen:ampF.pen,sev:ampF.sev,ar:ampF.ar,
+  fit:fitF,avgV:m.avgV,u:arcTb?arcVb/arcTb:null,bi:passIndex}; }
+function elecLocked(){ return !elecOn()||welding||bN>0; }
+function pickDia(d){ if(elecLocked()){ if(elecOn()&&bN>0) showToast(t("t_dialock"),"#ffae3c"); return; }
+  diaPick=d===diaTypNow()?0:d; updateInfo(); updateToolHud(); }
+function diaBtns(){ const typ=diaTypNow(), cur=curDia(), lock=elecLocked();
+  return DIAS.map(d=>'<button class="dia'+(d===cur?' on':'')+(d===typ?' typ':'')+'" data-dia="'+d+'"'+(lock?' disabled':'')+' title="'+(d===typ?t("dia_typ"):"")+'">'+fmtDia(d)+(d===typ?'★':'')+'</button>').join(''); }
 let seamPts=[],grooveHalf=8,bevelW=14,idealHalf=11,targetPx=50;
 let lastReport=null;
 // ── Multipass (root → fill → cap) — thick plate needs several layers ──
@@ -1442,7 +1487,7 @@ const ARC_LO=0.6, ARC_HI=1.6;   // pasmo bez kary, w krotnościach L0
 let arcLive=false, arcLen=0, btnMask=0, stickCount=0, arcBroke=0, contactT=0;
 let arcPenAcc=0, arcTime=0, arcVSum=0, arcPorAcc=0, arcRSum=0;
 // `end(null)` woła się też z fizyki łuku (przywarcie / zerwanie), nie tylko ze zdarzenia myszy.
-function arcL0(){ return ELEC_DIA[thick]||2.5; }
+function arcL0(){ return elecOn()?curDia()/10:(ELEC_DIA[thick]||2.5); }   // 3.10.0: MMA — L0 = Ø wybranej elektrody
 // Jeziorko MUSI iść za łukiem, bo to po nim spawacz reguluje — długi łuk rozlewa je szeroko
 // i płytko, krótki ściąga w wąskie i głębokie. Przy r=1 wychodzi dokładnie 1, więc runda bez
 // łuku (dotyk, demo, wszystko sprzed 2.0.0) liczy się bit-w-bit jak dotąd.
@@ -1739,7 +1784,7 @@ function beadWidth(){
   if(sr<0.7) w=Math.min(idealHalf*1.9,idealHalf*Math.pow(0.7/Math.max(sr,0.08),0.55));
   else if(sr>1.3) w=Math.max(idealHalf*0.42,idealHalf*Math.pow(1.3/sr,0.7));
   else w=idealHalf;
-  return w*ampF.w*arcWFac()*angWFac();  // prąd, długość łuku i kąt razem robią szerokość jeziorka
+  return w*ampF.w*fitF.w*arcWFac()*angWFac();  // prąd, Ø elektrody, długość łuku i kąt razem robią szerokość jeziorka
 }
 let fbGood=false;
 const HI_FB_MIN_S=0.5;   // HUD-only: ile sekund ściegu, zanim średnia bieżąca HI ma prawo głosu
@@ -1759,7 +1804,7 @@ function feedback(){
   if(welding&&!isCut()&&CVN_BEADS[bead]&&vTimeS>HI_FB_MIN_S){
     const wE=weldElectrics(posKey);
     if(wE&&wE.hi!=null){
-      const uRun=arcTime?arcVSum/arcTime:wE.volts;
+      const uRun=elecOn()?(arcTb?arcVb/arcTb:wE.volts):(arcTime?arcVSum/arcTime:wE.volts);   // MMA: bieżący ścieg
       const hiRun=heatInputKJmm(uRun,wE.ampsUse,(vSumT/vTimeS)/PX_PER_MM,WELD_EFF[proc]||0.8);
       if(hiRun!=null&&hiRun>Math.round(wE.hi*HI_MAX_R*1000)/1000){ fbGood=false; return t("fb_hi"); } } }
   // Kąt odzywa się dopiero 6° ZA pasmem — na krawędzi pasma cisza, tak jak przy tempie od 20.08.
@@ -1838,6 +1883,10 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
     if(battleTaskActive()){battleAttemptStart();reseedRound(battleState.task.seed);}
     recStart();
   }
+  // 3.10.0: wybrana Ø (i RĘCZNIE prąd) wchodzi do nagrania tuż przed zajarzeniem — tylko przed pierwszą kroplą ściegu (1:1 z sim.js)
+  if(elecOn()&&rec&&!bN){
+    if(rec.am&&ampSet!=null&&ampSet!==ampRecd){ rec.events.push({type:"amp",t:t0,x:0,y:0,a:ampSet}); ampRecd=ampSet; }
+    if(curDia()!==(diaRec||diaTypNow())){ rec.events.push({type:"dia",t:t0,x:0,y:0,d:curDia()}); diaRec=curDia(); electrodeLeft=1; replacing=false; } }
   if(needChip){ slagCount++; needChip=false; showToast(t("t_slagleft"),"#ff5a4a"); chipUI(); }   // 3.7.0: 1:1 z sim.js (down po bank bez chip)
   recEv('down',p.x,p.y,t0,btnMask); arcOn(); updateToolHud();
   if(e.pointerId!==undefined) try{ stage.setPointerCapture(e.pointerId); }catch(err){}
@@ -1879,7 +1928,8 @@ function move(e){ if(isCut())return cutMove(e);
         arcLen=L0*ARC_MAX_MUL; arcBroke++; showToast(t("t_arcbreak"),"#ff9a3c"); end(null); updateToolHud(); e.preventDefault(); return; }
       const r=arcLen/L0;
       arcPenAcc+=arcPenNow(r)*dtS; arcTime+=dtS; arcRSum+=r*dtS;
-      arcVSum+=(recommendedVolts(proc,thick)+ARC_V_SLOPE*(arcLen-L0))*dtS;
+      const uNow=recommendedVolts(proc,thick)+ARC_V_SLOPE*(arcLen-L0);
+      arcVSum+=uNow*dtS; if(elecOn()){ arcVb+=uNow*dtS; arcTb+=dtS; }   // 3.10.0: napięcie per ścieg (HI per ścieg)
       if(r>ARC_HI) arcPorAcc+=(r-ARC_HI)*dtS;                        // długi łuk gubi osłonę → pęcherze
       if(proc==="MMA"&&!replacing){ electrodeLeft-=dtS/ARC_BURN_S;   // łuk zjada elektrodę samym paleniem
         if(electrodeLeft<=ELEC_STUB){ replacing=true; arcIntensity(0.02); showToast(t("t_replace"),"#ff9a3c");
@@ -1952,7 +2002,7 @@ function move(e){ if(isCut())return cutMove(e);
     // idealny przebieg MMA i tak tracił 7–14 pkt i 8/12 mm nie mogły dostać A. Teraz płacisz za
     // to, co faktycznie robisz: 0 przy tempie docelowym, sufit 2× przy odchyłce ≥60%.
     let spatFac=Math.min(2,Math.abs(vEMA/targetPx-1)/0.30);
-    if(ampF.spatAdd) spatFac=Math.min(2.6,spatFac+ampF.spatAdd);   // za duży prąd pryska nawet przy idealnym tempie
+    const spA=ampF.spatAdd+fitF.spatAdd; if(spA) spatFac=Math.min(2.6,spatFac+spA);   // za duży prąd / za gruba Ø pryska nawet przy idealnym tempie
     if(arcLive){ const rr=arcLen/arcL0(); if(rr>ARC_HI) spatFac=Math.min(3.2,spatFac+(rr-ARC_HI)*1.2); }
     if(angLive){ const so=angOverT(taDeg); if(so>0) spatFac=Math.min(3.2,spatFac+Math.min(0.8,so/45)); }
     spatterCount+=Math.round((3+(thick>>1))*PROCESS[proc].sparks)*spatFac*(dtS*1000/16); passWeldMs+=dtS*1000;
@@ -2123,7 +2173,10 @@ function angHudTxt(){
 function updateToolHud(){
   const el=document.getElementById("toolhud"); if(!el)return;
   if(proc==="MMA"){ const pc=Math.max(0,Math.round((electrodeLeft-ELEC_STUB)/(1-ELEC_STUB)*100)), bars=Math.max(0,Math.round(electrodeLeft*8));
-    el.innerHTML=t("tool_elec")+'<b>'+(replacing?t("tool_used"):pc+'%')+'</b> '+'▮'.repeat(bars)+'▯'.repeat(8-bars); }
+    const eTxt=t("tool_elec")+'<b>'+(replacing?t("tool_used"):pc+'%')+'</b> '+'▮'.repeat(bars)+'▯'.repeat(8-bars);
+    const dRow='<span class="dia-row">Ø '+diaBtns()+(beadBase?' <b>'+beadAmps+' A</b>':'')+'</span>';
+    // telefon: Ø na lewym brzegu w jednej linii z elektrodą — HUD nie schodzi na blachę (szew zaczyna się dalej w prawo)
+    el.innerHTML=isMob()?dRow+' · '+eTxt:eTxt+'<br>'+dRow; }
   else if(proc==="MIG"){ el.innerHTML=t("tool_mig"); }
   else { el.innerHTML=t("tool_tig"); }
   el.innerHTML+=angHudTxt();
@@ -2650,7 +2703,8 @@ function passMetrics(){
 function bankPass(){
   vbFlush(true); vbReset();
   recEv('bank',0,0,performance.now());
-  passLog.push(passMetrics());
+  const pmB=passMetrics(); passLog.push(pmB);
+  if(elecOn()){ elecLog.push(elecEntry(pmB)); arcVb=0; arcTb=0; diaPick=0; diaRec=0; }   // 3.10.0: następny ścieg zaczyna od typowej Ø
   const bDone=beadPlan&&beadPlan[passIndex];
   if(bDone) beadStats.push({lay:bDone.lay,lane:bDone.lane,so:bN?bSo/bN:0,r:bN?bR/bN:0,n:bN});
   bSo=0; bR=0; bN=0;
@@ -2714,6 +2768,11 @@ function inspect(){
     for(const k in byLay){ const a=byLay[k].filter(q=>q.n).sort((p,q)=>p.so-q.so);
       for(let i=1;i<a.length;i++){ const g=(a[i].so-a[i].r)-(a[i-1].so+a[i-1].r); if(g>0){ ibGaps++; ibMax=Math.max(ibMax,g/Math.max(1e-6,Math.min(a[i].r,a[i-1].r))); } } } }
   const edgePen=beadPlan?Math.min(EDGE_PEN_CAP,(1-edgeCov)*EDGE_PEN):0;
+  // 3.10.0 (MMA): prąd i Ø per ścieg — kara = średnia po ściegach, wada = najgorsza (1:1 z sim.js)
+  let ampPenT=ampF.pen, ampSevT=ampF.sev, diaPen=0, E=null;
+  if(elecOn()){ E=elecLog.concat([elecEntry(cur)]); ampPenT=0; ampSevT=null;
+    for(const e of E){ ampPenT+=e.pen; diaPen+=e.fit.pen; if(e.sev==="major"||(e.sev&&!ampSevT)) ampSevT=e.sev; }
+    ampPenT/=E.length; diaPen/=E.length; }
 
   // grade = weighted weld-quality (positives sum to 100) minus defect penalties
   let score = coverage*50          // przetop / wypełnienie grani (najważniejsze)
@@ -2722,7 +2781,7 @@ function inspect(){
             + (1-overflow)*15      // brak podtopień / zwisów
             - porosity*5           // pęcherze
             - Math.min(SPATTER_PEN_CAP, proc==="TIG"?spatter*3:spatter*0.5)  // TIG ma być czysty; kara ograniczona
-            - ampF.pen             // prąd poza WPS (0 przy ustawieniu zgodnym z WPS)
+            - ampPenT - diaPen     // prąd poza WPS i Ø elektrody poza typową (0 przy ustawieniu zgodnym z WPS)
             - arcPen                                  // długość łuku poza pasmem (0 na dotyku i w starych rundach)
             - Math.min(15,arcFails*4)                 // przywarcia i zerwania łuku
             - angPen                                  // kąt elektrody poza pasmem (0 przy ustawieniu wg WPS)
@@ -2741,11 +2800,15 @@ function inspect(){
   // `arcTime` rośnie wyłącznie przy żywym łuku, więc dotyk i TIG schodzą na napięcie z WPS — 1:1 z sim.js.
   const wE=weldElectrics(posKey), effP=WELD_EFF[proc]||0.8;
   const uAct=arcTime?arcVSum/arcTime:(wE?wE.volts:null);
-  const hiAct=(wE&&uAct!=null)?heatInputKJmm(uAct,wE.ampsUse,avgV/PX_PER_MM,effP):null;
-  const hiWps=wE?wE.hi:null;
-  const hiMax=hiWps!=null?Math.round(hiWps*HI_MAX_R*1000)/1000:null;
+  let hiAct=(wE&&uAct!=null)?heatInputKJmm(uAct,wE.ampsUse,avgV/PX_PER_MM,effP):null;
+  let hiWps=wE?wE.hi:null;
+  let hiMax=hiWps!=null?Math.round(hiWps*HI_MAX_R*1000)/1000:null;
   const cvnJob=!!CVN_BEADS[bead];
-  const hiOver=!!(cvnJob&&hiMax!=null&&hiAct!=null&&hiAct>hiMax);
+  let hiOver=!!(cvnJob&&hiMax!=null&&hiAct!=null&&hiAct>hiMax);
+  if(E){ hiOver=false; let worst=-1; const tr=targetPx/PX_PER_MM, vW=recommendedVolts(proc,thick);   // 3.10.0: HI per ścieg, raport = ścieg najbliżej sufitu
+    for(const e of E){ e.hiW=vW!=null?heatInputKJmm(vW,e.ref,tr,effP):null; e.hiM=e.hiW!=null?Math.round(e.hiW*HI_MAX_R*1000)/1000:null;
+      e.hi=vW!=null?heatInputKJmm(e.u!=null?e.u:vW,e.amps,e.avgV/PX_PER_MM,effP):null;
+      if(e.hi!=null&&e.hiM!=null){ const r=e.hi/e.hiM; if(r>worst){ worst=r; hiAct=e.hi; hiWps=e.hiW; hiMax=e.hiM; } if(cvnJob&&e.hi>e.hiM) hiOver=true; } } }
   const fastV=Math.max.apply(null,all.map(m=>m.avgV)), tooFast=fastV/targetPx>1+FAST_TOL*MATERIAL[bead].tol;
 
   const D=[];
@@ -2763,7 +2826,14 @@ function inspect(){
     D.push({s:sev, t: wo>=to ? t("def_ang_work") : t(angT>0?"def_ang_drag":"def_ang_push")}); }
   if(offPen>0) D.push({s:offPen>=OFF_MAJOR?"major":"minor",t:t("def_offaxis")});
   if(filPen>0) D.push({s:filPen>=FIL_MAJOR?"major":"minor",t:t("def_filler")});
-  if(ampF.sev){ const wA=weldElectrics(posKey);
+  if(E){ // 3.10.0: najgorszy ścieg — prąd względem SWOJEJ Ø, Ø względem typowej
+    const sv=x=>x==="major"?2:x?1:0;
+    const ea=E.filter(e=>e.sev).sort((p,q)=>sv(q.sev)-sv(p.sev)||Math.abs(q.ar-1)-Math.abs(p.ar-1))[0];
+    if(ea) D.push({s:ampSevT,t:fmt(ea.ar<1?"def_amp_low":"def_amp_high",[ea.amps,diaAmps(ea.d,posKey)])});
+    const ed=E.filter(e=>e.fit.s).sort((p,q)=>sv(q.fit.sev)-sv(p.fit.sev)||Math.abs(q.fit.s)-Math.abs(p.fit.s))[0];
+    if(ed){ const bl=beadPlan&&beadPlan[ed.bi]; const key=ed.fit.s<0?"def_dia_small":(joint!=="fillet"&&bl&&bl.lay===0?"def_dia_root":"def_dia_big");
+      D.push({s:ed.fit.sev,t:fmt(key,[fmtDia(ed.d),fmtDia(ed.typ),beadLabel(ed.bi)])}); } }
+  else if(ampF.sev){ const wA=weldElectrics(posKey);
     if(wA) D.push({s:ampF.sev,t:fmt(ampF.ar<1?"def_amp_low":"def_amp_high",[wA.ampsUse,wA.amps])}); }
   if(spatter>4&&proc!=="TIG") D.push({s:"minor",t:fmt("def_spatter",[spatter])});
   if(evenness<0.6) D.push({s:"minor",t:t("def_uneven")});
@@ -2798,10 +2868,11 @@ function inspect(){
   if(we){
     // Ten sam `hiAct`, który zadecydował o dopuszczeniu — bez drugiego, rozjeżdżającego się rachunku.
     const actHi=hiAct;
-    const hiWarn=hiOver||(actHi&&Math.abs(actHi-we.hi)/we.hi>0.25);
-    const hiPct=actHi?Math.max(0,100-Math.abs(actHi-we.hi)/we.hi*100):0;
+    const hiRef=hiWps!=null?hiWps:we.hi;   // 3.10.0 MMA: WPS najgorszego ściegu
+    const hiWarn=hiOver||(actHi&&Math.abs(actHi-hiRef)/hiRef>0.25);
+    const hiPct=actHi?Math.max(0,100-Math.abs(actHi-hiRef)/hiRef*100):0;
     // Na materiale badanym udarnościowo górna granica NIE jest ostrzeżeniem, tylko sufitem — mówimy to wprost.
-    const hiTxt=cvnJob ? actHi+' / '+we.hi+' kJ/mm · '+t("hi_max")+' '+hiMax : actHi+' / '+we.hi+' kJ/mm';
+    const hiTxt=cvnJob ? actHi+' / '+hiRef+' kJ/mm · '+t("hi_max")+' '+hiMax : actHi+' / '+hiRef+' kJ/mm';
     renderStat("rHi", hiPct, hiTxt, hiWarn);
   } else document.getElementById("rHi").innerHTML='<b>—</b>';
   renderStat("rEven", evenness*100, Math.round(evenness*100)+"%");
@@ -2966,19 +3037,20 @@ function refreshAmps(){
   const aW=document.getElementById("ampAuto"), mW=document.getElementById("ampMan");
   if(aW) aW.style.display = ampMode==="auto" ? "" : "none";
   if(mW) mW.style.display = ampMode==="man" ? "" : "none";
+  const rb=(elecOn()&&r!=null&&beadBase)?beadBase:r;   // 3.10.0 MMA: prąd z Ø bieżącego ściegu
   document.querySelectorAll(".amp").forEach(b=>{ const m=+b.dataset.a;
-    b.textContent = r==null ? "—" : Math.round(r*m);
+    b.textContent = r==null ? "—" : rb!==r ? Math.round(rb*Math.round(r*m)/r) : Math.round(r*m);
     b.classList.toggle("on", m===ampMul); });
   if(r==null || ampMode!=="man") return;
-  if(ampSet==null) ampSet=Math.round(r*ampMul);
+  if(ampSet==null) ampSet=Math.round(rb*ampMul);
   // Skala trzyma się WPS, ale nigdy nie ucieka spod ręcznie ustawionej wartości: po skoku
   // grubości gracz musi móc chwycić suwak tam, gdzie go zostawił.
-  const lo=Math.min(AMP_LO(r),ampSet), hi=Math.max(AMP_HI(r),ampSet);
+  const lo=Math.min(ampLoFor(r),ampSet), hi=Math.max(ampHiFor(r),ampSet);
   const rng=document.getElementById("ampRange"), num=document.getElementById("ampNum");
   if(rng){ rng.min=lo; rng.max=hi; rng.value=ampSet; }
   if(num){ num.min=lo; num.max=hi; num.value=ampSet; }
-  const w=document.getElementById("ampWps"), d=ampSet-r;
-  if(w) w.innerHTML = `WPS ${r}` + (d ? ` <b style="color:#ffae3c">${d>0?"+":""}${d}</b>` : "");
+  const w=document.getElementById("ampWps"), d=ampSet-rb;
+  if(w) w.innerHTML = (rb!==r?`Ø${fmtDia(curDia())} `:"")+`WPS ${rb}` + (d ? ` <b style="color:#ffae3c">${d>0?"+":""}${d}</b>` : "");
 }
 // 🔨 Zbicie żużla (MMA, 3.7.0): zdarzenie `chip` w nagraniu. Bez niego następny ścieg idzie po żużlu → 301.
 function chipSlag(){ if(!needChip||welding) return; needChip=false; recEv('chip',0,0,performance.now());
@@ -2986,14 +3058,19 @@ function chipSlag(){ if(!needChip||welding) return; needChip=false; recEv('chip'
   for(let i=0;i<14;i++){ const p=G[Math.floor(Math.random()*G.length)]; if(p) spawnSmoke(p.x,p.y); }
   showToast(t("t_chipped"),"#5fe08a"); chipUI(); }
 function chipUI(){ const b=document.getElementById("chipBtn"); if(!b) return; b.hidden=!needChip; b.textContent=t("t_chip"); }
+// Ø elektrody (3.10.0): klik w HUD albo klawisz E (następna Ø). pointerdown, bo HUD przerysowuje się przy każdym ruchu.
+document.getElementById("toolhud").addEventListener("pointerdown",e=>{ const b=e.target.closest&&e.target.closest("[data-dia]"); if(!b) return;
+  e.preventDefault(); e.stopPropagation(); pickDia(+b.dataset.dia); });
+addEventListener("keydown",e=>{ if((e.key==="e"||e.key==="E")&&!e.repeat&&!modalOpen()&&!(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))&&elecOn()){
+  const i=DIAS.indexOf(curDia()); pickDia(DIAS[(i+1)%DIAS.length]); } });
 addEventListener("keydown",e=>{ if((e.key==="c"||e.key==="C")&&!e.repeat&&!modalOpen()&&!(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) chipSlag(); });
 // „wypełnienie · tor 2/3 · wahadło" — co gracz ma teraz położyć
 function beadLabel(i){ const b=beadPlan&&beadPlan[i]; if(!b) return t("pass_"+(passPlanArr[i]||"cap"));
   const k=beadPlan.filter((q,j)=>j<=i&&q.lay===b.lay).length;
   return t("pass_"+b.k)+(b.n>1?" · "+fmt("lane_n",[k,b.n]):"")+(b.wv?" · "+t("bead_weave"):""); }
-// Typowa średnica elektrody MMA / drutu MIG / pręta TIG [mm] dla warstwy — tylko podpowiedź, ocena jej nie używa.
+// Typowa średnica elektrody MMA / drutu MIG / pręta TIG [mm] dla warstwy. MIG/TIG — tylko podpowiedź; MMA od 3.10.0 = elecTyp (ocena).
 function fillerDia(k){ const t3=thick<=3, t12=thick>8;
-  if(proc==="MMA") return thick<=2?2.0:t3||k==="root"?2.5:t12&&k==="fill"?4.0:3.2;
+  if(proc==="MMA") return elecTyp(k,thick)/10;   // 3.10.0: ta sama tabela, którą liczy ocena
   if(proc==="MIG") return t3?0.8:t12?1.2:1.0;
   if(proc==="TIG") return t3?1.6:k==="root"?2.0:2.4;
   return null; }
@@ -3121,6 +3198,7 @@ function clearWeld(seedOverride){
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
+  diaPick=0; diaRec=0; elecLog=[]; arcVb=0; arcTb=0;
   setupBeads(); passLog=[]; covSmoothed=0; jobSettled=false; recalc(); resetBeadState(); slagFx.on=false; slagFx.fade=0; slgctx.clearRect(0,0,W,H);
   tickAcc=0; vTickRef=targetPx;                                          // stan startowy taktu — 1:1 z sim.js (po recalc, bo zależy od targetPx)
   updateToolHud(); }
@@ -3150,12 +3228,19 @@ document.querySelectorAll(".amp").forEach(b=>b.onclick=()=>{ if(isChallenge()&&c
 document.querySelectorAll(".ampmode").forEach(b=>b.onclick=()=>{ if(isChallenge()&&chalPinned("amps")) return;
   ampMode=b.dataset.m;
   // Wejście w tryb ręczny przejmuje ampery, które gracz właśnie ma — bez skoku prądu pod łukiem.
-  if(ampMode==="man"&&ampSet==null){ const r=recommendedAmps(proc,thick,posKey); if(r!=null) ampSet=Math.round(r*ampMul); }
+  if(ampMode==="man"&&ampSet==null){ const r=recommendedAmps(proc,thick,posKey); if(r!=null) ampSet=Math.round((elecOn()&&beadBase?beadBase:r)*ampMul); }
   try{ localStorage.setItem("gorweld_ampmode",ampMode); }catch(e){}
   selectPos(); });
+// MMA (3.10.0): zakres pokrętła obejmuje wszystkie Ø (2,0…4,0), bo grań i lico idą na różnych elektrodach.
+function ampLoFor(r){ return elecOn()?AMP_LO(diaAmps(20,posKey)):AMP_LO(r); }
+function ampHiFor(r){ return elecOn()?AMP_HI(diaAmps(40,posKey)):AMP_HI(r); }
 function setAmpSet(v){ const r=recommendedAmps(proc,thick,posKey); if(r==null) return;
   const n=Math.round(+v); if(!isFinite(n)) return;
-  ampSet=Math.max(AMP_LO(r),Math.min(AMP_HI(r),n)); selectPos(); }
+  const nv=Math.max(ampLoFor(r),Math.min(ampHiFor(r),n));
+  // MMA RĘCZNIE w trakcie rundy: pokrętło przekręcasz MIĘDZY ściegami (zdarzenie `amp` przy zajarzeniu), bez kasowania próbki
+  if(elecOn()&&rec&&rec.am&&rec.events.length){ if(welding||bN>0){ showToast(t("t_amplock"),"#ffae3c"); refreshAmps(); return; }
+    ampSet=nv; updateInfo(); updateToolHud(); return; }
+  ampSet=nv; selectPos(); }
 { const rng=document.getElementById("ampRange"), num=document.getElementById("ampNum");
   if(rng) rng.oninput=e=>setAmpSet(e.target.value);
   if(num) num.onchange=e=>setAmpSet(e.target.value); }
@@ -3555,7 +3640,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Amperaż zadania nie zgadza się z zaleceniem ARC.",taskMismatch:"Wczytane zadanie różni się od zadania w linku.",
     engineMismatch:"Inna wersja silnika ARC. Tego pojedynku nie można porównać.",scoreMismatch:"Inna wersja oceny ARC. Tego pojedynku nie można porównać.",
     modeConflict:"Battle nie może działać równocześnie ze starym trybem challenge.",taskReady:"Zadanie przypięte. Uderz w blachę, aby rozpocząć próbę.",
-    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"za mało spoiny",root:"brak przetopu grani",ends:"niedospawane końce",heatInput:"za duży wkład ciepła",underfill:"za szybko — niewypełniony rowek",overflow:"spoina poza rowkiem",porosity:"porowatość",offAxis:"zjazd z osi",amps:"zły prąd",arc:"niestabilny łuk",angle:"zły kąt elektrody",filler:"rytm spoiwa",edges:"lico nie przykryło fazy",interbead:"brak wtopienia między ściegami",slag:"żużel pod ściegiem",score:"ocena poniżej 50"},incomplete:"NIEUKOŃCZONE",
+    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"za mało spoiny",root:"brak przetopu grani",ends:"niedospawane końce",heatInput:"za duży wkład ciepła",underfill:"za szybko — niewypełniony rowek",overflow:"spoina poza rowkiem",porosity:"porowatość",offAxis:"zjazd z osi",amps:"zły prąd",arc:"niestabilny łuk",angle:"zły kąt elektrody",filler:"rytm spoiwa",edges:"lico nie przykryło fazy",interbead:"brak wtopienia między ściegami",slag:"żużel pod ściegiem",electrode:"zła średnica elektrody",score:"ocena poniżej 50"},incomplete:"NIEUKOŃCZONE",
     sameTask:"ZESPAWAJ TO SAMO ZADANIE",shareText:"To samo zadanie, te same zasady — GORWELD ARC Battle Weld",share:"UDOSTĘPNIJ WYNIK",copyLink:"KOPIUJ LINK",copied:"LINK SKOPIOWANY",
     wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",noResult:"BRAK WYNIKU",
     incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -3570,7 +3655,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Task amperage does not match the ARC recommendation.",taskMismatch:"Loaded task differs from the linked task.",
     engineMismatch:"ARC engine version differs. These attempts cannot be compared.",scoreMismatch:"ARC scoring version differs. These attempts cannot be compared.",
     modeConflict:"Battle cannot run together with the legacy challenge mode.",taskReady:"Task pinned. Strike the plate to begin your attempt.",
-    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"incomplete bead",root:"root not fused",ends:"unwelded ends",heatInput:"heat input over WPS",underfill:"too fast — underfilled groove",overflow:"weld off the joint",porosity:"porosity",offAxis:"off the joint line",amps:"wrong current",arc:"unstable arc",angle:"wrong electrode angle",filler:"filler rhythm",edges:"cap missed the bevel edges",interbead:"lack of fusion between beads",slag:"slag inclusion",score:"score below 50"},incomplete:"INCOMPLETE",
+    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"incomplete bead",root:"root not fused",ends:"unwelded ends",heatInput:"heat input over WPS",underfill:"too fast — underfilled groove",overflow:"weld off the joint",porosity:"porosity",offAxis:"off the joint line",amps:"wrong current",arc:"unstable arc",angle:"wrong electrode angle",filler:"filler rhythm",edges:"cap missed the bevel edges",interbead:"lack of fusion between beads",slag:"slag inclusion",electrode:"wrong electrode size",score:"score below 50"},incomplete:"INCOMPLETE",
     sameTask:"WELD THE SAME TASK",shareText:"Same task, same rules — GORWELD ARC Battle Weld",share:"SHARE RESULT",copyLink:"COPY BATTLE LINK",copied:"LINK COPIED",
     wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",noResult:"NO RESULT",
     incomparable:"INCOMPARABLE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -3585,7 +3670,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Ток задания не совпадает с рекомендацией ARC.",taskMismatch:"Загруженное задание отличается от задания в ссылке.",
     engineMismatch:"Версия движка ARC отличается. Результаты нельзя сравнить.",scoreMismatch:"Версия оценки ARC отличается. Результаты нельзя сравнить.",
     modeConflict:"Battle нельзя запускать одновременно со старым режимом challenge.",taskReady:"Задание закреплено. Коснитесь пластины, чтобы начать попытку.",
-    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"неполный шов",root:"непровар корня",ends:"непроваренные концы",heatInput:"превышено тепловложение",underfill:"слишком быстро — незаполненная разделка",overflow:"шов вне разделки",porosity:"пористость",offAxis:"уход с оси",amps:"неверный ток",arc:"нестабильная дуга",angle:"неверный угол электрода",filler:"ритм присадки",edges:"облицовка не перекрыла кромки",interbead:"несплавление между валиками",slag:"шлаковое включение",score:"оценка ниже 50"},incomplete:"НЕ ЗАВЕРШЕНО",
+    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"неполный шов",root:"непровар корня",ends:"непроваренные концы",heatInput:"превышено тепловложение",underfill:"слишком быстро — незаполненная разделка",overflow:"шов вне разделки",porosity:"пористость",offAxis:"уход с оси",amps:"неверный ток",arc:"нестабильная дуга",angle:"неверный угол электрода",filler:"ритм присадки",edges:"облицовка не перекрыла кромки",interbead:"несплавление между валиками",slag:"шлаковое включение",electrode:"неверный диаметр электрода",score:"оценка ниже 50"},incomplete:"НЕ ЗАВЕРШЕНО",
     sameTask:"СВАРИ ТО ЖЕ ЗАДАНИЕ",shareText:"То же задание, те же правила — GORWELD ARC Battle Weld",share:"ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ",copyLink:"КОПИРОВАТЬ ССЫЛКУ",copied:"ССЫЛКА СКОПИРОВАНА",
     wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",noResult:"НЕТ РЕЗУЛЬТАТА",
     incomparable:"НЕСРАВНИМЫ",unsupportedReason:"TASK_UNSUPPORTED",
