@@ -38,11 +38,11 @@
   :root { --cyan:#1fd6e3; --amber:#ffae3c; --panel:rgba(10,14,18,.78); --line:rgba(42,52,60,.9); --mob:0; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { width:100%; height:100%; overflow:hidden; background:#050709; font-family:"Segoe UI",system-ui,sans-serif; touch-action:manipulation; color:#cfd8de; }
-  #pagebg { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; filter:brightness(.58) contrast(1.14) saturate(1.2); pointer-events:none;
+  #pagebg { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; filter:brightness(.76) contrast(1.22) saturate(1.15); pointer-events:none;
     animation:kenburns 28s ease-in-out infinite alternate; transform-origin:50% 60%; }
   @keyframes kenburns { from{transform:scale(1)} to{transform:scale(1.045)} }
   @media (prefers-reduced-motion: reduce) { #pagebg { animation:none; } }
-  #vignette { position:fixed; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0,0,0,.55) 100%); }
+  #vignette { position:fixed; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at 50% 42%, transparent 42%, rgba(0,0,0,.45) 100%); }
   #grain { position:fixed; inset:0; z-index:3; pointer-events:none; opacity:.04; mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
   #stage { position:fixed; inset:0; display:block; cursor:none; z-index:1; transition:filter .12s, transform .12s; touch-action:none; }
@@ -59,7 +59,7 @@
   .demo-badge { font-size:9px; font-weight:800; letter-spacing:1.8px; padding:3px 7px; border-radius:6px;
     color:#8b97a0; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
   .group { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  .lbl { font-size:11px; letter-spacing:1.5px; color:#8a97a0; text-transform:uppercase; margin-right:2px; }
+  .lbl { font-size:13px; font-weight:700; letter-spacing:1.5px; color:#c2ccd3; text-transform:uppercase; margin-right:2px; }
 
   button { cursor:pointer; border:1px solid #2b333a; background:linear-gradient(180deg,#1a2228,#12181d); color:#b9c4cb;
     padding:7px 11px; border-radius:9px; font-size:12px; font-weight:600; letter-spacing:.3px; transition:border-color .15s,box-shadow .15s,color .15s,transform .1s; }
@@ -153,6 +153,8 @@
   .modal { position:fixed; inset:0; z-index:9; display:none; align-items:center; justify-content:center; background:rgba(2,4,6,.78); backdrop-filter:blur(6px); padding:16px;
     opacity:0; transition:opacity .22s ease; }
   .modal.open { opacity:1; }
+  .modal:not(.open) { pointer-events:none; }
+  body:has(.modal.open) .mob-hud { visibility:hidden; }   /* pasek info telefonu (z-index 21) wchodził na tytuł okna */   /* zamykane okno (animacja 0,22 s) nie zjada pierwszego kliknięcia */
   .modal > .card { transform:translateY(14px) scale(.97); transition:transform .22s cubic-bezier(.2,.9,.3,1); }
   .modal.open > .card { transform:translateY(0) scale(1); }
   .card { background:linear-gradient(165deg,#10161b,#0b1014); border:1px solid #2b333a; border-radius:18px; padding:24px 28px;
@@ -179,6 +181,9 @@
   #macro[hidden] { display:none; }
   #zoom { display:block; border-radius:10px; border:1px solid #232b31; margin:10px auto 4px; box-shadow:0 4px 20px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04); }
   .card .act { display:flex; gap:8px; margin-top:16px; }
+  .car-danger { margin-top:22px; padding-top:12px; border-top:1px solid #1d242a; text-align:left; }
+  .car-danger button { background:none; border:1px solid rgba(255,90,74,.35); color:#ff8a7a; font-size:12px; padding:6px 12px; min-height:0; }
+  body.is-mobile .car-danger button { min-height:44px; }
   .card .act button { flex:1; padding:11px; }
   #cardModal .card .act { flex-wrap:wrap; justify-content:center; }
   /* 10.10: przyciski raportu VT zawsze widoczne (karta przewija sie pod nimi) */
@@ -190,19 +195,22 @@
   #cardModal .card .act-sub button:hover { border-color:var(--cyan); color:#fff; }
 
   /* O ARC / FAQ — statyczny HTML w DOM od początku (czyta go Google bez JS). Widać wersję wg <html lang>, RU → EN */
-  .about-lang { display:none; font-size:13.5px; line-height:1.55; color:#b9c4cb; }
+  .about-lang { display:none; font-size:14px; line-height:1.55; color:#c7d0d6; }
   html[lang="pl"] .about-lang[lang="pl"], html:not([lang="pl"]) .about-lang[lang="en"] { display:block; }
   .about-lang h3 { font-size:13px; letter-spacing:1.2px; text-transform:uppercase; color:var(--cyan); margin:16px 0 6px; }
   .about-lang p, .about-lang ul { margin-bottom:8px; } .about-lang ul { padding-left:18px; } .about-lang li { margin:3px 0; }
   .about-lang b { color:#e9eef2; } .about-lang details { border-top:1px solid #1b2227; padding:7px 0; }
   .about-lang summary { cursor:pointer; color:#e9eef2; font-weight:600; } .about-lang details p { margin:6px 0 2px; }
+  .about-lang details.about-sec { border-top:1px solid #1b2227; padding:4px 0; }
+  .about-lang details.about-sec > summary h3 { display:inline; margin:0; } .about-lang details.about-sec > summary { padding:6px 0; }
+  .about-lang details.about-sec[open] > summary { margin-bottom:4px; }
   .cgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; width:min(620px,86vw); }
   .coupon { text-align:left; border:1px solid #242c32; border-radius:12px; padding:11px 12px; background:linear-gradient(145deg,#12181d,#0e1317); cursor:pointer; transition:border-color .15s,box-shadow .15s,transform .12s; position:relative; }
   .coupon:hover { border-color:var(--cyan); box-shadow:0 0 16px rgba(31,214,227,.12); transform:translateY(-1px); }
   .coupon.done { border-color:#2f5e3c; background:linear-gradient(145deg,#0f1a13,#0c1510); box-shadow:0 0 12px rgba(95,224,138,.08); }
   .coupon.locked { opacity:.4; cursor:not-allowed; filter:grayscale(.4); }
-  .coupon .ttl { font-weight:700; color:#e9eef2; font-size:12.5px; margin-bottom:3px; }
-  .coupon .meta { font-size:11px; color:#7d8990; }
+  .coupon .ttl { font-weight:700; color:#e9eef2; font-size:13.5px; margin-bottom:3px; }
+  .coupon .meta { font-size:12.5px; color:#aab6be; }
   .coupon .badge { position:absolute; top:8px; right:9px; font-size:13px; }
   .xpwrap { width:min(620px,86vw); margin:0 0 14px; }
   .xpbar { height:8px; background:#1a2127; border-radius:5px; overflow:hidden; margin-top:6px; }
@@ -229,7 +237,7 @@
   .covtxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; letter-spacing:.4px; color:#eaf2f5; text-shadow:0 1px 4px #000; white-space:nowrap; overflow:hidden; }
 
   /* tutorial */
-  .tutsteps { display:flex; flex-direction:column; gap:9px; font-size:12.7px; line-height:1.5; color:#9aa6ad; width:min(380px,84vw); counter-reset:tut; }
+  .tutsteps { display:flex; flex-direction:column; gap:9px; font-size:14px; line-height:1.5; color:#c0cad1; width:min(380px,84vw); counter-reset:tut; }
   .tutsteps > div { padding:9px 12px 9px 38px; background:linear-gradient(135deg,#11171b,#0d1216); border:1px solid #1d242a; border-radius:10px; position:relative; }
   .tutsteps > div::before { counter-increment:tut; content:counter(tut); position:absolute; left:10px; top:9px; width:20px; height:20px; border-radius:6px;
     background:linear-gradient(135deg,#143238,#0e2226); border:1px solid var(--cyan); color:var(--cyan); font-size:11px; font-weight:800;
@@ -260,7 +268,10 @@
   .method-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .method-code { margin-left:auto; font-size:9px; letter-spacing:1px; font-weight:800; color:var(--cyan); }
   .method-card.cut .method-code { color:var(--amber); }
-  .method-body { margin-top:8px; font-size:12px; line-height:1.65; color:#9aa6ae; }
+  .method-body { margin-top:8px; font-size:14px; line-height:1.6; color:#c3ccd2; }
+  .method-card > summary { list-style:none; cursor:pointer; } .method-card > summary::-webkit-details-marker { display:none; }
+  .method-lead { margin-top:6px; font-size:14px; line-height:1.5; color:#c3ccd2; }
+  .method-more { color:var(--cyan); font-size:12px; white-space:nowrap; } .method-card[open] .method-more { display:none; }
   #splash { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:#050709; transition:opacity .5s ease; }
   #splash.hide { opacity:0; pointer-events:none; }
@@ -306,7 +317,7 @@
     .top .brand span:not(.demo-badge){ display:none; }
     .top .brand img{ height:26px; width:26px; }
     .wal{ font-size:11px; padding:6px 9px; flex-shrink:0; }
-    .lbl{ font-size:10px; width:100%; margin-bottom:2px; }
+    .lbl{ font-size:12px; width:100%; margin-bottom:2px; }
     .proc,.joint,.bead,.thk,.lng,.pos,.amp,.ampmode{ padding:10px 12px; font-size:12px; min-height:44px; min-width:44px; }
     button{ min-height:44px; }
     .info-card,.grav,.rankbar,#watermark{ display:none !important; }
@@ -559,7 +570,8 @@
     <h2 data-i18n="car_title">Welder path</h2>
     <div class="xpwrap" id="xpwrap"></div>
     <div class="cgrid" id="cgrid"></div>
-    <div class="act"><button id="carReset" data-i18n="car_reset">RESET PROGRESS</button><button id="carClose" class="on" data-i18n="car_close">CLOSE</button></div>
+    <div class="act"><button id="carClose" class="on" data-i18n="car_close">CLOSE</button></div>
+    <div class="car-danger"><button id="carReset" type="button" data-i18n="car_reset">RESET PROGRESS</button></div>
   </div></div>
 
   <!-- SHARE CARD -->
@@ -615,8 +627,9 @@
   <div id="aboutModal" class="modal"><div class="card" style="width:min(640px,94vw);max-height:88vh;overflow:auto;text-align:left">
     <article class="about-lang" lang="en">
       <h2>GORWELD ARC — free browser welding trainer</h2>
-      <p><b>GORWELD ARC</b> is a free welding simulator that runs in the browser, with no install and no sign-up. It was built by a working welder, to practise what actually decides a weld: arc length, torch angle, travel speed and heat, and then to check the result the way an inspector would.</p>
-      <h3>Welding processes</h3>
+      <p><b>GORWELD ARC</b> is a free welding simulator in the browser — no install, no sign-up.</p>
+      <p>Built by a working welder. You practise arc length, angle, travel speed and heat, then the weld is inspected like in the shop.</p>
+      <details class="about-sec"><summary><h3>Welding processes</h3></summary>
       <ul>
         <li><b>MMA 111 (stick, SMAW)</b> — covered electrode. Strike the arc without sticking, keep a short arc while the electrode burns down, and chip the slag between passes.</li>
         <li><b>MIG/MAG 135 (GMAW)</b> — solid wire in shielding gas. One hand and constant wire feed, so steady travel speed and stick-out do the work.</li>
@@ -624,25 +637,34 @@
         <li><b>Oxy-fuel cutting 81</b> — cut through the plate cleanly: too fast leaves dross, too slow melts the edges.</li>
         <li><b>Plasma cutting 83</b> — a narrow, fast plasma cut through the same plates.</li>
       </ul>
-      <h3>Joints, positions and materials</h3>
-      <p>Butt joints (V-groove), fillet (T) joints and pipe. Welding positions follow <b>ISO 6947</b>: PA flat, PB horizontal fillet, PC horizontal, PD overhead fillet, PE overhead, PF vertical up and PG vertical down, plus pipe 1G, 2G, 5G and 6G (H-L045). Plate thickness from 2 to 12 mm, in carbon steel, stainless steel and aluminium. Gravity pulls the weld pool differently in each position, and thicker plate needs several passes: root, fill and cap.</p>
-      <h3>Inspection modelled on ISO 5817</h3>
-      <p>After the weld, ARC runs a simulated visual inspection (VT) and gives a grade modelled on the <b>ISO 5817</b> quality levels B, C and D. It measures groove coverage, travel speed, heat input (kJ/mm) and bead consistency, and lists the defects it found: lack of fusion, burn-through, undercut, porosity from a long arc or an uneven bead. A rejected weld does not count towards career progress, the same as in a real bend or macro test. ARC is a teaching aid: its grade is not a weld test, a WPQR or a welder qualification.</p>
-      <h3>For schools and training centres</h3>
-      <p>ARC works as a warm-up before the booth. Students learn the settings, the positions and the inspection terms before they burn real electrodes and plate. It runs on a school computer or a phone, with a mouse or a finger, and all you share is a link. It does not replace hands-on training with a real machine. It makes that training cheaper and faster.</p>
-      <h3>FAQ</h3>
+      </details>
+      <details class="about-sec"><summary><h3>Joints, positions and materials</h3></summary>
+      <p>Butt joints (V-groove), fillet (T) joints and pipe. Welding positions follow <b>ISO 6947</b>: PA flat, PB horizontal fillet, PC horizontal, PD overhead fillet, PE overhead, PF vertical up and PG vertical down, plus pipe 1G, 2G, 5G and 6G (H-L045).</p>
+      <p>Plate thickness from 2 to 12 mm, in carbon steel, stainless steel and aluminium. Gravity pulls the weld pool differently in each position, and thicker plate needs several passes: root, fill and cap.</p>
+      </details>
+      <details class="about-sec"><summary><h3>Inspection modelled on ISO 5817</h3></summary>
+      <p>After the weld, ARC runs a simulated visual inspection (VT) and gives a grade modelled on the <b>ISO 5817</b> quality levels B, C and D. It measures groove coverage, travel speed, heat input (kJ/mm) and bead consistency, and lists the defects it found: lack of fusion, burn-through, undercut, porosity from a long arc or an uneven bead.</p>
+      <p>A rejected weld does not count towards career progress, the same as in a real bend or macro test. ARC is a teaching aid: its grade is not a weld test, a WPQR or a welder qualification.</p>
+      </details>
+      <details class="about-sec"><summary><h3>For schools and training centres</h3></summary>
+      <p>ARC works as a warm-up before the booth. Students learn the settings, the positions and the inspection terms before they burn real electrodes and plate.</p>
+      <p>It runs on a school computer or a phone, with a mouse or a finger, and all you share is a link. It does not replace hands-on training with a real machine. It makes that training cheaper and faster.</p>
+      </details>
+      <details class="about-sec"><summary><h3>FAQ</h3></summary>
       <details><summary>Is the welding simulator really free?</summary><p>Yes. ARC runs in the browser, with no account, no download and no payment.</p></details>
       <details><summary>Can you learn to weld with a simulator?</summary><p>You can learn the theory and the hand habits: arc length, angles, travel speed, the order of passes and reading defects. The feel of a real arc, heat and fumes only comes in the booth. A simulator shortens the road there.</p></details>
       <details><summary>Which process should a beginner start with?</summary><p>MMA 111 on 3 mm steel in the PA (flat) position. That is the classic first exam coupon. After that, MIG/MAG 135, and TIG 141 last.</p></details>
       <details><summary>What do ISO 6947 and ISO 5817 mean?</summary><p>ISO 6947 names the welding positions (PA, PB, PC, PD, PE, PF, PG, PH and so on). ISO 5817 sets the quality levels for imperfections in welds: B is the strictest, D the most lenient.</p></details>
       <details><summary>Does it work on a phone?</summary><p>Yes. On a phone you weld with your finger and the view zooms in on the plate. A computer with a mouse gives more precision.</p></details>
+      </details>
       <h3>Privacy</h3>
       <p>Normal ARC runs only in your browser and sends nothing. Battle Weld with the server sends data only after your consent. <a href="prywatnosc/#en" target="_blank" rel="noopener">Privacy policy ↗</a></p>
     </article>
     <article class="about-lang" lang="pl">
       <h2>GORWELD ARC — darmowy trener spawania w przeglądarce</h2>
-      <p><b>GORWELD ARC</b> to darmowy symulator spawania, który działa w przeglądarce, bez instalacji i bez zakładania konta. Zbudował go czynny spawacz, żeby ćwiczyć to, co naprawdę decyduje o spoinie: długość łuku, kąt uchwytu, prędkość spawania i ciepło, a potem sprawdzić wynik tak, jak sprawdza go kontroler.</p>
-      <h3>Metody spawania</h3>
+      <p><b>GORWELD ARC</b> to darmowy symulator spawania w przeglądarce — bez instalacji i bez konta.</p>
+      <p>Zbudował go czynny spawacz. Ćwiczysz długość łuku, kąt, prędkość i ciepło, a spoinę ocenia kontrola jak na hali.</p>
+      <details class="about-sec"><summary><h3>Metody spawania</h3></summary>
       <ul>
         <li><b>MMA 111 (elektroda otulona)</b>: zajarzenie bez przywierania, krótki łuk przy topiącej się elektrodzie, żużel do skucia między warstwami.</li>
         <li><b>MIG/MAG 135</b>: drut lity w osłonie gazu. Jedna ręka i ciągłe podawanie drutu, więc liczy się równe tempo i wolny wylot drutu.</li>
@@ -650,18 +672,26 @@
         <li><b>Cięcie tlenowe 81</b>: czysty rzaz na wylot. Za szybko zostaje grat, za wolno nadtapiają się krawędzie.</li>
         <li><b>Cięcie plazmowe 83</b>: wąski, szybki rzaz plazmą na tych samych blachach.</li>
       </ul>
-      <h3>Złącza, pozycje i materiały</h3>
-      <p>Złącza doczołowe (na V), pachwinowe (teowe) i rury. Pozycje spawania według <b>ISO 6947</b>: PA podolna, PB naboczna, PC naścienna, PD okapowa, PE pułapowa, PF pionowa z dołu i PG pionowa z góry oraz rury 1G, 2G, 5G i 6G (H-L045). Grubość blachy od 2 do 12 mm; do wyboru stal, stal nierdzewna i aluminium. W każdej pozycji grawitacja inaczej ciągnie jeziorko, a grube blachy spawa się w kilku warstwach: przetop, wypełnienie, lico.</p>
-      <h3>Ocena wzorowana na ISO 5817</h3>
-      <p>Po spawaniu ARC robi symulowane badanie wizualne (VT) i daje ocenę wzorowaną na poziomach jakości <b>ISO 5817</b>: B, C i D. Mierzy pokrycie grani, trzymanie tempa, wkład ciepła (kJ/mm) i równość lica oraz wypisuje znalezione niezgodności: brak wtopienia, przepalenie, podtopienia, pęcherze od długiego łuku albo nierówne lico. Spoina odrzucona nie zalicza się do kariery, tak jak na prawdziwej próbie zginania czy zgładzie. ARC to pomoc dydaktyczna: jego ocena nie jest badaniem spoiny, WPQR ani uprawnieniem spawacza.</p>
-      <h3>Dla szkół i ośrodków szkolenia</h3>
-      <p>ARC to rozgrzewka przed kabiną. Uczeń poznaje ustawienia, pozycje i język inspekcji, zanim zacznie palić prawdziwe elektrody i blachę. Działa na szkolnym komputerze i na telefonie, obsługuje się go myszką albo palcem, a szkoła udostępnia tylko link. Nie zastępuje praktyki przy spawarce, ale sprawia, że jest tańsza i szybsza.</p>
-      <h3>Najczęstsze pytania</h3>
+      </details>
+      <details class="about-sec"><summary><h3>Złącza, pozycje i materiały</h3></summary>
+      <p>Złącza doczołowe (na V), pachwinowe (teowe) i rury. Pozycje spawania według <b>ISO 6947</b>: PA podolna, PB naboczna, PC naścienna, PD okapowa, PE pułapowa, PF pionowa z dołu i PG pionowa z góry oraz rury 1G, 2G, 5G i 6G (H-L045).</p>
+      <p>Grubość blachy od 2 do 12 mm; do wyboru stal, stal nierdzewna i aluminium. W każdej pozycji grawitacja inaczej ciągnie jeziorko, a grube blachy spawa się w kilku warstwach: przetop, wypełnienie, lico.</p>
+      </details>
+      <details class="about-sec"><summary><h3>Ocena wzorowana na ISO 5817</h3></summary>
+      <p>Po spawaniu ARC robi symulowane badanie wizualne (VT) i daje ocenę wzorowaną na poziomach jakości <b>ISO 5817</b>: B, C i D. Mierzy pokrycie grani, trzymanie tempa, wkład ciepła (kJ/mm) i równość lica oraz wypisuje znalezione niezgodności: brak wtopienia, przepalenie, podtopienia, pęcherze od długiego łuku albo nierówne lico.</p>
+      <p>Spoina odrzucona nie zalicza się do kariery, tak jak na prawdziwej próbie zginania czy zgładzie. ARC to pomoc dydaktyczna: jego ocena nie jest badaniem spoiny, WPQR ani uprawnieniem spawacza.</p>
+      </details>
+      <details class="about-sec"><summary><h3>Dla szkół i ośrodków szkolenia</h3></summary>
+      <p>ARC to rozgrzewka przed kabiną. Uczeń poznaje ustawienia, pozycje i język inspekcji, zanim zacznie palić prawdziwe elektrody i blachę.</p>
+      <p>Działa na szkolnym komputerze i na telefonie, obsługuje się go myszką albo palcem, a szkoła udostępnia tylko link. Nie zastępuje praktyki przy spawarce, ale sprawia, że jest tańsza i szybsza.</p>
+      </details>
+      <details class="about-sec"><summary><h3>Najczęstsze pytania</h3></summary>
       <details><summary>Czy symulator spawania jest naprawdę darmowy?</summary><p>Tak. ARC działa w przeglądarce, bez konta, bez pobierania i bez płatności.</p></details>
       <details><summary>Czy da się nauczyć spawać na symulatorze?</summary><p>Da się nauczyć teorii i nawyków ręki: długości łuku, kątów, tempa, kolejności warstw i czytania niezgodności. Czucie prawdziwego łuku, ciepła i dymu przychodzi dopiero w kabinie. Symulator skraca drogę do niej.</p></details>
       <details><summary>Od której metody zacząć naukę spawania?</summary><p>Od MMA 111 na stali 3 mm w pozycji PA (podolnej). To klasyczna pierwsza próbka egzaminacyjna. Potem MIG/MAG 135, a TIG 141 na końcu.</p></details>
       <details><summary>Co oznaczają ISO 6947 i ISO 5817?</summary><p>ISO 6947 nazywa pozycje spawania (PA, PB, PC, PD, PE, PF, PG, PH itd.). ISO 5817 określa poziomy jakości dla niezgodności spawalniczych: B jest najostrzejszy, D najłagodniejszy.</p></details>
       <details><summary>Czy działa na telefonie?</summary><p>Tak. Na telefonie spawasz palcem, a widok przybliża się do blachy. Komputer z myszką daje większą precyzję.</p></details>
+      </details>
       <h3>Prywatność</h3>
       <p>Zwykłe ARC działa tylko w Twojej przeglądarce i niczego nie wysyła. Battle Weld z serwerem wysyła dane dopiero po Twojej zgodzie. <a href="prywatnosc/" target="_blank" rel="noopener">Polityka prywatności ↗</a></p>
     </article>
@@ -755,9 +785,9 @@ let lang=(()=>{ const n=((navigator.languages&&navigator.languages[0])||navigato
   return n==="pl"?"pl":(["ru","uk","be"].includes(n)?"ru":"en"); })();
 try{ const l=localStorage.getItem('gorweld_lang'); if(l) lang=l; }catch(e){}
 const I18N={
- pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", sec_title:"PRZEKRÓJ", pr_cut:"TLEN", pr_plasma:"PLAZMA", mc_battle:"Battle", mc_helmet:"Przyłbica", mc_sound:"Dźwięk", mc_music:"Muzyka", mc_clear:"Zetrzyj", mc_help:"Jak grać", mc_setup:"Opcje", mc_career:"Kariera", mc_methods:"Metody", mc_about:"O ARC", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
+ pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", sec_title:"PRZEKRÓJ", pr_cut:"TLEN", pr_plasma:"PLAZMA", mc_battle:"Battle", mc_helmet:"Przyłbica", mc_sound:"Dźwięk", mc_music:"Muzyka", mc_clear:"Wyczyść", mc_help:"Jak grać", mc_setup:"Opcje", mc_career:"Kariera", mc_methods:"Metody", mc_about:"O ARC", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
   jt_butt:"Doczołowe V", jt_fillet:"Pachwinowe T", jt_pipe:"Rura", mat_steel:"Stal", mat_ss:"Nierdz.", mat_alu:"Alu",
-  btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ ZETRZYJ",
+  btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ WYCZYŚĆ",
   grav:"grawitacja<br>jeziorka", vset:"v zadane:", forA:"za A ≈",
   tool_elec:"🔥 Elektroda: ", tool_used:"ZUŻYTA — klik = nowa", tool_mig:"🔫 <b>Drut z automatu</b> — jedna ręka, ciągłe podawanie", tool_tig:"👐 <b>Palnik + drut</b> — LPM zapala, SPACJA dokłada spoiwo, PPM gasi",
   fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu", fb_slow:"ZA WOLNO — przepalenie / przelew", fb_good:"DOBRE TEMPO — pełny przetop",
@@ -771,7 +801,7 @@ const I18N={
   def_pen:"Brak przetopu / przyklejenie grani (%1% niewypełnione)", def_narrow:"Wąskie lico — niedolew (za szybkie tempo)", def_wide:"Nadmierny nadlew lica (za wolno)",
   def_amp_low:"Za mały prąd — brak wtopienia (%1 A przy WPS %2 A)", def_amp_high:"Za duży prąd — przepalenie / podtopienie (%1 A przy WPS %2 A)",
   def_undercut:"Podtopienie / zwis poza granią (%1%)", def_porosity:"Porowatość — %1 pęcherzy (niestabilny łuk)", def_spatter:"Odpryski — %1 (czyszczenie po spawaniu)", def_uneven:"Nierówna szerokość lica", def_clean:"Brak wad — spoina zgodna z wymaganiami",
-  zoom_zoom:"powiększenie ×", car_title:"Ścieżka spawacza", car_req:"wymóg", car_reset:"RESET POSTĘPU", car_close:"ZAMKNIJ", car_max:"MAX",
+  zoom_zoom:"powiększenie ×", car_title:"Ścieżka spawacza", car_req:"wymóg", car_reset:"RESET POSTĘPU", car_reset_q:"Skasować cały postęp (XP i zaliczone kupony)? Tego nie da się cofnąć.", more:"więcej ▾", car_close:"ZAMKNIJ", car_max:"MAX",
   card_title:"Karta wyniku", card_share:"📤 UDOSTĘPNIJ WYNIK", card_proof:"🔒 KOPIUJ PROOF", card_dl:"💾 POBIERZ PNG", card_copy:"📋 KOPIUJ TEKST", card_close:"ZAMKNIJ", tagline:"SPAWASZ — UCZYSZ SIĘ",
   cov_lbl:"Pokrycie", cov_layer:"Warstwa", cov_inspect:"⚡ auto-inspekcja", cov_done:"✅ PEŁNA ŁAGA — puść",
   pass_root:"przetop", pass_fill:"wypełnienie", pass_cap:"lico",
@@ -781,11 +811,11 @@ const I18N={
   t_cut_steelonly:"🔥 Palnik tlenowy tnie TYLKO stal — nie nierdzewkę ani alu", t_cut_preheat:"🔥 Podgrzewaj przy starcie — trzymaj wolno aż przebije", t_cut_pierced:"✅ Przebite! Prowadź rzaz po linii", cut_word:"cięcie",
   cd_incomplete:"Niedocięcie — rzaz nie przeszedł na wylot (%1%)", cd_wide:"Szeroki rzaz / nadtopienie krawędzi (za wolno)", cd_dross:"Żużel i grat na dole (za szybko)", cd_dev:"Odchył od linii — krzywy rzaz", cd_clean:"Czysty rzaz — gładkie, prostopadłe krawędzie",
   tut_title:"Jak spawać — 30 sekund", tut_skip:"POMIŃ", tut_start:"DO ROBOTY ⚡",
-  tut1:"<b>1. Ustaw robotę.</b> Metoda · złącze · pozycja · grubość · materiał · <b>prąd</b>. Prąd startuje na wartości z WPS (zielona ramka): zejdziesz niżej — brak wtopienia, podbijesz — przepalenie i odpryski. Im trudniej, tym wyższa klasa roboty (gwiazdki = trudność).",
-  tut2:"<b>2. Zajarz łuk.</b><ul><li><b>LPM</b> dotyka blachy i zapala łuk — <b style='color:#ff5a4a'>nie trzymaj</b>, bo elektroda przywrze.</li><li>Elektroda się topi i odjeżdża: dogrywaj krótkimi kliknięciami <b>LPM</b>, <b>PPM</b> odciąga. Pomarańczowy pasek na czubku = odległość od blachy.</li><li><b>Kąt:</b> <b>W/S</b> pchanie ↔ ciągnięcie, <b>A/D</b> kąt roboczy. Startujesz na kącie z WPS — nic nie ruszysz, nic nie tracisz.</li><li><b>LPM+PPM</b> gasi łuk tam, gdzie chcesz — to nie zerwanie, bez kary.</li><li><b>TIG:</b> LPM zapala, <b>SPACJA</b> dokłada spoiwo, PPM gasi. Bez spoiwa nie ma spoiny.</li><li><i>Telefon: dotknij i ciągnij — łuk trzyma się sam, kąt stoi na WPS.</i></li></ul>",
-  tut3:"<b>3. Trzymaj tempo.</b> Ciągnij wzdłuż grani — dopóki <b style='color:#5fe08a'>nic nie wyskakuje</b>, tempo jest dobre. Pod blachą zapali się <b style='color:#ff9a3c'>ZA SZYBKO</b> (zimny zakład) albo <b style='color:#ff9a3c'>ZA WOLNO</b> (przepalenie) dopiero gdy naprawdę zjedziesz.",
-  tut4:"<b>4. Hełm i warstwy.</b> Bez hełmu łuk oślepia po 2 s. Grube blachy spawasz w kilku warstwach: <b>przetop → wypełnienie → lico</b>.",
-  tut5:"<b>5. Ocena.</b> Wyspawaj CAŁĄ łagę (pasek u góry) → automatyczna inspekcja (wzorowana na ISO 5817) → ocena i postęp kariery. Pochwal się kartą wyniku na X.",
+  tut1:"<b>Ustaw parametry.</b> Metoda · złącze · pozycja · grubość · materiał · <b>prąd</b>. Prąd startuje na wartości z WPS (zielona ramka): zejdziesz niżej — brak wtopienia, podbijesz — przepalenie i odpryski. Im trudniej, tym wyższa klasa roboty (gwiazdki = trudność).",
+  tut2:"<b>Zajarz łuk.</b><ul><li><b>LPM</b> stuknij i puść — łuk się pali (<b style='color:#ff5a4a'>trzymany przywiera</b>). Krótkie <b>LPM</b> dogrywają elektrodę, <b>PPM</b> odciąga, <b>LPM+PPM</b> gasi.</li><li><b>W/S</b> pchanie ↔ ciągnięcie, <b>A/D</b> kąt roboczy, <b>E</b> średnica elektrody — start na WPS.</li><li><b>TIG:</b> LPM zapala, <b>SPACJA</b> spoiwo, PPM gasi. <i>Telefon: dotknij i ciągnij.</i></li></ul>",
+  tut3:"<b>Trzymaj tempo.</b> Ciągnij wzdłuż grani — dopóki <b style='color:#5fe08a'>nic nie wyskakuje</b>, tempo jest dobre. Pod blachą zapali się <b style='color:#ff9a3c'>ZA SZYBKO</b> (zimny zakład) albo <b style='color:#ff9a3c'>ZA WOLNO</b> (przepalenie) dopiero gdy naprawdę zjedziesz.",
+  tut4:"<b>Hełm i warstwy.</b> Bez hełmu łuk oślepia po 2 s. Grube blachy spawasz w kilku warstwach: <b>przetop → wypełnienie → lico</b>.",
+  tut5:"<b>Ocena.</b> Wyspawaj CAŁĄ łagę (pasek u góry) → automatyczna inspekcja (wzorowana na ISO 5817) → ocena i postęp kariery. Pochwal się kartą wyniku na X.",
   res_ok:"🏆 ŁAGA ZALICZONA", rew_zero:"💀 ŁAGA ODRZUCONA — dokończ całą spoinę (pokrycie ≥80%), min. ocena D",
   eco_free:"runda konkursowa", chal_wal:"KONKURS", chal_pass:"PRÓG ZALICZONY — skopiuj PROOF i wyślij zgłoszenie", chal_fail:"PONIŻEJ PROGU — spawaj dalej",
   tier_common:"PODSTAWOWA", tier_rare:"ŚREDNIA", tier_epic:"TRUDNA", tier_legendary:"MISTRZOWSKA",
@@ -795,7 +825,7 @@ const I18N={
  en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_fast:"Travel too fast — %1 mm/s against %2 mm/s on the WPS: underfilled groove and lack of sidewall fusion (ISO 5817: 511, 401) — reject regardless of how the face looks",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", sec_title:"SECTION", pr_cut:"OXY", pr_plasma:"PLASMA", mc_battle:"Battle", mc_helmet:"Helmet", mc_sound:"Sound", mc_music:"Music", mc_clear:"Clear", mc_help:"How to", mc_setup:"Settings", mc_career:"Career", mc_methods:"Methods", mc_about:"About", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
   jt_butt:"Butt V", jt_fillet:"Fillet T", jt_pipe:"Pipe", mat_steel:"Steel", mat_ss:"Stainless", mat_alu:"Alu",
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
-  grav:"puddle<br>gravity", vset:"set v:", forA:"for A ≈",
+  grav:"puddle<br>gravity", vset:"Set v:", forA:"for A ≈",
   tool_elec:"🔥 Electrode: ", tool_used:"SPENT — click for new", tool_mig:"🔫 <b>Auto-fed wire</b> — one hand, continuous", tool_tig:"👐 <b>Torch + rod</b> — LMB lights it, SPACE dabs filler, RMB puts it out",
   fb_fast:"TOO FAST — cold lap, no fusion", fb_slow:"TOO SLOW — burn-through / overflow", fb_good:"GOOD SPEED — full penetration",
   t_replace:"CHANGE ELECTRODE — release & grab a new one", t_eye:"🔆 ARC FLASH! PUT THE HELMET ON", t_layfirst:"LAY A BEAD FIRST", t_strikeoff:"STRIKE ON THE PLATE", t_toosmall:"CHALLENGE: BAY TOO SMALL — turn your phone landscape or enlarge the window (400 px min), so everyone gets the same shot", t_cfgfail:"CHALLENGE: official config not loaded — reload the page or your run will not count",
@@ -808,7 +838,7 @@ const I18N={
   def_pen:"Lack of penetration / cold lap (%1% unfilled)", def_narrow:"Narrow bead — underfill (too fast)", def_wide:"Excess reinforcement (too slow)",
   def_amp_low:"Current too low — lack of fusion (%1 A vs WPS %2 A)", def_amp_high:"Current too high — burn-through / undercut (%1 A vs WPS %2 A)",
   def_undercut:"Undercut / sag outside groove (%1%)", def_porosity:"Porosity — %1 pores (unstable arc)", def_spatter:"Spatter — %1 (post-weld cleanup)", def_uneven:"Uneven bead width", def_clean:"No defects — weld meets requirements",
-  zoom_zoom:"zoom ×", car_title:"Welder path", car_req:"req", car_reset:"RESET PROGRESS", car_close:"CLOSE", car_max:"MAX",
+  zoom_zoom:"zoom ×", car_title:"Welder path", car_req:"req", car_reset:"RESET PROGRESS", car_reset_q:"Erase all progress (XP and passed coupons)? This cannot be undone.", more:"more ▾", car_close:"CLOSE", car_max:"MAX",
   card_title:"Score card", card_share:"📤 SHARE RESULT", card_proof:"🔒 COPY PROOF", card_dl:"💾 SAVE PNG", card_copy:"📋 COPY TEXT", card_close:"CLOSE", tagline:"WELD — LEARN",
   cov_lbl:"Coverage", cov_layer:"Layer", cov_inspect:"⚡ auto-inspect", cov_done:"✅ FULL BEAD — release",
   pass_root:"root", pass_fill:"fill", pass_cap:"cap",
@@ -818,11 +848,11 @@ const I18N={
   t_cut_steelonly:"🔥 Oxy torch cuts STEEL only — not stainless or aluminium", t_cut_preheat:"🔥 Preheat at the start — hold slow until it pierces", t_cut_pierced:"✅ Pierced! Run the cut along the line", cut_word:"cut",
   cd_incomplete:"Incomplete cut — didn't sever through (%1%)", cd_wide:"Wide kerf / edge melt (too slow)", cd_dross:"Dross on the underside (too fast)", cd_dev:"Off the cut line — crooked kerf", cd_clean:"Clean cut — smooth, square edges",
   tut_title:"How to weld — 30 seconds", tut_skip:"SKIP", tut_start:"LET'S WELD ⚡",
-  tut1:"<b>1. Set the job.</b> Method · joint · position · thickness · material · <b>current</b>. Current starts at the WPS figure (green outline): go under and you lose fusion, go over and you burn through and spatter. Harder jobs rank higher (stars = difficulty).",
-  tut2:"<b>2. Strike the arc.</b><ul><li><b>Left button</b> touches the plate and lights the arc — <b style='color:#ff5a4a'>don't hold it</b> or the electrode sticks.</li><li>The electrode melts and drifts away: feed it back with short <b>left</b> clicks, <b>right</b> pulls it off. The orange bar at the tip = distance from the plate.</li><li><b>Angle:</b> <b>W/S</b> push ↔ drag, <b>A/D</b> work angle. You start on the WPS angle — touch nothing, lose nothing.</li><li><b>LMB+RMB</b> puts the arc out where you choose — not a break, no penalty.</li><li><b>TIG:</b> LMB lights, <b>SPACE</b> adds filler, RMB puts it out. No filler, no weld.</li><li><i>Phone: touch and drag — the arc holds itself, the angle stays on WPS.</i></li></ul>",
-  tut3:"<b>3. Keep the pace.</b> Drag along the groove — as long as <b style='color:#5fe08a'>nothing pops up</b>, you're on target. <b style='color:#ff9a3c'>TOO FAST</b> (cold lap) or <b style='color:#ff9a3c'>TOO SLOW</b> (burn-through) shows under the plate only once you really drift.",
-  tut4:"<b>4. Helmet & layers.</b> No helmet and the arc blinds you after 2 s. Thick plate is welded in several layers: <b>root → fill → cap</b>.",
-  tut5:"<b>5. Grade.</b> Weld the WHOLE bead (top bar) → automatic inspection (modelled on ISO 5817) → grade and career progress. Share your result card on X.",
+  tut1:"<b>Set the job.</b> Method · joint · position · thickness · material · <b>current</b>. Current starts at the WPS figure (green outline): go under and you lose fusion, go over and you burn through and spatter. Harder jobs rank higher (stars = difficulty).",
+  tut2:"<b>Strike the arc.</b><ul><li><b>LMB</b> tap and release — the arc lights (<b style='color:#ff5a4a'>hold it and it sticks</b>). Short <b>LMB</b> taps feed the electrode, <b>RMB</b> pulls it off, <b>LMB+RMB</b> puts it out.</li><li><b>W/S</b> push ↔ drag, <b>A/D</b> work angle, <b>E</b> electrode size — you start on the WPS.</li><li><b>TIG:</b> LMB lights, <b>SPACE</b> adds filler, RMB puts it out. <i>Phone: touch and drag.</i></li></ul>",
+  tut3:"<b>Keep the pace.</b> Drag along the groove — as long as <b style='color:#5fe08a'>nothing pops up</b>, you're on target. <b style='color:#ff9a3c'>TOO FAST</b> (cold lap) or <b style='color:#ff9a3c'>TOO SLOW</b> (burn-through) shows under the plate only once you really drift.",
+  tut4:"<b>Helmet & layers.</b> No helmet and the arc blinds you after 2 s. Thick plate is welded in several layers: <b>root → fill → cap</b>.",
+  tut5:"<b>Grade.</b> Weld the WHOLE bead (top bar) → automatic inspection (modelled on ISO 5817) → grade and career progress. Share your result card on X.",
   res_ok:"🏆 PASS ACCEPTED", rew_zero:"💀 PASS REJECTED — finish the whole pass (coverage ≥80%), min grade D",
   eco_free:"challenge run", chal_wal:"CHALLENGE", chal_pass:"BAR CLEARED — copy the PROOF and submit", chal_fail:"BELOW THE BAR — keep welding",
   tier_common:"BASIC", tier_rare:"MEDIUM", tier_epic:"HARD", tier_legendary:"MASTER",
@@ -845,7 +875,7 @@ const I18N={
   def_pen:"Непровар / несплавление (%1% не заполнено)", def_narrow:"Узкий валик — недолив (быстро)", def_wide:"Чрезмерное усиление (медленно)",
   def_amp_low:"Ток занижен — непровар (%1 А при WPS %2 А)", def_amp_high:"Ток завышен — прожог / подрез (%1 А при WPS %2 А)",
   def_undercut:"Подрез / натёк вне шва (%1%)", def_porosity:"Поры — %1 (нестабильная дуга)", def_spatter:"Брызги — %1 (зачистка)", def_uneven:"Неравномерная ширина", def_clean:"Без дефектов — шов годен",
-  zoom_zoom:"увелич. ×", car_title:"Путь сварщика", car_req:"треб.", car_reset:"СБРОС ПРОГРЕССА", car_close:"ЗАКРЫТЬ", car_max:"МАКС",
+  zoom_zoom:"увелич. ×", car_title:"Путь сварщика", car_req:"треб.", car_reset:"СБРОС ПРОГРЕССА", car_reset_q:"Стереть весь прогресс (XP и сданные образцы)? Это нельзя отменить.", more:"подробнее ▾", car_close:"ЗАКРЫТЬ", car_max:"МАКС",
   card_title:"Карта результата", card_share:"📤 ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ", card_proof:"🔒 КОПИРОВАТЬ PROOF", card_dl:"💾 СКАЧАТЬ PNG", card_copy:"📋 КОПИР. ТЕКСТ", card_close:"ЗАКРЫТЬ", tagline:"ВАРИШЬ — УЧИШЬСЯ",
   cov_lbl:"Заполнение", cov_layer:"Слой", cov_inspect:"⚡ авто-контроль", cov_done:"✅ ШОВ ЦЕЛИКОМ — отпусти",
   pass_root:"корень", pass_fill:"заполнение", pass_cap:"облицовка",
@@ -855,11 +885,11 @@ const I18N={
   t_cut_steelonly:"🔥 Кислородный резак режет ТОЛЬКО сталь — не нержавейку и не алюминий", t_cut_preheat:"🔥 Прогрев у старта — держи медленно до прожига", t_cut_pierced:"✅ Прожиг! Веди рез по линии", cut_word:"рез",
   cd_incomplete:"Недорез — не прошло насквозь (%1%)", cd_wide:"Широкий рез / оплавление кромки (медленно)", cd_dross:"Грат снизу (слишком быстро)", cd_dev:"Уход от линии — кривой рез", cd_clean:"Чистый рез — гладкие, прямые кромки",
   tut_title:"Как варить — 30 секунд", tut_skip:"ПРОПУСТИТЬ", tut_start:"ЗА РАБОТУ ⚡",
-  tut1:"<b>1. Задай работу.</b> Метод · соединение · позиция · толщина · материал · <b>ток</b>. Ток стоит на значении из WPS (зелёная рамка): занизишь — непровар, завысишь — прожог и брызги. Чем сложнее — тем выше класс работы (звёзды = сложность).",
-  tut2:"<b>2. Зажги дугу.</b><ul><li><b>ЛКМ</b> касается пластины и зажигает дугу — <b style='color:#ff5a4a'>не удерживай</b>, электрод прилипнет.</li><li>Электрод плавится и отходит: подавай короткими нажатиями <b>ЛКМ</b>, <b>ПКМ</b> оттягивает. Оранжевая полоска на кончике = расстояние до пластины.</li><li><b>Угол:</b> <b>W/S</b> толкание ↔ волочение, <b>A/D</b> рабочий угол. Старт на угле из WPS — ничего не трогаешь, ничего не теряешь.</li><li><b>ЛКМ+ПКМ</b> гасят дугу в выбранном месте — это не обрыв, без штрафа.</li><li><b>TIG:</b> ЛКМ зажигает, <b>ПРОБЕЛ</b> подаёт присадку, ПКМ гасит. Без присадки шва нет.</li><li><i>Телефон: коснись и веди — дуга держится сама, угол стоит на WPS.</i></li></ul>",
-  tut3:"<b>3. Держи темп.</b> Веди вдоль шва — пока <b style='color:#5fe08a'>ничего не всплывает</b>, темп верный. <b style='color:#ff9a3c'>СЛИШКОМ БЫСТРО</b> (непровар) или <b style='color:#ff9a3c'>СЛИШКОМ МЕДЛЕННО</b> (прожог) появится под пластиной, только если реально собьёшься.",
-  tut4:"<b>4. Маска и слои.</b> Без маски дуга слепит через 2 с. Толстый металл варят в несколько слоёв: <b>корень → заполнение → облицовка</b>.",
-  tut5:"<b>5. Оценка.</b> Завари ВЕСЬ шов (полоса сверху) → авто-контроль (по образцу ISO 5817) → оценка и прогресс карьеры. Похвались картой в X.",
+  tut1:"<b>Задай работу.</b> Метод · соединение · позиция · толщина · материал · <b>ток</b>. Ток стоит на значении из WPS (зелёная рамка): занизишь — непровар, завысишь — прожог и брызги. Чем сложнее — тем выше класс работы (звёзды = сложность).",
+  tut2:"<b>Зажги дугу.</b><ul><li><b>ЛКМ</b> нажми и отпусти — дуга горит (<b style='color:#ff5a4a'>удержишь — прилипнет</b>). Короткие <b>ЛКМ</b> подают электрод, <b>ПКМ</b> оттягивает, <b>ЛКМ+ПКМ</b> гасит.</li><li><b>W/S</b> толкание ↔ волочение, <b>A/D</b> рабочий угол, <b>E</b> диаметр электрода — старт по WPS.</li><li><b>TIG:</b> ЛКМ зажигает, <b>ПРОБЕЛ</b> присадка, ПКМ гасит. <i>Телефон: коснись и веди.</i></li></ul>",
+  tut3:"<b>Держи темп.</b> Веди вдоль шва — пока <b style='color:#5fe08a'>ничего не всплывает</b>, темп верный. <b style='color:#ff9a3c'>СЛИШКОМ БЫСТРО</b> (непровар) или <b style='color:#ff9a3c'>СЛИШКОМ МЕДЛЕННО</b> (прожог) появится под пластиной, только если реально собьёшься.",
+  tut4:"<b>Маска и слои.</b> Без маски дуга слепит через 2 с. Толстый металл варят в несколько слоёв: <b>корень → заполнение → облицовка</b>.",
+  tut5:"<b>Оценка.</b> Завари ВЕСЬ шов (полоса сверху) → авто-контроль (по образцу ISO 5817) → оценка и прогресс карьеры. Похвались картой в X.",
   res_ok:"🏆 ШОВ ПРИНЯТ", rew_zero:"💀 ШОВ ОТКЛОНЁН — завершите весь шов (≥80%), мин. оценка D",
   eco_free:"конкурсный заход", chal_wal:"КОНКУРС", chal_pass:"ПОРОГ ВЗЯТ — скопируй PROOF и отправь заявку", chal_fail:"НИЖЕ ПОРОГА — вари дальше",
   tier_common:"БАЗОВАЯ", tier_rare:"СРЕДНЯЯ", tier_epic:"СЛОЖНАЯ", tier_legendary:"МАСТЕРСКАЯ",
@@ -2404,7 +2434,7 @@ function secModel(v,all){
       const inn=f0?arc(f0,0.03*leg).reverse():[[0,0]]; return {k:L.k,lay:L.lay,beads:L.beads,n:L.n,pts:out.concat(inn),zm:-(f0+f1)/2*leg*0.5,xm:(f0+f1)/2*leg*0.6}; });
     return {xL:-T-2*v.k, xR:ext, zT:-Hw, zB:T+2, title:"T · a≈"+(Math.round(0.7*thick*2)/2)+" mm",
       plates:[[[-ext*0.3,0],[ext,0],[ext,T],[-ext*0.3,T]], [[-T,-Hw],[0,-Hw],[0,0],[-T,0]]], layers}; }
-  const g=v.gap,bw=v.bevelTop,dz=v.T-v.rf, ext=v.capHalf+6*v.k;
+  const g=v.gap,bw=v.bevelTop,dz=v.T-v.rf, ext=v.capHalf+(v.thin?3:6)*v.k;   // ≤3 mm: węższy margines blachy — złącze I wypełnia lupę
   return {xL:-ext, xR:ext, zT:-v.reinf, zB:v.T+v.pen, title:(POSITIONS[posKey].pipe?t("jt_pipe")+" · ":"")+(v.thin?"I":"V 60°"),
     plates:[-1,1].map(s=>[[s*bw,0],[s*ext,0],[s*ext,v.T],[s*g,v.T],[s*g,dz]]),
     layers:all.map(L=>{ const zmid=(Math.max(0,L.z0)+L.z1)/2, wmid=L.cap?v.capHalf:(zmid>=dz?g:g+(bw-g)*(1-zmid/dz));
@@ -2415,7 +2445,9 @@ function drawSectionLens(c,now,v,F,all,st,live,at){
   const m=secModel(v,all), BW=300, wid=m.xR-m.xL, depth=m.zB-m.zT;
   // Stała skala lupy w mm (3.9.0): 12 mm wypełnia lupę, cieńsza blacha jest w niej mniejsza — jak w realu.
   // Wcześniej lupa sama dopasowywała powiększenie i przekrój 3 mm wyglądał tak samo jak 12 mm.
-  const S=Math.min((BW-125)/wid,120/depth,(joint==="fillet"?4.0:6.0)/v.k), BH=Math.round(depth*S+58);
+  // ≤3 mm: przy stałej skali z blach zostawały dwa szare paski bez złącza — cienka blacha dostaje większe
+  // powiększenie (do 16 px/mm), a pasek „1 mm" w lupie mówi uczciwie, w jakiej skali patrzysz.
+  const thinL=thick<=3, S=Math.min((BW-125)/wid,120/depth,(joint==="fillet"?(thinL?14.0:4.0):(thinL?16.0:6.0))/v.k), BH=Math.round(depth*S+58);
   const lp=at||lensPlace(BW,BH,v,F); if(!lp) return; const bx=lp.x, by=lp.y;
   if(at){ const d=at.d||1; c.canvas.width=380*d; c.canvas.height=(BH+8)*d; c.canvas.style.width="380px"; c.setTransform(d,0,0,d,0,0); }   // raport: wysokość pod treść, ostro na retinie
   const ox=bx+12-m.xL*S, oz=by+36-m.zT*S, M=(x,z)=>[ox+x*S,oz+z*S];
@@ -2426,7 +2458,7 @@ function drawSectionLens(c,now,v,F,all,st,live,at){
     c.lineTo(bx+(F.E.x>bx+BW/2?BW:0),by+BH/2); c.stroke(); c.setLineDash([]); }          // linia od czoła/szwu do lupy
   c.fillStyle="rgba(8,12,15,.86)"; c.strokeStyle="rgba(31,214,227,.35)"; c.lineWidth=1.2;
   c.beginPath(); if(c.roundRect) c.roundRect(bx,by,BW,BH,10); else c.rect(bx,by,BW,BH); c.fill(); c.stroke();
-  c.fillStyle="#8a97a0"; c.font="700 11px 'Segoe UI',sans-serif"; c.textBaseline="top";
+  c.fillStyle="#c2ccd3"; c.font="700 12px 'Segoe UI',sans-serif"; c.textBaseline="top";
   c.fillText(t("sec_title")+" · "+m.title+" · "+thick+" mm",bx+12,by+10);
   for(const pl of m.plates){ poly(pl); const gr=c.createLinearGradient(0,oz,0,oz+v.T*S); gr.addColorStop(0,"#6b7780"); gr.addColorStop(1,"#3d464d");
     c.fillStyle=gr; c.fill(); c.strokeStyle="rgba(200,214,222,.35)"; c.lineWidth=1; c.stroke(); }
@@ -2448,13 +2480,16 @@ function drawSectionLens(c,now,v,F,all,st,live,at){
       c.save(); poly(L.pts); c.clip(); c.strokeStyle=col.dark; c.lineWidth=1; c.globalAlpha=0.8;
       for(const B of L.bands.slice(1)){ const [X]=M(B.lo,0); c.beginPath(); c.moveTo(X,by); c.lineTo(X,by+BH); c.stroke(); } c.restore();
       if(done){ poly(L.pts); c.strokeStyle=col.dark; c.lineWidth=1.2; c.stroke(); } }
-    else if(!done){ poly(L.pts); c.setLineDash([3,3]); c.strokeStyle="rgba(138,151,160,.45)"; c.lineWidth=1; c.stroke(); c.setLineDash([]); }   // plan warstwy
+    else if(!done){ poly(L.pts); c.fillStyle="rgba(138,151,160,.08)"; c.fill(); c.setLineDash([3,3]); c.strokeStyle="rgba(170,184,194,.7)"; c.lineWidth=1.2; c.stroke(); c.setLineDash([]); }   // plan warstwy
     else { fillPart(L,i,hot); poly(L.pts); c.strokeStyle=col.dark; c.lineWidth=1.2; c.stroke(); }
     const [X,Y]=M(m.xR,L.zm); labY[i]=Math.max(by+32,Math.min(by+BH-10,Y)); X0=X;
-    c.fillStyle=done?"#e9eef2":"#5d6973"; c.font=(done?"700 ":"")+"10px 'Segoe UI',sans-serif"; c.textBaseline="middle"; labC[i]=c.fillStyle; labF[i]=c.font; });
+    c.fillStyle=done?"#e9eef2":"#9aa6ad"; c.font=(done?"700 ":"")+"11px 'Segoe UI',sans-serif"; c.textBaseline="middle"; labC[i]=c.fillStyle; labF[i]=c.font; });
   // podpisy warstw w kolumnie z prawej, rozsunięte min. 13 px (cienkie warstwy pachwiny leżą blisko siebie)
   const ord=labY.map((y,i)=>i).sort((a,b)=>labY[a]-labY[b]); let prev=-1e9;
   for(const i of ord){ const y=Math.max(labY[i],prev+13); prev=y; c.fillStyle=labC[i]; c.font=labF[i]; c.textBaseline="middle"; c.fillText((i+1)+". "+t("pass_"+m.layers[i].k)+(m.layers[i].n>1?" ×"+m.layers[i].n:""),X0+8,y); }
+  { const pmm=S*v.k, mm=pmm>=10?1:5, L=mm*pmm, yb=by+BH-9, xb=bx+12;   // pasek skali: ile to milimetrów
+    c.strokeStyle="#c2ccd3"; c.lineWidth=1.5; c.beginPath(); c.moveTo(xb,yb-3); c.lineTo(xb,yb); c.lineTo(xb+L,yb); c.lineTo(xb+L,yb-3); c.stroke();
+    c.fillStyle="#c2ccd3"; c.font="700 10px 'Segoe UI',sans-serif"; c.textBaseline="middle"; c.fillText(mm+" mm",xb+L+6,yb-1); }
   c.restore(); }
 
 // the molten pool — where the arc liquefies and fuses the base metal
@@ -3263,7 +3298,7 @@ document.getElementById("clear").onclick=()=>{ clearWeld(); flashEl.style.opacit
 document.getElementById("rClose").onclick=()=>closeModal("repModal");
 document.getElementById("rCard").onclick=()=>{ closeModal("repModal"); buildCard(); };
 document.getElementById("carClose").onclick=()=>closeModal("carModal");
-document.getElementById("carReset").onclick=()=>{ progress={done:{},xp:0}; saveProgress(); updateInfo(); updateRank(); openCareer(); };
+document.getElementById("carReset").onclick=()=>{ if(!confirm(t("car_reset_q"))) return; progress={done:{},xp:0}; saveProgress(); updateInfo(); updateRank(); openCareer(); };
 document.getElementById("cardClose").onclick=()=>closeModal("cardModal");
 // 10.10: w karcie zawsze dokladnie jeden przycisk udostepniania — link Battle (cardBattleShare) albo zwykly (cardShare)
 function syncCardShare(){ const b=document.getElementById("cardBattleShare"); document.getElementById("cardShare").hidden=!b.hidden; }
@@ -3379,26 +3414,31 @@ document.getElementById("snd").addEventListener("click",()=>{ const m=document.q
 // ── Glossary: wszystkie metody fachu (spawanie + cięcie) ──
 const GLOSSARY=[
  {ic:"🔥",code:"MMA · 111 · SMAW",cut:0,
+  lead:{pl:"Elektroda otulona — teren, wiatr, bez butli. Między ściegami zbijasz żużel.",en:"Covered electrode — outdoors, in wind, no gas bottle. You chip slag between passes.",ru:"Покрытый электрод — улица, ветер, без баллона. Между проходами сбиваешь шлак."},
   t:{pl:"MMA — elektroda otulona",en:"MMA — stick electrode",ru:"MMA — штучный электрод"},
   b:{pl:`Łuk jarzy się między <b>topliwą elektrodą otuloną</b> a materiałem. Topiąca się otulina tworzy gaz osłonowy i żużel chroniący jeziorko. Uniwersalna i tania — działa <b>w terenie i wietrze</b>, bez butli gazowej; wymaga odbijania żużla. Stal, stopy, żeliwo, naprawy. <i>Sterujesz: długość łuku, kąt, prąd, tempo.</i>`,
      en:`Arc burns between a <b>consumable covered electrode</b> and the work. The melting coating makes both shielding gas and slag that protect the pool. Cheap and universal — works <b>outdoors and in wind</b>, no gas bottle; needs slag chipping. Steel, alloys, cast iron, repairs. <i>You control: arc length, angle, current, pace.</i>`,
      ru:`Дуга горит между <b>плавящимся покрытым электродом</b> и металлом. Плавясь, обмазка даёт защитный газ и шлак. Дёшево и универсально — работает <b>на улице и ветру</b>, без баллона; нужно сбивать шлак. Сталь, сплавы, чугун, ремонт. <i>Управляешь: длина дуги, угол, ток, темп.</i>`}},
  {ic:"🔫",code:"MIG/MAG · 131/135 · GMAW",cut:0,
+  lead:{pl:"Drut podawany z podajnika w osłonie gazu — szybko i wydajnie.",en:"Wire fed from the machine under shielding gas — fast and productive.",ru:"Проволока с подающего механизма в защитном газе — быстро и производительно."},
   t:{pl:"MIG/MAG — drut w osłonie gazu",en:"MIG/MAG — wire in gas",ru:"MIG/MAG — проволока в газе"},
   b:{pl:`<b>Drut elektrodowy</b> podawany w sposób ciągły, łuk w osłonie gazu. <b>MIG (131)</b> = gaz obojętny (Ar/He) → aluminium i metale nieżelazne; <b>MAG (135)</b> = gaz aktywny (CO₂, Ar+CO₂) → stal. Szybkie, wydajne, łatwe — cienkie i średnie blachy, produkcja, konstrukcje. <i>Sterujesz: prędkość drutu, napięcie, tempo, kąt.</i>`,
      en:`<b>Continuously fed wire</b>, arc shielded by gas. <b>MIG (131)</b> = inert gas (Ar/He) → aluminium and non-ferrous; <b>MAG (135)</b> = active gas (CO₂, Ar+CO₂) → steel. Fast, productive, easy — thin to medium plate, production, structures. <i>You control: wire speed, voltage, pace, angle.</i>`,
      ru:`<b>Непрерывная подача проволоки</b>, дуга в защите газа. <b>MIG (131)</b> = инертный газ (Ar/He) → алюминий и цветные; <b>MAG (135)</b> = активный газ (CO₂, Ar+CO₂) → сталь. Быстро, производительно, просто — тонкий и средний металл, производство. <i>Управляешь: скорость проволоки, напряжение, темп, угол.</i>`}},
  {ic:"👐",code:"TIG · 141 · GTAW/WIG",cut:0,
+  lead:{pl:"Wolfram + pręt spoiwa w drugiej ręce — najczystsza i najtrudniejsza.",en:"Tungsten + filler rod in the other hand — the cleanest and the hardest.",ru:"Вольфрам + пруток второй рукой — самый чистый и самый сложный."},
   t:{pl:"TIG — elektroda wolframowa",en:"TIG — tungsten electrode",ru:"TIG — вольфрамовый электрод"},
   b:{pl:`Łuk między <b>nietopliwą elektrodą wolframową</b> a materiałem, osłona gazu obojętnego (Ar); spoiwo dokładasz <b>drugą ręką — SPACJĄ</b> (LPM zapala łuk, PPM gasi; bez spoiwa nie ma spoiny). Najwyższa jakość i precyzja: nierdzewka, aluminium, cienkie ścianki, <b>przetopy graniowe</b>, rury 6G. Wolne, obie ręce, często pedał prądu. <i>Sterujesz: prąd, dystans elektrody, dozowanie spoiwa <b>spacją</b>, tempo.</i>`,
      en:`Arc between a <b>non-consumable tungsten electrode</b> and the work, inert gas (Ar); filler added <b>by the other hand — SPACE</b> (LMB lights the arc, RMB puts it out; no filler, no weld). Top quality and precision: stainless, aluminium, thin walls, <b>root passes</b>, 6G pipe. Slow, two hands, often a current pedal. <i>You control: current, electrode distance, filler dabs with <b>Space</b>, pace.</i>`,
      ru:`Дуга между <b>неплавящимся вольфрамовым электродом</b> и металлом, инертный газ (Ar); присадку подаёшь <b>второй рукой</b>. Высшее качество и точность: нержавейка, алюминий, тонкие стенки, <b>корневые проходы</b>, труба 6G. Медленно, две руки, часто педаль тока. <i>Управляешь: ток, дистанция электрода, присадка, темп.</i>`}},
- {ic:"🔥",code:"CIĘCIE · 81 · oxy-fuel",cut:1,
+ {ic:"🔥",code:{pl:"CIĘCIE · 81 · oxy-fuel",en:"CUTTING · 81 · oxy-fuel",ru:"РЕЗКА · 81 · oxy-fuel"},cut:1,
+  lead:{pl:"Tlen + acetylen — tylko stal węglowa, grube blachy.",en:"Oxygen + acetylene — carbon steel only, thick plate.",ru:"Кислород + ацетилен — только углеродистая сталь, толстый металл."},
   t:{pl:"Przepalanie palnikiem (tlen + acetylen)",en:"Oxy-fuel cutting (oxygen + acetylene)",ru:"Кислородная резка (кислород + ацетилен)"},
   b:{pl:`<b>Cięcie termiczne</b> w dwóch etapach: (1) płomień <b>tlen + acetylen</b> (~3160 °C) podgrzewa stal do temperatury zapłonu ~900 °C; (2) strumień <b>czystego tlenu</b> utlenia żelazo → ciekły żużel wydmuchiwany z rzazu. <b>Tylko stal niskowęglowa i niskostopowa</b> — nie tnie nierdzewki ani aluminium (ich tlenki topią się wyżej niż metal). Grube blachy, złom, demontaż.`,
      en:`<b>Thermal cutting</b> in two stages: (1) an <b>oxygen + acetylene</b> flame (~3160 °C) preheats steel to its ignition point ~900 °C; (2) a <b>pure oxygen</b> jet oxidises the iron → molten slag blown out of the kerf. <b>Low-carbon / low-alloy steel only</b> — won't cut stainless or aluminium (their oxides melt higher than the metal). Thick plate, scrap, demolition.`,
      ru:`<b>Термическая резка</b> в два этапа: (1) пламя <b>кислород + ацетилен</b> (~3160 °C) греет сталь до температуры воспламенения ~900 °C; (2) струя <b>чистого кислорода</b> окисляет железо → жидкий шлак выдувается из реза. <b>Только низкоуглеродистая/низколегированная сталь</b> — не режет нержавейку и алюминий (их оксиды плавятся выше металла). Толстый лист, лом, демонтаж.`}},
- {ic:"⚡",code:"CIĘCIE · 83 · plasma",cut:1,
+ {ic:"⚡",code:{pl:"CIĘCIE · 83 · plazma",en:"CUTTING · 83 · plasma",ru:"РЕЗКА · 83 · плазма"},cut:1,
+  lead:{pl:"Strumień plazmy — tnie każdy metal przewodzący.",en:"Plasma jet — cuts any conductive metal.",ru:"Плазменная струя — режет любой токопроводящий металл."},
   t:{pl:"Przepalanie plazmą",en:"Plasma cutting",ru:"Плазменная резка"},
   b:{pl:`<b>Łuk plazmowy</b>: gaz (sprężone powietrze, azot, Ar) przepychany przez zwężoną dyszę i jonizowany łukiem tworzy strumień plazmy <b>~20 000–30 000 °C</b>, który topi metal, a gaz wydmuchuje stop z rzazu. <b>Tnie każdy metal przewodzący</b> — stal, nierdzewkę, aluminium, miedź. Czysty, szybki, wąski rzaz; cienkie i średnie. Potrzeba prądu i sprężonego gazu. <i>Sterujesz: prąd, dysza, prędkość, odległość.</i>`,
      en:`<b>Plasma arc</b>: gas (compressed air, nitrogen, Ar) forced through a constricted nozzle and ionised by the arc forms a plasma jet <b>~20,000–30,000 °C</b> that melts the metal while the gas blows it out of the kerf. <b>Cuts any conductive metal</b> — steel, stainless, aluminium, copper. Clean, fast, narrow kerf; thin to medium. Needs power and compressed gas. <i>You control: current, nozzle, speed, standoff.</i>`,
@@ -3408,12 +3448,14 @@ function fillMethods(){
   const el=document.getElementById("methodsBody"); if(!el)return; el.innerHTML="";
   GLOSSARY.forEach(g=>{
     el.insertAdjacentHTML("beforeend",
-      '<div class="method-card'+(g.cut?" cut":"")+'"><div class="method-head"><span style="font-size:18px">'+g.ic+'</span>'
-      +'<b style="color:#e9eef2;font-size:14px">'+g.t[lang]+'</b><span class="method-code">'+g.code+'</span></div>'
-      +'<div class="method-body">'+g.b[lang]+'</div></div>'); });
+      '<details class="method-card'+(g.cut?" cut":"")+'"><summary><div class="method-head"><span style="font-size:18px">'+g.ic+'</span>'
+      +'<b style="color:#e9eef2;font-size:15px">'+g.t[lang]+'</b><span class="method-code">'+(typeof g.code==="string"?g.code:g.code[lang])+'</span></div>'
+      +'<div class="method-lead">'+g.lead[lang]+' <span class="method-more">'+t("more")+'</span></div></summary>'
+      +'<div class="method-body">'+g.b[lang]+'</div></details>'); });
 }
 document.getElementById("methods").onclick=()=>{ fillMethods(); openModal("methodsModal"); };
 document.getElementById("about").onclick=()=>openModal("aboutModal");
+for(const id of ["methodsModal","aboutModal"]) document.getElementById(id).addEventListener("click",e=>{ if(e.target.id===id) closeModal(id); });   // klik w tło zamyka
 
 // ════════ TRYB CIĘCIA — oxy-fuel (TLEN) + PLAZMA ════════
 let cutHeat=0, pierced=false, cutDevSum=0, cutDevN=0;
@@ -3646,7 +3688,7 @@ const BATTLE_TEXT={
     incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
     task:"Zadanie",bp:"BP",scoreUnit:"pkt",attempt:"Próba",started:"rozpoczęte",
     friendly:"TOWARZYSKI · NIEZWERYFIKOWANY",serverTag:"SERWER · WERYFIKOWANY",nickLabel:"Nick (opcjonalnie)",profileLabel:"Profil odtworzenia",fullProfile:"Pełny — tylko komputer z myszą",touchProfile:"Dotykowy — komputer i telefon",syncMode:"Wspólny start",linkMode:"Przez link",
-    clientError:"Błąd w przeglądarce (nie po stronie serwera): %1",attemptClosed:"Próba zamknięta, wynik zapisany. ✕ ZETRZYJ = nowa próba, albo ZAKOŃCZ POJEDYNEK.",consentTitle:"Dane pojedynku",privacyLink:"Polityka prywatności — szczegóły ↗",consentBodyProd:"Po zgodzie wyślemy na serwer Battle Weld (Hetzner, Niemcy) Twój nick, nagranie rundy i czasy prób — tylko po to, żeby serwer odtworzył spaw i rozstrzygnął pojedynek. Nick jest opcjonalny. Każdy, kto ma link do pojedynku, widzi nicki, oceny i werdykt; samo nagranie nie jest publiczne. Nagrania usuwamy po 30 dniach, wynik pojedynku po 180 dniach, a nierozpoczęty pojedynek po 7 dniach. Gra nie zapisuje Twojego adresu IP. Zwykłe ARC dalej działa tylko na Twoim urządzeniu.",serverDownProd:"Serwer Battle Weld jest teraz niedostępny. Spróbuj ponownie za chwilę; tryb towarzyski nie został uruchomiony.",consentBody:"Po zgodzie wyślemy nick, nagranie rundy i czasy do lokalnego serwera testowego Battle Weld. Serwer działa tylko na tym komputerze, a dane są przechowywane w pamięci do restartu serwera.",continueText:"KONTYNUUJ",cancelText:"ANULUJ",createText:"UTWÓRZ POJEDYNEK",joinText:"DOŁĄCZ DO POJEDYNKU",copyInvite:"KOPIUJ ZAPROSZENIE",waitingPlayer:"Oczekiwanie na drugiego gracza",waitingReady:"Oczekiwanie na gotowość przeciwnika",readyText:"GOTOWY",finishText:"ZAKOŃCZ POJEDYNEK",confirmFinish:"Zakończyć? Po potwierdzeniu nie można wysłać kolejnych prób.",exitText:"WYJDŹ Z BATTLE",spectator:"Podgląd tylko do odczytu",mouseWarning:"Ten pojedynek wymaga myszy.",mouseBlocked:"Ten pojedynek ma profil Pełny i wymaga komputera z myszą — z telefonu próby nie zostałyby przyjęte. Dołącz z komputera albo poproś gracza 1 o nowy pojedynek z profilem Dotykowy (komputer i telefon).",versions:"Silnik %1 · ocena %2",serverDown:"Serwer Battle Weld jest niedostępny. Połącz się ponownie z serwerem testowym; tryb towarzyski nie został uruchomiony.",joinPreview:"Zadanie: %1 · tryb: %2 · profil: %3 · gracz 1: %4",incomparableServer:"INCOMPARABLE — wersja ARC nie pasuje. Nie dołączono do pojedynku.",countdown:"Start za %1",strikeNow:"START — możesz rozpocząć spawanie.",verifying:"WERYFIKOWANIE PRÓBY…",verified:"WYNIK SERWERA · %1 · %2 BP",opponentWelding:"Przeciwnik spawa",opponentIdle:"Przeciwnik oczekuje",serverWaiting:"Oczekiwanie na przeciwnika",serverResult:"Wynik serwera",serverAttemptError:"Próba nie została przyjęta: %1",duplicateAttempt:"To nagranie zostało już wysłane.",attemptLimit:"Wykorzystano limit 20 zaakceptowanych prób.",invalidAttempt:"Serwer odrzucił nieprawidłowe nagranie ARC.",unknownServerError:"Serwer odrzucił żądanie (%1).",noCredentials:"Brak zapisanej sesji. Ten ekran jest tylko do odczytu.",taskAndVersions:"%1 · %2 · %3",replayFull:"pełny",replayTouch:"dotykowy",finishedNotice:"Pojedynek zakończony",statusDisconnected:"Połączenie utracone. Trwa ponowne łączenie…",copyFailed:"Nie udało się skopiować zaproszenia."},
+    clientError:"Błąd w przeglądarce (nie po stronie serwera): %1",attemptClosed:"Próba zamknięta, wynik zapisany. ✕ WYCZYŚĆ = nowa próba, albo ZAKOŃCZ POJEDYNEK.",consentTitle:"Dane pojedynku",privacyLink:"Polityka prywatności — szczegóły ↗",consentBodyProd:"Po zgodzie wyślemy na serwer Battle Weld (Hetzner, Niemcy) Twój nick, nagranie rundy i czasy prób — tylko po to, żeby serwer odtworzył spaw i rozstrzygnął pojedynek. Nick jest opcjonalny. Każdy, kto ma link do pojedynku, widzi nicki, oceny i werdykt; samo nagranie nie jest publiczne. Nagrania usuwamy po 30 dniach, wynik pojedynku po 180 dniach, a nierozpoczęty pojedynek po 7 dniach. Gra nie zapisuje Twojego adresu IP. Zwykłe ARC dalej działa tylko na Twoim urządzeniu.",serverDownProd:"Serwer Battle Weld jest teraz niedostępny. Spróbuj ponownie za chwilę; tryb towarzyski nie został uruchomiony.",consentBody:"Po zgodzie wyślemy nick, nagranie rundy i czasy do lokalnego serwera testowego Battle Weld. Serwer działa tylko na tym komputerze, a dane są przechowywane w pamięci do restartu serwera.",continueText:"KONTYNUUJ",cancelText:"ANULUJ",createText:"UTWÓRZ POJEDYNEK",joinText:"DOŁĄCZ DO POJEDYNKU",copyInvite:"KOPIUJ ZAPROSZENIE",waitingPlayer:"Oczekiwanie na drugiego gracza",waitingReady:"Oczekiwanie na gotowość przeciwnika",readyText:"GOTOWY",finishText:"ZAKOŃCZ POJEDYNEK",confirmFinish:"Zakończyć? Po potwierdzeniu nie można wysłać kolejnych prób.",exitText:"WYJDŹ Z BATTLE",spectator:"Podgląd tylko do odczytu",mouseWarning:"Ten pojedynek wymaga myszy.",mouseBlocked:"Ten pojedynek ma profil Pełny i wymaga komputera z myszą — z telefonu próby nie zostałyby przyjęte. Dołącz z komputera albo poproś gracza 1 o nowy pojedynek z profilem Dotykowy (komputer i telefon).",versions:"Silnik %1 · ocena %2",serverDown:"Serwer Battle Weld jest niedostępny. Połącz się ponownie z serwerem testowym; tryb towarzyski nie został uruchomiony.",joinPreview:"Zadanie: %1 · tryb: %2 · profil: %3 · gracz 1: %4",incomparableServer:"INCOMPARABLE — wersja ARC nie pasuje. Nie dołączono do pojedynku.",countdown:"Start za %1",strikeNow:"START — możesz rozpocząć spawanie.",verifying:"WERYFIKOWANIE PRÓBY…",verified:"WYNIK SERWERA · %1 · %2 BP",opponentWelding:"Przeciwnik spawa",opponentIdle:"Przeciwnik oczekuje",serverWaiting:"Oczekiwanie na przeciwnika",serverResult:"Wynik serwera",serverAttemptError:"Próba nie została przyjęta: %1",duplicateAttempt:"To nagranie zostało już wysłane.",attemptLimit:"Wykorzystano limit 20 zaakceptowanych prób.",invalidAttempt:"Serwer odrzucił nieprawidłowe nagranie ARC.",unknownServerError:"Serwer odrzucił żądanie (%1).",noCredentials:"Brak zapisanej sesji. Ten ekran jest tylko do odczytu.",taskAndVersions:"%1 · %2 · %3",replayFull:"pełny",replayTouch:"dotykowy",finishedNotice:"Pojedynek zakończony",statusDisconnected:"Połączenie utracone. Trwa ponowne łączenie…",copyFailed:"Nie udało się skopiować zaproszenia."},
   en:{launch:"⚔ BATTLE WELD",choose:"Choose a Battle task",chooseNote:"Both welders get the same settings. Battle V1 uses AUTO current from the WPS only.",
     start:"SET TASK",ready:"TASK READY",accept:"LOAD TASK",close:"CLOSE",newBattle:"NEW TASK",exitBattle:"EXIT BATTLE",touchMouseHint:"Touch profile: the mouse works like a finger — hold the button down, releasing ends the stroke.",
     inspectAgain:"Clear the plate to start a new attempt",careerUnavailable:"Career unavailable during Battle",shareLink:"SHARE LINK",
