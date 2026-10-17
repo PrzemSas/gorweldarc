@@ -281,7 +281,8 @@
     const kb = !!round.kb;
     const phys = round.kb >= 3;    // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
     const dz = round.kb >= 4 && proc === "MMA";
-    const zoneOn = round.kb >= 5;   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
+    const zoneOn = round.kb >= 5;
+    const keepDia = round.kb >= 6;  // 3.12.0: elektroda zostaje w uchwycie na następny ścieg (do 3.11.0 wracała do typowej)   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
     // Kąt rusza się WYŁĄCZNIE w trakcie jazdy (na zdarzeniach `move`), tak samo jak długość łuku.
@@ -419,7 +420,7 @@
       return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen };
     }
     function bankReset() { const pm = passMetrics(); passLog.push(pm);
-      if (dz) { elecLog.push(elecEntry(pm)); arcVb = 0; arcTb = 0; diaSel = 0; }
+      if (dz) { elecLog.push(elecEntry(pm)); arcVb = 0; arcTb = 0; if (!keepDia) diaSel = 0; }
       if (kb) { const b = beadPlan[passIndex]; if (b) beadStats.push({ lay: b.lay, lane: b.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
         bSo = 0; bR = 0; bN = 0; if (proc === "MMA") needChip = true; }
       baked = []; speedSum = 0; speedN = 0; vVarSum = 0; spatterCount = 0; distAcc = 0;
@@ -651,6 +652,9 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.12.0 — ELEKTRODA ZOSTAJE W UCHWYCIE (flaga `kb: 6`, MMA): po zamknięciu ściegu Ø się nie zmienia — następny
+  //         ścieg idzie tą samą elektrodą, dopóki gracz jej nie zmieni (zdarzenie `dia`). Do 3.11.0 każdy ścieg
+  //         startował od typowej Ø. Rundy kb≤5 bit-w-bit jak 3.11.0 (zamrożony sim-3.11.0.js, test kb6.js). SCORING_VERSION 1.7.0.
   // 3.11.0 — ŁUK TYLKO W ROWKU (flaga `kb: 5`): zajarzenie, palenie i odkładanie metalu tylko w strefie
   //         grooveHalf + bevelW × ZONE_BW od osi złącza (wcześniej cała blacha ±75 px — „dywan" spoiny po blasze).
   //         Zjazd ze strefy gasi łuk jak dawniej zjazd z blachy. Rundy kb≤4 bit-w-bit jak 3.10.0
@@ -710,7 +714,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.11.0", SCORING_VERSION: "1.6.0", ZONE_BW };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.12.0", SCORING_VERSION: "1.7.0", ZONE_BW };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
