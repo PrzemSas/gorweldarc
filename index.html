@@ -702,7 +702,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.12.0"></script>
+<script src="sim.js?v=3.13.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -771,7 +771,7 @@ let rec=null;
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
-  kb:6,                           // 3.12.0: elektroda zostaje w uchwycie na następny ścieg. 3.11.0: łuk tylko w strefie rowka (onZone). 3.10.0: elektrody MMA — Ø per ścieg (`dia`), prąd z Ø, RĘCZNIE `am` + `amp` między ściegami. 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
+  kb:7,                           // 3.13.0: kierunek PF ↑ / PG ↓ w ocenie. 3.12.0: elektroda zostaje w uchwycie na następny ścieg. 3.11.0: łuk tylko w strefie rowka (onZone). 3.10.0: elektrody MMA — Ø per ścieg (`dia`), prąd z Ø, RĘCZNIE `am` + `amp` między ściegami. 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
   rw:Math.round((()=>{try{return stage.getBoundingClientRect().width;}catch(e){return 0;}})()),  // szerokość renderu → krok kwantyzacji kursora
   events:[]};
   if(proc==="MMA"&&ampMode==="man"&&ampSet!=null) rec.am=1;   // 3.10.0: RĘCZNIE = ampery bezwzględne (AUTO = krotność, jak dotąd)
@@ -794,7 +794,7 @@ const I18N={
   btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ WYCZYŚĆ",
   grav:"grawitacja<br>jeziorka", vset:"Prędkość zadana:", forA:"za A ≈",
   tool_elec:"🔥 Elektroda: ", tool_used:"ZUŻYTA — klik = nowa", tool_mig:"🔫 <b>Drut z automatu</b> — jedna ręka, ciągłe podawanie", tool_tig:"👐 <b>Palnik + drut</b> — LPM zapala, SPACJA dokłada spoiwo, PPM gasi",
-  fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu", fb_slow:"ZA WOLNO — przepalenie / przelew", fb_good:"DOBRE TEMPO — pełny przetop",
+  fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu",fb_dir_pf:"PF SPAWASZ Z DOŁU DO GÓRY — jedziesz w dół",fb_dir_pg:"PG SPAWASZ Z GÓRY NA DÓŁ — jedziesz w górę",def_dir_pf:"Ścieg PF jechany z góry na dół — niezgodny z WPS (PF = z dołu do góry): ryzyko braku przetopu i przyklejenia (ISO 5817: 401) — odrzut niezależnie od wyglądu lica",def_dir_pg:"Ścieg PG jechany z dołu do góry — niezgodny z WPS (PG = z góry na dół): przegrzanie cienkiej blachy i nadmierny nadlew — odrzut niezależnie od wyglądu lica", fb_slow:"ZA WOLNO — przepalenie / przelew", fb_good:"DOBRE TEMPO — pełny przetop",
   t_replace:"WYMIEŃ ELEKTRODĘ — puść i złap nową", t_eye:"🔆 ŁUK W OCZY! ZAŁÓŻ HEŁM", t_layfirst:"POŁÓŻ NAJPIERW ŚCIEG", t_strikeoff:"PRZYŁÓŻ ELEKTRODĘ DO BLACHY", t_toosmall:"KONKURS: ZA MAŁE STANOWISKO — obróć telefon poziomo albo powiększ okno (min. 400 px), żeby wszyscy mieli równo", t_cfgfail:"KONKURS: nie wczytano oficjalnej konfiguracji — odśwież stronę, inaczej runda nie zostanie uznana",
   t_couponOk:"✅ COUPON ZALICZONY +%1 XP", t_couponFail:"COUPON NIEZALICZONY — wymóg %1%", t_copied:"TEKST SKOPIOWANY", t_clipFail:"BRAK DOSTĘPU DO SCHOWKA", t_couponSel:"COUPON: %1",
   rep_title:"Inspekcja wizualna VT", row_cov:"Pokrycie grani", row_spd:"Trzymanie tempa", row_hi:"Wkład ciepła (HI)", row_even:"Równość lica",
@@ -831,7 +831,7 @@ const I18N={
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"Set speed:", forA:"for A ≈",
   tool_elec:"🔥 Electrode: ", tool_used:"SPENT — click for new", tool_mig:"🔫 <b>Auto-fed wire</b> — one hand, continuous", tool_tig:"👐 <b>Torch + rod</b> — LMB lights it, SPACE dabs filler, RMB puts it out",
-  fb_fast:"TOO FAST — cold lap, no fusion", fb_slow:"TOO SLOW — burn-through / overflow", fb_good:"GOOD SPEED — full penetration",
+  fb_fast:"TOO FAST — cold lap, no fusion",fb_dir_pf:"PF IS WELDED UPWARD — you are going down",fb_dir_pg:"PG IS WELDED DOWNWARD — you are going up",def_dir_pf:"PF bead run downhill — not per WPS (PF = vertical up): risk of lack of fusion and cold lap (ISO 5817: 401) — reject regardless of how the face looks",def_dir_pg:"PG bead run uphill — not per WPS (PG = vertical down): overheated thin plate and excess reinforcement — reject regardless of how the face looks", fb_slow:"TOO SLOW — burn-through / overflow", fb_good:"GOOD SPEED — full penetration",
   t_replace:"CHANGE ELECTRODE — release & grab a new one", t_eye:"🔆 ARC FLASH! PUT THE HELMET ON", t_layfirst:"LAY A BEAD FIRST", t_strikeoff:"STRIKE ON THE PLATE", t_toosmall:"CHALLENGE: BAY TOO SMALL — turn your phone landscape or enlarge the window (400 px min), so everyone gets the same shot", t_cfgfail:"CHALLENGE: official config not loaded — reload the page or your run will not count",
   t_couponOk:"✅ COUPON PASSED +%1 XP", t_couponFail:"COUPON FAILED — need %1%", t_copied:"TEXT COPIED", t_clipFail:"CLIPBOARD BLOCKED", t_couponSel:"COUPON: %1",
   rep_title:"Visual inspection (VT)", row_cov:"Groove coverage", row_spd:"Travel speed", row_hi:"Heat input (HI)", row_even:"Bead evenness",
@@ -868,7 +868,7 @@ const I18N={
   btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"Задан. скорость:", forA:"за A ≈",
   tool_elec:"🔥 Электрод: ", tool_used:"ИЗРАСХОДОВАН — клик = новый", tool_mig:"🔫 <b>Автоподача</b> — одна рука, непрерывно", tool_tig:"👐 <b>Горелка + пруток</b> — присадка макая, веди медленно",
-  fb_fast:"СЛИШКОМ БЫСТРО — непровар", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
+  fb_fast:"СЛИШКОМ БЫСТРО — непровар",fb_dir_pf:"PF ВАРЯТ СНИЗУ ВВЕРХ — ты ведёшь вниз",fb_dir_pg:"PG ВАРЯТ СВЕРХУ ВНИЗ — ты ведёшь вверх",def_dir_pf:"Валик PF выполнен сверху вниз — не по WPS (PF = снизу вверх): риск несплавления и наплыва без провара (ISO 5817: 401) — брак независимо от вида валика",def_dir_pg:"Валик PG выполнен снизу вверх — не по WPS (PG = сверху вниз): перегрев тонкого листа и избыточное усиление — брак независимо от вида валика", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
   t_replace:"СМЕНИ ЭЛЕКТРОД — отпусти и возьми новый", t_eye:"🔆 ЗАЙЧИКИ В ГЛАЗА! НАДЕНЬ МАСКУ", t_layfirst:"СНАЧАЛА ПОЛОЖИ ШОВ", t_strikeoff:"ВЕДИ ПО МЕТАЛЛУ", t_toosmall:"КОНКУРС: ПОСТ СЛИШКОМ МАЛ — поверни телефон горизонтально или увеличь окно (мин. 400 px), чтобы условия были равными", t_cfgfail:"КОНКУРС: официальная конфигурация не загружена — обнови страницу, иначе раунд не засчитают",
   t_couponOk:"✅ КУПОН СДАН +%1 XP", t_couponFail:"КУПОН НЕ СДАН — нужно %1%", t_copied:"ТЕКСТ СКОПИРОВАН", t_clipFail:"БУФЕР НЕДОСТУПЕН", t_couponSel:"КУПОН: %1",
   rep_title:"Визуальный контроль (VT)", row_cov:"Заполнение шва", row_spd:"Темп", row_hi:"Тепловложение (HI)", row_even:"Равномерность",
@@ -1520,6 +1520,11 @@ const FIL_DT=0.15, FIL_LO=0.6, FIL_HI=1.6, FIL_PEN_CAP=20, FIL_MAJOR=17;   // 1:
 function filPenNow(r){ return r<FIL_LO ? Math.min(25,(FIL_LO-r)*40)
                      : r>FIL_HI ? Math.min(25,(r-FIL_HI)*22) : 0; }
 const ARC_LO=0.6, ARC_HI=1.6;   // pasmo bez kary, w krotnościach L0
+// 3.13.0 (kb:7) — kierunek na ścianie pionowej, 1:1 z sim.js: PF z dołu do góry, PG z góry na dół. Ścieg z ≥ DIR_MIN px
+// drogi w pionie, który ponad połowę (DIR_BAD) jedzie w złą stronę = wada niezgodności z WPS → REJECT. Punkty bez zmian.
+const DIR_MIN=40, DIR_BAD=0.5;
+let dirUp=0, dirDn=0, dirLog=[];
+function dirOnNow(){ return posKey==="PF"||posKey==="PG"; }
 let arcLive=false, arcLen=0, btnMask=0, stickCount=0, arcBroke=0, contactT=0;
 let arcPenAcc=0, arcTime=0, arcVSum=0, arcPorAcc=0, arcRSum=0;
 // `end(null)` woła się też z fizyki łuku (przywarcie / zerwanie), nie tylko ze zdarzenia myszy.
@@ -1839,6 +1844,8 @@ function beadWidth(){
 let fbGood=false;
 const HI_FB_MIN_S=0.5;   // HUD-only: ile sekund ściegu, zanim średnia bieżąca HI ma prawo głosu
 function feedback(){
+  // 3.13.0: zły kierunek na ścianie pionowej mówimy NAJPIERW — to odrzut, nie kosmetyka (ten sam próg co ocena)
+  if(welding&&dirOnNow()){ const tot=dirUp+dirDn, wr=posKey==="PF"?dirDn:dirUp; if(tot>=DIR_MIN&&wr/tot>DIR_BAD){ fbGood=false; return t(posKey==="PF"?"fb_dir_pf":"fb_dir_pg"); } }
   if(arcLive){ const r=arcLen/arcL0();
     if(r>ARC_HI*1.15){ fbGood=false; return t("fb_arclong"); }
     if(r<ARC_LO*0.90){ fbGood=false; return t("fb_arcshort"); } }
@@ -2057,6 +2064,7 @@ function move(e){ if(isCut())return cutMove(e);
     if(angLive){ const so=angOverT(taDeg); if(so>0) spatFac=Math.min(3.2,spatFac+Math.min(0.8,so/45)); }
     spatterCount+=Math.round((3+(thick>>1))*PROCESS[proc].sparks)*spatFac*(dtS*1000/16); passWeldMs+=dtS*1000;
     vSumT+=vEMA*dtS; vTimeS+=dtS;
+    if(dirOnNow()){ if(ddy<0) dirUp-=ddy; else dirDn+=ddy; }   // 3.13.0: droga w górę / w dół przy palącym się łuku (1:1 z sim.js)
     speedSum+=vEMA; speedN++; speedFb=feedback();
     if(!(proc==="MMA"&&replacing)) arcIntensity(Math.min(1,dist/14));
     updateToolHud();
@@ -2911,6 +2919,7 @@ function bankPass(){
   wbctx.drawImage(seam,0,0,W,H); sctx.clearRect(0,0,W,H);
   secLayers.push({bi:passIndex,lay:bDone?bDone.lay:passIndex,hit:secHitCur}); secHitCur=false;
   baked=[]; molten=[]; speedSum=0; speedN=0; vVarSum=0; spatterCount=0; distAcc=0;
+  if(dirOnNow()){ dirLog.push([dirUp,dirDn]); dirUp=0; dirDn=0; }   // 3.13.0: kierunek per ścieg (1:1 z bankReset() w sim.js)
   vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; tickAcc=0; vTickRef=vEMA;   // takt `instab` — 1:1 z bankReset() w sim.js
   passIndex++; passMul=(PASS_W[passPlanArr[passIndex]]||1)*(beadPlan&&beadPlan[passIndex]?beadPlan[passIndex].wm:1); recalc(); setLane();
   const isLast=passIndex===passPlanArr.length-1;
@@ -3009,6 +3018,8 @@ function inspect(){
   const D=[];
   if(hiOver) D.push({s:"major",reason:"accept_hi",t:fmt("def_hi_over",[hiAct,hiMax])});   // poza zakresem kwalifikacji — lico tego nie ratuje
   if(tooFast) D.push({s:"major",t:fmt("def_fast",[(fastV/PX_PER_MM).toFixed(1),(targetPx/PX_PER_MM).toFixed(1)])});
+  { const dB=dirOnNow()?dirLog.concat([[dirUp,dirDn]]):[], dW=dB.map(([u,d])=>(u+d>=DIR_MIN)?+((posKey==="PF"?d:u)/(u+d)).toFixed(3):0);   // 3.13.0: 1:1 z sim.js
+    if(dW.some(w=>w>DIR_BAD)) D.push({s:"major",t:t(posKey==="PF"?"def_dir_pf":"def_dir_pg")}); }
   if(coverage<0.85) D.push({s:coverage<0.6?"major":"minor",t:fmt("def_pen",[Math.round((1-coverage)*100)])});
   if(narrow/baked.length>0.25) D.push({s:"minor",t:t("def_narrow")});
   if(wide/baked.length>0.2) D.push({s:"minor",t:t("def_wide")});
@@ -3392,6 +3403,7 @@ function clearWeld(seedOverride){
   reseedRound(seedOverride!==undefined?seedOverride:battleTaskActive()?battleState.task.seed:isChallenge()?CHALLENGE.seed:null); recStart(); sctx.clearRect(0,0,W,H); wbctx.clearRect(0,0,W,H); secLayers=[]; secHitCur=false; molten=[]; sparks=[]; smoke=[]; ambients=[]; baked=[]; vbReset(); slvctx.clearRect(0,0,W,H); slagLiveOn=false; slagLiveFade=0; speedSum=0; speedN=0; distAcc=0; vVarSum=0; spatterCount=0; vSumT=0; vTimeS=0; passWeldMs=0; depCarry=0; electrodeLeft=1; replacing=false; lastDab=0; trail=[];
   arcLive=false; arcLen=0; btnMask=0; stickCount=0; arcBroke=0; contactT=0; arcPenAcc=0; arcTime=0; arcVSum=0; arcPorAcc=0; arcRSum=0;
   angLive=false; waDeg=0; taDeg=0; keyMask=0; angPenAcc=0; angTime=0; angPorAcc=0; angWSum=0; angTSum=0;
+  dirUp=0; dirDn=0; dirLog=[];
   tigLive=false; filPend=false; filPenAcc=0; filCount=0; lastDabPos=null;
   diaPick=0; diaRec=0; elecLog=[]; arcVb=0; arcTb=0;
   setupBeads(); passLog=[]; covSmoothed=0; jobSettled=false; recalc(); resetBeadState(); slagFx.on=false; slagFx.fade=0; slgctx.clearRect(0,0,W,H);
@@ -3850,7 +3862,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Amperaż zadania nie zgadza się z zaleceniem ARC.",taskMismatch:"Wczytane zadanie różni się od zadania w linku.",
     engineMismatch:"Inna wersja silnika ARC. Tego pojedynku nie można porównać.",scoreMismatch:"Inna wersja oceny ARC. Tego pojedynku nie można porównać.",
     modeConflict:"Battle nie może działać równocześnie ze starym trybem challenge.",taskReady:"Zadanie przypięte. Uderz w blachę, aby rozpocząć próbę.",
-    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"za mało spoiny",root:"brak przetopu grani",ends:"niedospawane końce",heatInput:"za duży wkład ciepła",underfill:"za szybko — niewypełniony rowek",overflow:"spoina poza rowkiem",porosity:"porowatość",offAxis:"zjazd z osi",amps:"zły prąd",arc:"niestabilny łuk",angle:"zły kąt elektrody",filler:"rytm spoiwa",edges:"lico nie przykryło fazy",interbead:"brak wtopienia między ściegami",slag:"żużel pod ściegiem",electrode:"zła średnica elektrody",score:"ocena poniżej 50"},incomplete:"NIEUKOŃCZONE",
+    rematch:"REWANŻ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"za mało spoiny",root:"brak przetopu grani",ends:"niedospawane końce",heatInput:"za duży wkład ciepła",underfill:"za szybko — niewypełniony rowek",overflow:"spoina poza rowkiem",porosity:"porowatość",offAxis:"zjazd z osi",amps:"zły prąd",arc:"niestabilny łuk",angle:"zły kąt elektrody",filler:"rytm spoiwa",edges:"lico nie przykryło fazy",interbead:"brak wtopienia między ściegami",slag:"żużel pod ściegiem",electrode:"zła średnica elektrody",direction:"zły kierunek (PF ↑ · PG ↓)",score:"ocena poniżej 50"},incomplete:"NIEUKOŃCZONE",
     sameTask:"ZESPAWAJ TO SAMO ZADANIE",shareText:"To samo zadanie, te same zasady — GORWELD ARC Battle Weld",share:"UDOSTĘPNIJ WYNIK",copyLink:"KOPIUJ LINK",copied:"LINK SKOPIOWANY",
     wins1:"%1 WYGRYWA",wins2:"%1 WYGRYWA",draw:"REMIS",noQualified:"BRAK KWALIFIKOWANEGO WYNIKU",noResult:"BRAK WYNIKU",
     incomparable:"WYNIKI NIEPORÓWNYWALNE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -3865,7 +3877,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Task amperage does not match the ARC recommendation.",taskMismatch:"Loaded task differs from the linked task.",
     engineMismatch:"ARC engine version differs. These attempts cannot be compared.",scoreMismatch:"ARC scoring version differs. These attempts cannot be compared.",
     modeConflict:"Battle cannot run together with the legacy challenge mode.",taskReady:"Task pinned. Strike the plate to begin your attempt.",
-    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"incomplete bead",root:"root not fused",ends:"unwelded ends",heatInput:"heat input over WPS",underfill:"too fast — underfilled groove",overflow:"weld off the joint",porosity:"porosity",offAxis:"off the joint line",amps:"wrong current",arc:"unstable arc",angle:"wrong electrode angle",filler:"filler rhythm",edges:"cap missed the bevel edges",interbead:"lack of fusion between beads",slag:"slag inclusion",electrode:"wrong electrode size",score:"score below 50"},incomplete:"INCOMPLETE",
+    rematch:"REMATCH",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"incomplete bead",root:"root not fused",ends:"unwelded ends",heatInput:"heat input over WPS",underfill:"too fast — underfilled groove",overflow:"weld off the joint",porosity:"porosity",offAxis:"off the joint line",amps:"wrong current",arc:"unstable arc",angle:"wrong electrode angle",filler:"filler rhythm",edges:"cap missed the bevel edges",interbead:"lack of fusion between beads",slag:"slag inclusion",electrode:"wrong electrode size",direction:"wrong direction (PF ↑ · PG ↓)",score:"score below 50"},incomplete:"INCOMPLETE",
     sameTask:"WELD THE SAME TASK",shareText:"Same task, same rules — GORWELD ARC Battle Weld",share:"SHARE RESULT",copyLink:"COPY BATTLE LINK",copied:"LINK COPIED",
     wins1:"%1 WINS",wins2:"%1 WINS",draw:"DRAW",noQualified:"NO QUALIFIED RESULT",noResult:"NO RESULT",
     incomparable:"INCOMPARABLE",unsupportedReason:"TASK_UNSUPPORTED",
@@ -3880,7 +3892,7 @@ const BATTLE_TEXT={
     ampsMismatch:"Ток задания не совпадает с рекомендацией ARC.",taskMismatch:"Загруженное задание отличается от задания в ссылке.",
     engineMismatch:"Версия движка ARC отличается. Результаты нельзя сравнить.",scoreMismatch:"Версия оценки ARC отличается. Результаты нельзя сравнить.",
     modeConflict:"Battle нельзя запускать одновременно со старым режимом challenge.",taskReady:"Задание закреплено. Коснитесь пластины, чтобы начать попытку.",
-    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"неполный шов",root:"непровар корня",ends:"непроваренные концы",heatInput:"превышено тепловложение",underfill:"слишком быстро — незаполненная разделка",overflow:"шов вне разделки",porosity:"пористость",offAxis:"уход с оси",amps:"неверный ток",arc:"нестабильная дуга",angle:"неверный угол электрода",filler:"ритм присадки",edges:"облицовка не перекрыла кромки",interbead:"несплавление между валиками",slag:"шлаковое включение",electrode:"неверный диаметр электрода",score:"оценка ниже 50"},incomplete:"НЕ ЗАВЕРШЕНО",
+    rematch:"РЕВАНШ",p1:"Welder 01",p2:"Welder 02",accepted:"ACCEPTED",reject:"REJECT",rejectWhy:{coverage:"неполный шов",root:"непровар корня",ends:"непроваренные концы",heatInput:"превышено тепловложение",underfill:"слишком быстро — незаполненная разделка",overflow:"шов вне разделки",porosity:"пористость",offAxis:"уход с оси",amps:"неверный ток",arc:"нестабильная дуга",angle:"неверный угол электрода",filler:"ритм присадки",edges:"облицовка не перекрыла кромки",interbead:"несплавление между валиками",slag:"шлаковое включение",electrode:"неверный диаметр электрода",direction:"неверное направление (PF ↑ · PG ↓)",score:"оценка ниже 50"},incomplete:"НЕ ЗАВЕРШЕНО",
     sameTask:"СВАРИ ТО ЖЕ ЗАДАНИЕ",shareText:"То же задание, те же правила — GORWELD ARC Battle Weld",share:"ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ",copyLink:"КОПИРОВАТЬ ССЫЛКУ",copied:"ССЫЛКА СКОПИРОВАНА",
     wins1:"ПОБЕДА: %1",wins2:"ПОБЕДА: %1",draw:"НИЧЬЯ",noQualified:"НЕТ ЗАЧТЁННОГО РЕЗУЛЬТАТА",noResult:"НЕТ РЕЗУЛЬТАТА",
     incomparable:"НЕСРАВНИМЫ",unsupportedReason:"TASK_UNSUPPORTED",

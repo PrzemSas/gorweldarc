@@ -226,6 +226,7 @@
   const BASE_REWARD = 50;
   const ZONE_BW = 1.5;   // 3.11.0: strefa łuku = krawędź fazy + 1,5 × szerokość fazy od osi (1:1 z index.html)
   const ELEC_STUB = 0.16;
+  const DIR_MIN = 40, DIR_BAD = 0.5;   // 3.13.0: kierunek PF/PG — min. droga w pionie [px] i udział złej strony
   const V_TAU = 0.045;            // stała czasowa wygładzania prędkości [s]
   const V_TICK = 0.016;           // referencyjny takt [s] — skala `instab`
   const SPATTER_PEN_CAP = 15;     // sufit kary za odpryski
@@ -282,6 +283,9 @@
     const phys = round.kb >= 3;    // 3.9.0: fizyczna skala blachy (VIS_K) — kb=1/2 liczą się bit-w-bit jak 3.8.0
     const dz = round.kb >= 4 && proc === "MMA";
     const zoneOn = round.kb >= 5;
+    // 3.13.0: kierunek jazdy na ścianie pionowej (PF z dołu do góry, PG z góry na dół) — kb≤6 bez reguły (bit-w-bit jak 3.12.0)
+    const dirOn = round.kb >= 7 && (posKey === "PF" || posKey === "PG");
+    let dirUp = 0, dirDn = 0; const dirLog = [];
     const keepDia = round.kb >= 6;  // 3.12.0: elektroda zostaje w uchwycie na następny ścieg (do 3.11.0 wracała do typowej)   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
@@ -420,6 +424,7 @@
       return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen };
     }
     function bankReset() { const pm = passMetrics(); passLog.push(pm);
+      if (dirOn) { dirLog.push([dirUp, dirDn]); dirUp = 0; dirDn = 0; }
       if (dz) { elecLog.push(elecEntry(pm)); arcVb = 0; arcTb = 0; if (!keepDia) diaSel = 0; }
       if (kb) { const b = beadPlan[passIndex]; if (b) beadStats.push({ lay: b.lay, lane: b.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
         bSo = 0; bR = 0; bN = 0; if (proc === "MMA") needChip = true; }
@@ -529,6 +534,7 @@
       if (angLive) { const so = angOverT(taDeg); if (so > 0) spatFac = Math.min(3.2, spatFac + Math.min(0.8, so / 45)); }
       spatterCount += Math.round((3 + (thick >> 1)) * PROCESS[proc].sparks) * spatFac * (dtS * 1000 / 16); passWeldMs += dtS * 1000;
       vSumT += vEMA * dtS; vTimeS += dtS;
+      if (dirOn) { if (ddy < 0) dirUp -= ddy; else dirDn += ddy; }   // 3.13.0: droga w górę / w dół przy palącym się łuku
       speedSum += vEMA; speedN++;
       last = p; lastT = now;
     }
@@ -595,6 +601,10 @@
     score = Math.max(0, Math.min(100, Math.round(score)));
 
     // wady major (do oceny ISO / odrzutu) — te same progi co w grze
+    // 3.13.0: ścieg z ≥ DIR_MIN px drogi w pionie, z czego ponad połowa w złą stronę = wada (1:1 z index.html)
+    const dirBeads = dirOn ? dirLog.concat([[dirUp, dirDn]]) : [];
+    const dirWrong = dirBeads.map(([u, d]) => (u + d >= DIR_MIN) ? +((posKey === "PF" ? d : u) / (u + d)).toFixed(3) : 0);
+    const dirBad = dirWrong.some(w => w > DIR_BAD);
     const Dmajor =
       (coverage < 0.6) ||
       (overflow > 0.3) ||
@@ -608,7 +618,8 @@
       tooFast ||                    // niewypełniony rowek — tak samo
       (kb && edgeCov < EDGE_MAJOR) ||   // 3.7.0: lico nie przykryło krawędzi fazy (511/401)
       (kb && ibMax >= IB_MAJOR) ||      // brak wtopienia między ściegami (401)
-      (kb && slagCount > 0);            // wtrącenie żużla (301)
+      (kb && slagCount > 0) ||          // wtrącenie żużla (301)
+      dirBad;                           // 3.13.0: ścieg jechany w złą stronę (PF w dół / PG w górę) — niezgodny z WPS
 
     // przyczyny odrzutu dla karty Battle — TE SAME warunki co Dmajor, w kolejności ważności; nie wpływają na wynik
     const rejectReasons = [];
@@ -628,6 +639,7 @@
     if ((arcPen >= 12) || (arcFails > 2)) rejectReasons.push("arc");
     if (angPen >= 10) rejectReasons.push("angle");
     if (filPen >= FIL_MAJOR) rejectReasons.push("filler");
+    if (dirBad) rejectReasons.push("direction");
     if (!Dmajor && score < 50) rejectReasons.push("score");
 
     const letter = score >= 90 ? "A" : score >= 78 ? "B" : score >= 62 ? "C" : score >= 45 ? "D" : "F";
@@ -647,11 +659,15 @@
              angPen: +angPen.toFixed(2), offPen: +offPen.toFixed(2), filPen: +filPen.toFixed(2), filDabs: filCount, waDeg: +waDeg.toFixed(2), taDeg: +taDeg.toFixed(2),
              angW: +angW.toFixed(2), angT: +angT.toFixed(2), taIdeal: TA_IDEAL[proc] != null ? TA_IDEAL[proc] : 0,
              volts: arcTime ? +(arcVSum / arcTime).toFixed(2) : recommendedVolts(proc, thick),
-             hi: hiR, hiWps: hiRW, hiMax: hiRM, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [],
+             hi: hiR, hiWps: hiRW, hiMax: hiRM, hiOver, cvn, fastR: +fastR.toFixed(3), fastMax: +fastMax.toFixed(3), tooFast, rejectReasons: iso === "REJECT" ? rejectReasons : [], ...(dirOn ? { dirWrong } : {}),
              ...(dz ? { elec, diaPen: +diaPen.toFixed(2) } : {}),
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.13.0 — KIERUNEK NA ŚCIANIE PIONOWEJ (flaga `kb: 7`): PF spawa się z dołu do góry, PG z góry na dół (ISO 6947).
+  //         Ścieg, który ma ≥ DIR_MIN px drogi w pionie, a ponad połowę (DIR_BAD) jedzie w złą stronę, to wada
+  //         niezgodności z WPS (PF w dół = brak przetopu / przyklejenie, PG w górę = przegrzanie cienkiej blachy) → REJECT
+  //         z przyczyną `direction`. Punkty bez zmian. Rundy kb≤6 bit-w-bit jak 3.12.0 (sim-3.12.0.js, kb7.js). SCORING 1.8.0.
   // 3.12.0 — ELEKTRODA ZOSTAJE W UCHWYCIE (flaga `kb: 6`, MMA): po zamknięciu ściegu Ø się nie zmienia — następny
   //         ścieg idzie tą samą elektrodą, dopóki gracz jej nie zmieni (zdarzenie `dia`). Do 3.11.0 każdy ścieg
   //         startował od typowej Ø. Rundy kb≤5 bit-w-bit jak 3.11.0 (zamrożony sim-3.11.0.js, test kb6.js). SCORING_VERSION 1.7.0.
@@ -714,7 +730,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.12.0", SCORING_VERSION: "1.7.0", ZONE_BW };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.13.0", SCORING_VERSION: "1.8.0", DIR_MIN, DIR_BAD, ZONE_BW };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
