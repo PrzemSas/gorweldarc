@@ -475,6 +475,10 @@
       <button class="tlift on" data-v="1" data-i18n="tlift_on">ON</button>
       <button class="tlift" data-v="0" data-i18n="tlift_off">OFF</button>
     </div>
+    <div class="group" id="guidesWrap"><span class="lbl" data-i18n="guides">🎯 Guides</span>
+      <button class="guides on" data-v="1" data-i18n="tlift_on">ON</button>
+      <button class="guides" data-v="0" data-i18n="tlift_off">OFF</button>
+    </div>
     <button id="helmet" class="on" data-i18n="btn_helmet">🥽 HELMET</button>
     <button id="snd">🔊 ARC</button>
     <button id="inspect" data-i18n="btn_inspect">🔎 INSPECT</button>
@@ -785,7 +789,7 @@ let lang=(()=>{ const n=((navigator.languages&&navigator.languages[0])||navigato
   return n==="pl"?"pl":(["ru","uk","be"].includes(n)?"ru":"en"); })();
 try{ const l=localStorage.getItem('gorweld_lang'); if(l) lang=l; }catch(e){}
 const I18N={
- pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", sec_title:"PRZEKRÓJ", pr_cut:"TLEN", pr_plasma:"PLAZMA", mc_battle:"Battle", mc_helmet:"Przyłbica", mc_sound:"Dźwięk", mc_music:"Muzyka", mc_clear:"Wyczyść", mc_help:"Jak grać", mc_setup:"Opcje", mc_career:"Kariera", mc_methods:"Metody", mc_about:"O ARC", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
+ pl:{ t_offplate:"⚡ ZJECHAŁEŚ Z BLACHY — łuk zgasł", t_arcstop:"✔ ŁUK ZGASZONY — LPM+PPM",t_tigstop:"✔ ŁUK ZGASZONY — PPM", t_stick:"⚡ PRZYWARŁA — odbij elektrodę i zajarz od nowa",t_arcbreak:"⚡ ŁUK ZERWANY — zajarz od nowa",fb_arclong:"ZA DŁUGI ŁUK — pęcherze i odpryski",fb_arcshort:"ZA KRÓTKI ŁUK — zaraz przywrze",def_arc_long:"Za długi łuk — utrata osłony, pęcherze i odpryski",def_arc_short:"Za krótki łuk — przywieranie, brak wtopienia",def_stick:"Przerwany łuk — %1 raz(y)",fb_angwork:"KRZYWY KĄT ROBOCZY — ścieg ucieka z rowka",fb_offaxis:"ZJECHAŁEŚ Z OSI — wracaj na grań",fb_filler:"DODAJ SPOIWO — SPACJA",def_filler:"Nierówny rytm spoiwa — faliste lico, miejscami nadlew, miejscami niedolew",def_fast:"Za szybki przejazd — %1 mm/s przy %2 mm/s z WPS: niewypełniony rowek i brak wtopienia w brzegi (ISO 5817: 511, 401) — odrzut niezależnie od wyglądu lica",def_hi_over:"Przekroczony wkład ciepła — %1 kJ/mm przy dopuszczalnych %2. Materiał badany udarnościowo: powyżej granicy z WPS kwalifikacja udarnościowa nie pokrywa złącza — odrzut niezależnie od wyglądu lica",hi_max:"max",hi_cvn:"max wg WPS (udarność)",fb_hi:"ZA DUŻY WKŁAD CIEPŁA — jedź szybciej albo zbij prąd",def_offaxis:"Ścieg poza osią złącza — podtopienie jednej krawędzi, brak wtopienia po drugiej",fb_angdrag:"ZA MOCNO CIĄGNIESZ — żużel wchodzi pod łuk",fb_angpush:"PCHASZ ELEKTRODĘ — brak wtopienia",def_ang_work:"Krzywy kąt roboczy — podtopienie jednej krawędzi, ścieg obok osi",def_ang_drag:"Za duży kąt ciągnięcia — wtrącenia żużla, wypukłe lico",def_ang_push:"Elektroda pchana — brak wtopienia, żużel przed jeziorkiem",ang_lbl:"Kąt:",ang_drag:"ciągn.",ang_push:"pchan.",ang_work:"rob.", sec_title:"PRZEKRÓJ", pr_cut:"TLEN", pr_plasma:"PLAZMA", mc_battle:"Battle", mc_helmet:"Przyłbica", mc_sound:"Dźwięk", mc_music:"Muzyka", mc_clear:"Wyczyść", mc_help:"Jak grać", mc_setup:"Opcje", mc_career:"Kariera", mc_methods:"Metody", mc_about:"O ARC", method:"Metoda", joint:"Złącze", position:"Pozycja", thickness:"Grubość", material:"Materiał", amperage:"Prąd (A)", amp_auto:"AUTO", amp_man:"RĘCZNIE", tlift:"☝ Łuk nad palcem",guides:"🎯 Podpowiedzi",gd_arc:"ŁUK",gd_fil:"SPOIWO",gd_ang:"KĄT",gd_spd:"TEMPO",gd_hi:"CIEPŁO",gd_short:"krócej",gd_long:"dłużej",gd_slower:"wolniej",gd_faster:"szybciej",gd_tilt:"pochyl",gd_cooler:"chłodniej",gd_hotter:"cieplej",gd_feed:"podaj", tlift_on:"WŁ", tlift_off:"WYŁ", t_tlift_hint:"☝ Łuk pali się nad palcem, żebyś widział szczelinę — wyłączysz w ⚙️", t_tlift_low:"☝ Koniec szwu za nisko na łuk nad palcem — obróć telefon pionowo albo wyłącz go w ⚙️",
   jt_butt:"Doczołowe V", jt_fillet:"Pachwinowe T", jt_pipe:"Rura", mat_steel:"Stal", mat_ss:"Nierdz.", mat_alu:"Alu",
   btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ WYCZYŚĆ",
   grav:"grawitacja<br>jeziorka", vset:"Prędkość zadana:", forA:"za A ≈",
@@ -822,7 +826,7 @@ const I18N={
   rank_helper:"Pomocnik", rank_tacker:"Sczepiacz", rank_welder:"Spawacz", rank_cert:"Spawacz doświadczony", rank_coded:"Spawacz ekspert", rank_master:"Mistrz Spawalnictwa",
   cardtext:"Wyspawałem łagę %1 — ocena %2, ≈ ISO 5817 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#welding #spawanie #GorWeld",
   cardtext_cut:"Przeciąłem %1 — ocena %2, ≈ ISO 9013 %3 (symulacja). 🔥⚡\n\nGORWELD® Arc Welder — darmowy symulator\n#ciecie #spawanie #GorWeld" },
- en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_fast:"Travel too fast — %1 mm/s against %2 mm/s on the WPS: underfilled groove and lack of sidewall fusion (ISO 5817: 511, 401) — reject regardless of how the face looks",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", sec_title:"SECTION", pr_cut:"OXY", pr_plasma:"PLASMA", mc_battle:"Battle", mc_helmet:"Helmet", mc_sound:"Sound", mc_music:"Music", mc_clear:"Clear", mc_help:"How to", mc_setup:"Settings", mc_career:"Career", mc_methods:"Methods", mc_about:"About", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
+ en:{ t_offplate:"⚡ OFF THE PLATE — arc went out", t_arcstop:"✔ ARC STOPPED — LMB+RMB",t_tigstop:"✔ ARC STOPPED — RMB", t_stick:"⚡ STUCK — break the electrode free and re-strike",t_arcbreak:"⚡ ARC BROKEN — strike again",fb_arclong:"ARC TOO LONG — pores and spatter",fb_arcshort:"ARC TOO SHORT — about to stick",def_arc_long:"Arc too long — lost shielding, pores and spatter",def_arc_short:"Arc too short — sticking, lack of fusion",def_stick:"Arc interrupted — %1 time(s)",fb_angwork:"WORK ANGLE OFF — bead walking out of the joint",fb_offaxis:"OFF THE CENTRELINE — get back on the seam",fb_filler:"ADD FILLER — SPACE",def_filler:"Uneven filler rhythm — rippled face, excess in places, starved in others",def_fast:"Travel too fast — %1 mm/s against %2 mm/s on the WPS: underfilled groove and lack of sidewall fusion (ISO 5817: 511, 401) — reject regardless of how the face looks",def_hi_over:"Heat input exceeded — %1 kJ/mm against %2 allowed. Impact-tested material: above the WPS limit the CVN qualification no longer covers the joint — reject regardless of how the face looks",hi_max:"max",hi_cvn:"WPS max (impact-tested)",fb_hi:"HEAT INPUT TOO HIGH — travel faster or drop the current",def_offaxis:"Bead off the joint centreline — undercut on one edge, lack of fusion on the other",fb_angdrag:"DRAGGING TOO HARD — slag runs under the arc",fb_angpush:"PUSHING THE STICK — no penetration",def_ang_work:"Work angle off — undercut on one side, bead off the centreline",def_ang_drag:"Drag angle too steep — slag inclusions, ropey convex face",def_ang_push:"Electrode pushed — lack of fusion, slag ahead of the puddle",ang_lbl:"Angle:",ang_drag:"drag",ang_push:"push",ang_work:"work", sec_title:"SECTION", pr_cut:"OXY", pr_plasma:"PLASMA", mc_battle:"Battle", mc_helmet:"Helmet", mc_sound:"Sound", mc_music:"Music", mc_clear:"Clear", mc_help:"How to", mc_setup:"Settings", mc_career:"Career", mc_methods:"Methods", mc_about:"About", method:"Method", joint:"Joint", position:"Position", thickness:"Thickness", material:"Material", amperage:"Current (A)", amp_auto:"AUTO", amp_man:"MANUAL", tlift:"☝ Arc above finger",guides:"🎯 Guides",gd_arc:"ARC",gd_fil:"FILLER",gd_ang:"ANGLE",gd_spd:"SPEED",gd_hi:"HEAT",gd_short:"shorter",gd_long:"longer",gd_slower:"slower",gd_faster:"faster",gd_tilt:"tilt",gd_cooler:"cooler",gd_hotter:"hotter",gd_feed:"feed", tlift_on:"ON", tlift_off:"OFF", t_tlift_hint:"☝ The arc burns above your finger so you can see the gap — turn it off in ⚙️", t_tlift_low:"☝ Seam end too low for arc above finger — turn your phone upright or switch it off in ⚙️",
   jt_butt:"Butt V", jt_fillet:"Fillet T", jt_pipe:"Pipe", mat_steel:"Steel", mat_ss:"Stainless", mat_alu:"Alu",
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"Set speed:", forA:"for A ≈",
@@ -859,7 +863,7 @@ const I18N={
   rank_helper:"Helper", rank_tacker:"Tacker", rank_welder:"Welder", rank_cert:"Skilled welder", rank_coded:"Expert welder", rank_master:"Welding Master",
   cardtext:"Welded a %1 pass — grade %2, ≈ ISO 5817 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#welding #GorWeld",
   cardtext_cut:"Cut %1 — grade %2, ≈ ISO 9013 %3 (simulated). 🔥⚡\n\nGORWELD® Arc Welder — free simulator\n#cutting #welding #GorWeld" },
- ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_fast:"Слишком быстрое ведение — %1 мм/с при %2 мм/с по WPS: незаполненная разделка и несплавление кромок (ISO 5817: 511, 401) — брак независимо от вида валика",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", sec_title:"РАЗРЕЗ", pr_cut:"ГАЗ", pr_plasma:"ПЛАЗМА", mc_battle:"Battle", mc_helmet:"Маска", mc_sound:"Звук", mc_music:"Музыка", mc_clear:"Стереть", mc_help:"Помощь", mc_setup:"Опции", mc_career:"Карьера", mc_methods:"Методы", mc_about:"Об ARC", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ", tlift:"☝ Дуга над пальцем", tlift_on:"ВКЛ", tlift_off:"ВЫКЛ", t_tlift_hint:"☝ Дуга горит над пальцем, чтобы был виден зазор — отключается в ⚙️", t_tlift_low:"☝ Конец шва слишком низко для дуги над пальцем — поверни телефон вертикально или отключи её в ⚙️",
+ ru:{ t_offplate:"⚡ СОШЁЛ С ПЛАСТИНЫ — дуга погасла", t_arcstop:"✔ ДУГА ПОГАШЕНА — ЛКМ+ПКМ",t_tigstop:"✔ ДУГА ПОГАШЕНА — ПКМ", t_stick:"⚡ ПРИЛИПЛА — отломи электрод и зажги заново",t_arcbreak:"⚡ ДУГА ОБОРВАНА — зажги заново",fb_arclong:"ДУГА СЛИШКОМ ДЛИННАЯ — поры и брызги",fb_arcshort:"ДУГА СЛИШКОМ КОРОТКАЯ — вот-вот прилипнет",def_arc_long:"Слишком длинная дуга — потеря защиты, поры и брызги",def_arc_short:"Слишком короткая дуга — прилипание, непровар",def_stick:"Дуга прервана — %1 раз(а)",fb_angwork:"КРИВОЙ РАБОЧИЙ УГОЛ — шов уходит из разделки",fb_offaxis:"УШЁЛ С ОСИ — возвращайся на стык",fb_filler:"ДОБАВЬ ПРИСАДКУ — ПРОБЕЛ",def_filler:"Неровный ритм присадки — волнистый валик, местами наплыв, местами непровар",def_fast:"Слишком быстрое ведение — %1 мм/с при %2 мм/с по WPS: незаполненная разделка и несплавление кромок (ISO 5817: 511, 401) — брак независимо от вида валика",def_hi_over:"Превышен погонный тепловложение — %1 кДж/мм при допустимых %2. Материал с испытанием на удар: выше предела по WPS квалификация не покрывает соединение — брак независимо от вида валика",hi_max:"макс",hi_cvn:"макс по WPS (удар.)",fb_hi:"СЛИШКОМ БОЛЬШОЕ ТЕПЛОВЛОЖЕНИЕ — иди быстрее или убавь ток",def_offaxis:"Шов вне оси соединения — подрез с одной кромки, непровар с другой",fb_angdrag:"СЛИШКОМ БОЛЬШОЙ УГОЛ — шлак идёт под дугу",fb_angpush:"ТОЛКАЕШЬ ЭЛЕКТРОД — нет провара",def_ang_work:"Кривой рабочий угол — подрез с одной стороны, шов мимо оси",def_ang_drag:"Слишком большой угол волочения — шлаковые включения, выпуклый валик",def_ang_push:"Электрод толкается — непровар, шлак перед ванной",ang_lbl:"Угол:",ang_drag:"волоч.",ang_push:"толк.",ang_work:"раб.", sec_title:"РАЗРЕЗ", pr_cut:"ГАЗ", pr_plasma:"ПЛАЗМА", mc_battle:"Battle", mc_helmet:"Маска", mc_sound:"Звук", mc_music:"Музыка", mc_clear:"Стереть", mc_help:"Помощь", mc_setup:"Опции", mc_career:"Карьера", mc_methods:"Методы", mc_about:"Об ARC", method:"Метод", joint:"Соединение", position:"Позиция", thickness:"Толщина", material:"Материал", amperage:"Ток (А)", amp_auto:"АВТО", amp_man:"ВРУЧНУЮ", tlift:"☝ Дуга над пальцем",guides:"🎯 Подсказки",gd_arc:"ДУГА",gd_fil:"ПРИС.",gd_ang:"УГОЛ",gd_spd:"ТЕМП",gd_hi:"ТЕПЛО",gd_short:"короче",gd_long:"длиннее",gd_slower:"медленнее",gd_faster:"быстрее",gd_tilt:"наклон",gd_cooler:"холоднее",gd_hotter:"горячее",gd_feed:"подай", tlift_on:"ВКЛ", tlift_off:"ВЫКЛ", t_tlift_hint:"☝ Дуга горит над пальцем, чтобы был виден зазор — отключается в ⚙️", t_tlift_low:"☝ Конец шва слишком низко для дуги над пальцем — поверни телефон вертикально или отключи её в ⚙️",
   jt_butt:"Стыковое V", jt_fillet:"Тавровое T", jt_pipe:"Труба", mat_steel:"Сталь", mat_ss:"Нерж.", mat_alu:"Алюм.",
   btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"Задан. скорость:", forA:"за A ≈",
@@ -2331,7 +2335,9 @@ function drawSpeedCoach(now){
   if(fbGood) fbBadT=0; else fbBadT+=dt;
   if(fbBadT>=FB_ARM){ fbText=speedFb; fbAlpha=Math.min(1,fbAlpha+dt/FB_IN); }
   else fbAlpha=Math.max(0,fbAlpha-dt/FB_OUT);
-  if(fbAlpha>0.01){ const at=speedPillSpot(); drawSpeedPill(at.x,at.y,fbText,false,fbAlpha,at.left); }
+  if(fbAlpha>0.01){ const at=speedPillSpot();
+    if(guideBox&&!at.left&&at.y<guideBox.y+guideBox.h+16&&at.y>guideBox.y-16) at.y=guideBox.y+guideBox.h+16;   // podpowiedzi zajęły miejsce — pigułka pod nimi
+    drawSpeedPill(at.x,at.y,fbText,false,fbAlpha,at.left); }
 }
 // 05.10 (user: napisy w trakcie spawania za blisko elektrody, "mega to drazni"): pigulka juz NIE jedzie za lukiem.
 // Stale miejsce liczone ze szwu: pod blacha (szew poziomy / rura) albo z boku blachy (szew pionowy PF/PG),
@@ -2342,6 +2348,88 @@ function speedPillSpot(){
   for(const q of seamPts){ if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y; }
   return (y1-y0)>(x1-x0)*1.5 ? {x:x1+100,y:y1-70,left:true} : {x:(x0+x1)/2,y:Math.min(H-40,y1+115)};
 }
+// ── Podpowiedzi na żywo (jak w symulatorach VR) — CZYSTO WIZUALNE ─────────────────────────
+// Paski przy łuku: ŁUK / SPOIWO (TIG) · KĄT · TEMPO · CIEPŁO. Progi to DOKŁADNIE te liczby, którymi
+// liczy ocena i komunikaty — nic nowego: łuk ARC_LO/ARC_HI (pasmo bez kary) i ×1,15/×0,90 (komunikat),
+// kąt pasmo waBandFor/TA_BAND i +6° (komunikat), tempo 0,7–1,3 (sim.js beadWidth = idealne lico)
+// i 0,62/1,45 (komunikat), spoiwo FIL_HI i ×1,9 (komunikat), wkład ciepła ±25% od WPS (pasek raportu),
+// czerwony tylko powyżej sufitu HI_MAX_R na stali (= odrzut). Zielony = w paśmie, żółty = poza pasmem,
+// ale przed komunikatem, czerwony = tam, gdzie komunikat/odrzut. Telefon: łuk i kąt trzyma gra (nie gracz),
+// więc tych pasków tam nie ma — zostaje tempo i ciepło. Konkurs i Battle: wymuszone WYŁ (jak egzamin).
+// Nie trafia do nagrania, nie rusza sim.js — wynik bit-w-bit jak bez podpowiedzi.
+let guidesOn=true; try{ if(localStorage.getItem("gorweld_guides")==="0") guidesOn=false; }catch(e){}
+let guidePos=null, guideBox=null, guideForcedShown=null, GUIDE_XR=1e9;
+function guidesForcedOff(){ return isChallenge()||battleTaskActive()||!!(battleState&&battleState.serverMode); }
+const GD_G=0.32, GD_Y=0.64;   // pozycja na torze: krawędź zieleni / krawędź żółci (reszta = czerwień)
+function gdSide(d,g,y,s){   // d ≥ 0 od celu w stronę krawędzi; g/y/s = krawędź zieleni / żółci / nasycenie
+  if(d<=g) return {p:g>0?GD_G*d/g:0,st:0};
+  if(!(y>g)){ return {p:GD_Y+(1-GD_Y)*Math.min(1,(d-g)/Math.max(1e-6,s-g)),st:2}; }   // brak żółci (sufit HI)
+  if(d<=y||!isFinite(y)) return {p:GD_G+(GD_Y-GD_G)*Math.min(1,(d-g)/Math.max(1e-6,(isFinite(y)?y:s)-g)),st:1};
+  return {p:GD_Y+(1-GD_Y)*Math.min(1,(d-y)/Math.max(1e-6,s-y)),st:2}; }
+function gdMap(x,t,gLo,gHi,yLo,yHi,sLo,sHi){
+  if(x>=t){ const r=gdSide(x-t,gHi-t,yHi-t,sHi-t); return {p:r.p,st:r.st}; }
+  const r=gdSide(t-x,t-gLo,t-yLo,t-sLo); return {p:-r.p,st:r.st}; }
+function guideRows(){
+  const rows=[];
+  if(arcLive&&!tigLive){ const r=arcLen/arcL0(), m=gdMap(r,1,ARC_LO,ARC_HI,ARC_LO*0.90,ARC_HI*1.15,0.2,ARC_MAX_MUL);
+    rows.push({k:"gd_arc",...m,h:m.st?t(r>1?"gd_short":"gd_long"):""}); }
+  if(tigLive&&lastDabPos){ const p=last||cursor, r=Math.hypot(p.x-lastDabPos.x,p.y-lastDabPos.y)/Math.max(1e-6,targetPx*FIL_DT);
+    const m=gdMap(r,0.8,0,FIL_HI,0,1.9,0,3); rows.push({k:"gd_fil",...m,h:m.st?t("gd_feed"):""}); }
+  if(angLive&&TA_IDEAL[proc]!=null){ const bw=waBandFor(posKey);
+    if(Math.abs(waDeg)/bw>=Math.abs(taDeg)/TA_BAND){ const m=gdMap(waDeg,0,-bw,bw,-(bw+6),bw+6,-(bw+20),bw+20); rows.push({k:"gd_ang",...m,h:m.st?t("gd_tilt"):""}); }
+    else { const m=gdMap(taDeg,0,-TA_BAND,TA_BAND,-(TA_BAND+6),TA_BAND+6,-(TA_BAND+20),TA_BAND+20); rows.push({k:"gd_ang",...m,h:m.st?t("gd_tilt"):""}); } }
+  { const sr=vEMA/Math.max(1e-6,targetPx), m=gdMap(sr,1,0.7,1.3,0.62,1.45,0.3,2); rows.push({k:"gd_spd",...m,h:m.st?t(sr>1?"gd_slower":"gd_faster"):""}); }
+  const wE=weldElectrics(posKey);
+  if(wE&&wE.hi!=null){
+    if(vTimeS>HI_FB_MIN_S){   // ten sam rachunek co feedback()/raport: średnie bieżące napięcia i tempa
+      const uRun=elecOn()?(arcTb?arcVb/arcTb:wE.volts):(arcTime?arcVSum/arcTime:wE.volts);
+      const hiRun=heatInputKJmm(uRun,wE.ampsUse,(vSumT/vTimeS)/PX_PER_MM,WELD_EFF[proc]||0.8);
+      if(hiRun!=null){ const q=hiRun/wE.hi, cap=Math.round(wE.hi*HI_MAX_R*1000)/1000/wE.hi, cvn=!!CVN_BEADS[bead];
+        const m=gdMap(q,1,0.75,cvn?cap:1.25,-Infinity,cvn?cap:Infinity,0.4,1.8); rows.push({k:"gd_hi",...m,h:m.st?t(q>1?"gd_cooler":"gd_hotter"):""}); }
+      else rows.push({k:"gd_hi",p:0,st:-1,h:""}); }
+    else rows.push({k:"gd_hi",p:0,st:-1,h:""}); }   // pierwsze pół sekundy ściegu: średnia jeszcze nie ma głosu
+  return rows; }
+function syncGuidesUI(){ const forced=guidesForcedOff(); if(forced===guideForcedShown) return; guideForcedShown=forced;
+  const g=document.getElementById("guidesWrap"); if(g) g.style.display=forced?"none":""; }
+function drawGuides(now){
+  syncGuidesUI();
+  if(!guidesOn||guidesForcedOff()||!(welding&&last)||isCut()||(proc==="MMA"&&replacing)){ guidePos=null; guideBox=null; return; }
+  const rows=guideRows(); if(!rows.length) return;
+  // 17.10 user: panel 2× większy (telefon 1,5× — inaczej zakrywa pół blachy), ciemne tło, grube paski
+  const mob=isMob(), s=Math.max(1,Math.min(3,W/Math.max(1,stage.clientWidth||W)))*(mob?1.5:2);   // ~stały rozmiar w px ekranu
+  ctx.save(); ctx.font="700 "+(10*s)+"px 'Segoe UI',system-ui,sans-serif";
+  const hintW=Math.max(...["gd_short","gd_long","gd_slower","gd_faster","gd_tilt","gd_cooler","gd_hotter","gd_feed"].map(k=>ctx.measureText("◀ "+t(k)).width))+8*s;
+  const labW=Math.max(...rows.map(r=>ctx.measureText(t(r.k)).width))+8*s;
+  const rowH=15*s, padX=7*s, trW=84*s, bw=padX*2+labW+trW+hintW, bh=rows.length*rowH+8*s;
+  // Miejsce: pod szwem i trochę przed łukiem (user 17.10: „placement under the seam is good”), z dala od
+  // elektrody (stoi w górę). Szew pionowy: z prawej. Telefon: przed łukiem (pod łukiem jest palec).
+  const horiz=Math.abs(ux)>=Math.abs(uy), g0=s/(mob?1.5:2);   // odstęp od szwu jak przed powiększeniem
+  let tx, ty;
+  if(horiz){ const dir=ux>=0?1:-1; tx=mob?(dir>0?last.x+30*g0:last.x-30*g0-bw):last.x+dir*34*g0-bw/2; ty=last.y+32*g0; }
+  else { tx=last.x+48*g0; ty=last.y-bh/2; }
+  const V=VIEW||{x:0,y:0,w:W,h:H};
+  const xr=Math.min(V.x+V.w,GUIDE_XR)-6;
+  if(mob&&horiz&&tx+bw>xr&&ux>=0) tx=last.x-30*g0-bw;   // przed łukiem brak miejsca (koniec szwu) — panel za łuk, nad gotową spoiną
+  tx=Math.max(V.x+6,Math.min(xr-bw,tx)); ty=Math.max(V.y+6,Math.min(V.y+V.h-bh-6,ty));
+  if(!guidePos) guidePos={x:tx,y:ty}; else { guidePos.x+=(tx-guidePos.x)*0.18; guidePos.y+=(ty-guidePos.y)*0.18; }
+  const x0=guidePos.x, y0=guidePos.y, COL=["#5fe08a","#ffd23f","#ff5a4a"]; guideBox={x:x0,y:y0,w:bw,h:bh};
+  ctx.fillStyle="rgba(1,3,4,.90)"; ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(x0,y0,bw,bh,6*s); ctx.fill(); ctx.stroke();
+  ctx.textBaseline="middle";
+  rows.forEach((r,i)=>{
+    const cy=y0+4*s+rowH*(i+0.5), trX=x0+padX+labW, mid=trX+trW/2, col=r.st<0?"#6b767d":COL[r.st], th=4*s;
+    ctx.textAlign="left"; ctx.fillStyle=r.st>0?col:"#e3eaee"; ctx.fillText(t(r.k),x0+padX,cy);
+    ctx.fillStyle="rgba(255,255,255,.14)"; ctx.fillRect(trX,cy-th,trW,th*2);                   // tor
+    ctx.strokeStyle="rgba(95,224,138,.75)"; ctx.lineWidth=Math.max(1,0.8*s);                   // pasmo zieleni = ramka
+    ctx.strokeRect(mid-GD_G*trW/2,cy-th,GD_G*trW,th*2);
+    if(r.st<0){ ctx.fillStyle="rgba(255,255,255,.6)"; ctx.fillRect(mid-0.6*s,cy-th-2*s,1.2*s,th*2+4*s); return; }
+    const mx=mid+Math.max(-1,Math.min(1,r.p))*trW/2;
+    ctx.fillStyle=col; ctx.fillRect(Math.min(mid,mx),cy-th,Math.max(1.5*s,Math.abs(mx-mid)),th*2);   // kolorowy słupek od celu
+    ctx.fillStyle="#fff"; ctx.fillRect(mid-0.6*s,cy-th-2*s,1.2*s,th*2+4*s);                    // cel
+    ctx.fillStyle=col; ctx.strokeStyle="rgba(0,0,0,.85)"; ctx.lineWidth=1.2*s;
+    ctx.beginPath(); ctx.arc(mx,cy,5*s,0,7); ctx.fill(); ctx.stroke();
+    if(r.h){ ctx.textAlign="left"; ctx.fillStyle=col; ctx.fillText((r.p>0?"◀ ":"▶ ")+r.h,trX+trW+6*s,cy); } });   // w którą stronę na pasku + co zrobić
+  ctx.restore(); }
 // ── Przekrój spoiny na czole blachy (doczołowe) — czysto wizualne ──────────────────────────
 // Na przednim, uciętym końcu próbki widać wycięcie V i to, co w nim siedzi: grań na dnie (z przetopem
 // pod spodem), wypełnienie, lico z nadlewem — jak na makrozgładzie. Warstwa pojawia się dopiero, gdy
@@ -2709,6 +2797,7 @@ function frame(now){
   ctx.save(); const vcy=workCY(); const vg=ctx.createRadialGradient(W/2,vcy,H*0.15,W/2,vcy,Math.max(W,H)*0.72);
   vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,.38)");
   ctx.fillStyle=vg; ctx.fillRect(0,0,W,H); ctx.restore();
+  drawGuides(now);
   if(clipV) ctx.restore();
 
   requestAnimationFrame(frame);
@@ -3351,6 +3440,10 @@ function syncTlift(){ document.querySelectorAll(".tlift").forEach(b=>b.classList
 document.querySelectorAll(".tlift").forEach(b=>b.onclick=()=>{ touchLift=b.dataset.v==="1";
   try{ localStorage.setItem("gorweld_tlift",touchLift?"1":"0"); }catch(e){} syncTlift(); fitStage(); });
 syncTlift();
+function syncGuides(){ document.querySelectorAll(".guides").forEach(b=>b.classList.toggle("on",(b.dataset.v==="1")===guidesOn)); }
+document.querySelectorAll(".guides").forEach(b=>b.onclick=()=>{ guidesOn=b.dataset.v==="1";
+  try{ localStorage.setItem("gorweld_guides",guidesOn?"1":"0"); }catch(e){} syncGuides(); });
+syncGuides();
 
 // ── Tutorial ──────────────────────────────────────────────────────
 function fillTut(){ const el=document.getElementById("tutSteps"); if(!el) return; el.innerHTML="";
@@ -3680,6 +3773,9 @@ function fitStage(){
   const vx0=Math.max(0,Math.floor(-left/s)-2), vy0=Math.max(0,Math.floor(-top/s)-2);
   const vx1=Math.min(W,Math.ceil((innerWidth-left)/s)+2), vy1=Math.min(H,Math.ceil((innerHeight-top)/s)+2);
   VIEW=(vx1-vx0)*(vy1-vy0)<W*H*0.95?{x:vx0,y:vy0,w:vx1-vx0,h:vy1-vy0}:null;
+  // podpowiedzi: telefon ma z prawej kolumnę przycisków na canvasie — panel ma kończyć się przed nią
+  GUIDE_XR=W; if(isMob()){ let cx=innerWidth; document.querySelectorAll(".mob-actions").forEach(b=>{ const r=b.getBoundingClientRect(); if(r.width&&r.left>innerWidth/2) cx=Math.min(cx,r.left); });
+    GUIDE_XR=Math.min(W,(cx-8-left)/s); }
   stage.style.inset="auto";
   stage.style.left=Math.round(left)+"px"; stage.style.top=Math.round(top)+"px";
   stage.style.width=Math.max(1,Math.round(W*s))+"px"; stage.style.height=Math.max(1,Math.round(H*s))+"px";
