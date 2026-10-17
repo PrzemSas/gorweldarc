@@ -234,7 +234,7 @@
   .covbar.ready .covfill { animation:covpulse 1.2s ease-in-out infinite; }
   @keyframes covpulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
   .covmark { position:absolute; top:0; bottom:0; left:90%; width:2px; background:#ffae3c; box-shadow:0 0 10px #ffae3c; }
-  .covtxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; letter-spacing:.4px; color:#eaf2f5; text-shadow:0 1px 4px #000; white-space:nowrap; overflow:hidden; }
+  .covtxt { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); max-width:96%; padding:1px 10px; border-radius:9px; background:rgba(4,8,10,.72); line-height:17px; text-overflow:ellipsis; font-size:11px; font-weight:700; letter-spacing:.4px; color:#eaf2f5; text-shadow:0 1px 4px #000; white-space:nowrap; overflow:hidden; }
 
   /* tutorial */
   .tutsteps { display:flex; flex-direction:column; gap:9px; font-size:14px; line-height:1.5; color:#c0cad1; width:min(380px,84vw); counter-reset:tut; }
@@ -1640,10 +1640,20 @@ function depositBead(x,y,w){
 // one "dime" — crescent scale bowed toward travel: dark trailing edge + bright leading ridge
 // Kształt lica od pozycji (ISO 6947) — wyłącznie wygląd. sag: brzuch w dół ekranu (×w),
 // crown: połysk korony, bow: wygięcie łuski (PF z wahadłem — szerokie „półki", PG — płaskie, szybkie).
+// ── Kierunek względem grawitacji (17.10 user: „jak jedziesz spoinę do góry to inaczej powinna się układać jak
+// jedziesz na dół”). TYLKO WYGLĄD — ocena, baked, nagranie bez zmian. Ściana pionowa (PF/PG, nie rura):
+// gUp +1 = jazda w górę (jeziorko siedzi na zastygłym metalu pod spodem: wyższe, wypukłe lico, gruba łuska
+// w „V” jak półki), −1 = w dół (metal spływa przed łuk: płaskie, gładkie lico, drobna łuska, język przed łukiem).
+// Z FAKTYCZNEGO ruchu (uy, wygładzone) — PF jechane z góry wygląda jak PG, uczciwie. Bez ruchu: kierunek pozycji.
+let gUpS=0;
+function vertWall(){ const P=POSITIONS[posKey]||{}; return P.ang===90&&!P.pipe; }
+function gUpDefault(){ return posKey==="PF"?1:posKey==="PG"?-1:0; }
+function gUpTick(){ if(!vertWall()){ gUpS=0; return; } if(welding&&last) gUpS+=(Math.max(-1,Math.min(1,-uy*1.4))-gUpS)*0.08; else gUpS=gUpDefault(); }
+function dirLook(){ const u=vertWall()?gUpS:0, up=Math.max(0,u), dn=Math.max(0,-u);
+  return {u, hc:1+0.30*up-0.40*dn, bow:1+0.25*up-0.55*dn, rip:1+0.45*up-0.55*dn, sp:1+0.22*up-0.25*dn, tail:1+0.22*up-0.38*dn, lead:dn}; }
 function beadShape(){ const P=POSITIONS[posKey]||{}, k=posKey;
   if(P.flip) return {sag:0,crown:0.55,bow:0.85};                          // PE/PD: wisi, płaskie, matowe
-  if(k==="PF") return {sag:0,crown:0.9,bow:1.45};
-  if(k==="PG") return {sag:0,crown:0.7,bow:0.6};
+  if(vertWall()){ const f=(gUpS+1)/2; return {sag:0,crown:0.7+0.2*f,bow:0.6+0.85*f}; }   // w górę = dawne PF (0,9/1,45), w dół = dawne PG (0,7/0,6)
   if(k==="PC"||k==="PB"||k==="P2G") return {sag:Math.min(0.22,P.g*1.3),crown:0.85,bow:1};
   if(k==="P5G"||k==="HL045") return {sag:0.06,crown:0.8,bow:1.15};
   return {sag:0,crown:1,bow:1}; }
@@ -1668,7 +1678,7 @@ function vbHit(x,y,ww){ if(!vbOK()) return; if(!vb||vb.pass!==passIndex||vb.lo.l
     if(i<vb.d0) vb.d0=i; if(i>vb.d1) vb.d1=i; }
   if(vb.tip>=0&&j!==vb.tip){ const st=j>vb.tip?1:-1, dd=Math.abs(j-vb.tip)*sl; if(Math.abs(j-vb.tip)<=s*3){ if(st===vb.dir){ vb.prog+=dd; vb.back=0; } else { vb.back=(vb.back||0)+dd; if(vb.back>ww*2.5){ vb.dir=st; vb.back=0; } } } }   /* kierunek zmienia się dopiero po wyraźnym cofnięciu — wahadło nie odwraca łuski */
   // łuska co ~0,45 szerokości lica wzdłuż szwu (MIG rzadziej, TIG z kropli spoiwa); szybciej = rzadziej
-  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.5:proc==="MMA"?bh*0.46:bh*0.62)*(proc==="TIG"?1:proc==="MIG"?0.85+Math.random()*0.3:0.9+Math.random()*0.2)*(1+vEMA*0.003)/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
+  const bh=Math.max(ww,(vb.hi[j]-vb.lo[j])/2), rip=(proc==="MIG"?bh*0.5:proc==="MMA"?bh*0.46:bh*0.62)*(proc==="TIG"?1:proc==="MIG"?0.85+Math.random()*0.3:0.9+Math.random()*0.2)*(1+vEMA*0.003)*dirLook().sp/Math.sqrt(PROCESS[proc].rippleK);   // MAG: gęste, cienkie łuki (zdjęcie), MMA: grubsza łuska   // odstęp łuski ~0,3 szerokości lica (zdjęcia)
   if(!vb.ge) vb.ge=rip;   /* stały odstęp na cały ścieg — zastygające w różnych chwilach kawałki liczą ten sam rytm */
   if(proc!=="TIG"&&vb.prog>=rip){ const nk=Math.min(6,Math.floor(vb.prog/rip)); for(let q=nk-1;q>=0;q--) vbAddRipS(vb.S[j]-vb.dir*q*rip); vb.rp[j]=1; vb.prog=0; }   /* duży skok: brakujące łuski po kolei */
   vb.tip=j; vb.ww=ww; }
@@ -1729,8 +1739,8 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
   const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
     (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
-  const k=-vb.dir, half0=(hi-lo)/2, bowK=proc==="TIG"?0.62:proc==="MIG"?0.72:0.85, rough=proc==="MMA"?0.09:proc==="MIG"?0.08:0.05;
-  const ripA=proc==="TIG"?0.5:proc==="MIG"?0.3:0.16, Hc=proc==="TIG"?0.62:proc==="MIG"?0.5:0.44, Hp=proc==="TIG"?0.65:0.9, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.08:0.06;   /* MAG/MMA: płaskie lico (wypukłość ~13–18% szer.), łagodna stopka (wzorce Grok) */
+  const k=-vb.dir, half0=(hi-lo)/2, bowK=(proc==="TIG"?0.62:proc==="MIG"?0.72:0.85)*dirLook().bow, rough=proc==="MMA"?0.09:proc==="MIG"?0.08:0.05;
+  const DL=dirLook(), ripA=(proc==="TIG"?0.5:proc==="MIG"?0.3:0.16)*DL.rip, Hc=(proc==="TIG"?0.62:proc==="MIG"?0.5:0.44)*DL.hc, Hp=proc==="TIG"?0.65:0.9, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.08:0.06;   /* MAG/MMA: płaskie lico (wypukłość ~13–18% szer.), łagodna stopka (wzorce Grok) */
   // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
   // Brzegi wygładzone wzdłuż szwu (średnia z sąsiadów) i interpolowane gładko — skokowa szerokość punkt-po-punkcie
   // (wahadło) dawała płaskie fasetki = pionowe pasy w cieniowaniu. Sama krawędź łatki (lo/hi) zostaje bez zmian.
@@ -2252,13 +2262,25 @@ function drawSeamGuide(now){
   ctx.strokeStyle="rgba(31,214,227,"+pulse+")"; ctx.lineWidth=2.5;
   ctx.shadowColor="#1fd6e3"; ctx.shadowBlur=10+Math.sin(now/300)*4;
   ctx.setLineDash([10,14]); ctx.lineDashOffset=-now/40;
-  const G=lanePts.length===seamPts.length?lanePts:seamPts;           // 3.7.0: prowadnica pokazuje TOR bieżącego ściegu
+  const G0=lanePts.length===seamPts.length?lanePts:seamPts;          // 3.7.0: prowadnica pokazuje TOR bieżącego ściegu
+  // 17.10: kierunek widać — PF start NA DOLE (z dołu do góry), PG u góry; reszta jak tor. Strzałki płyną od startu.
+  const rev=vertWall()&&(posKey==="PF")===(G0[0].y<G0[G0.length-1].y), G=rev?G0.slice().reverse():G0;
+  ctx.setLineDash([10,14]); ctx.lineDashOffset=-now/40;
   ctx.beginPath(); ctx.moveTo(G[0].x,G[0].y);
   for(let i=1;i<G.length;i++) ctx.lineTo(G[i].x,G[i].y);
   ctx.stroke(); ctx.setLineDash([]);
-  ctx.shadowBlur=0; ctx.globalAlpha=pulse*0.6; ctx.fillStyle="#1fd6e3";
-  ctx.beginPath(); ctx.arc(G[0].x,G[0].y,4,0,7); ctx.fill();
-  ctx.beginPath(); ctx.arc(G[G.length-1].x,G[G.length-1].y,3,0,7); ctx.fill();
+  ctx.shadowBlur=0;
+  const S=[0]; for(let i=1;i<G.length;i++) S.push(S[i-1]+Math.hypot(G[i].x-G[i-1].x,G[i].y-G[i-1].y));
+  const at=d=>{ let i=1; while(i<G.length-1&&S[i]<d) i++; const f=(d-S[i-1])/Math.max(1e-6,S[i]-S[i-1]), dx=G[i].x-G[i-1].x, dy=G[i].y-G[i-1].y, m=Math.hypot(dx,dy)||1;
+    return {x:G[i-1].x+dx*f,y:G[i-1].y+dy*f,ux:dx/m,uy:dy/m}; };
+  ctx.strokeStyle="#1fd6e3"; ctx.lineWidth=2.5;
+  for(let k=0;k<3;k++){ const f=((now/2400)+k/3)%1, q=at(f*S[S.length-1]), a=Math.min(1,f*5,(1-f)*5);   // strzałki „›” w stronę jazdy
+    ctx.globalAlpha=pulse*1.6*a; const bx=q.x-q.ux*7, by=q.y-q.uy*7, nx=-q.uy, ny=q.ux;
+    ctx.beginPath(); ctx.moveTo(bx+nx*6,by+ny*6); ctx.lineTo(q.x,q.y); ctx.lineTo(bx-nx*6,by-ny*6); ctx.stroke(); }
+  ctx.globalAlpha=Math.min(1,pulse*2); ctx.fillStyle="#1fd6e3";
+  ctx.beginPath(); ctx.arc(G[0].x,G[0].y,5,0,7); ctx.fill();                                   // START: kropka + pierścień
+  ctx.lineWidth=2; ctx.beginPath(); ctx.arc(G[0].x,G[0].y,10+2*Math.sin(now/300),0,7); ctx.stroke();
+  ctx.globalAlpha=pulse*0.6; ctx.beginPath(); ctx.arc(G[G.length-1].x,G[G.length-1].y,3,0,7); ctx.fill();
   ctx.restore();
 }
 function spawnAmbient(x,y,n){ for(let i=0;i<n;i++) ambients.push({x:x+(Math.random()*24-12),y:y+(Math.random()*16-8),
@@ -2332,11 +2354,13 @@ function resetSpeedCoach(){ fbBadT=0; fbAlpha=0; fbCoachT=0; }
 function drawSpeedCoach(now){
   const dt=Math.min(0.05,Math.max(0,(now-(fbCoachT||now))/1000)); fbCoachT=now;
   if(!(welding&&last&&speedFb)||(proc==="MMA"&&replacing)){ resetSpeedCoach(); return; }
-  if(fbGood) fbBadT=0; else fbBadT+=dt;
+  if(fbGood){ fbBadT=0; fbAlpha=0; } else fbBadT+=dt;   // 17.10: koniec przyczyny = koniec napisu (pasek ŁUK i napis w tej samej klatce)
   if(fbBadT>=FB_ARM){ fbText=speedFb; fbAlpha=Math.min(1,fbAlpha+dt/FB_IN); }
   else fbAlpha=Math.max(0,fbAlpha-dt/FB_OUT);
   if(fbAlpha>0.01){ const at=speedPillSpot();
-    if(guideBox&&!at.left&&at.y<guideBox.y+guideBox.h+16&&at.y>guideBox.y-16) at.y=guideBox.y+guideBox.h+16;   // podpowiedzi zajęły miejsce — pigułka pod nimi
+    if(guideBox&&at.x>guideBox.x-120&&at.x<guideBox.x+guideBox.w+120&&at.y>guideBox.y-16&&at.y<guideBox.y+guideBox.h+16){   // podpowiedzi zajęły miejsce
+      const V=VIEW||{x:0,y:0,w:W,h:H}, below=guideBox.y+guideBox.h+16;
+      at.left=false; at.x=guideBox.x+guideBox.w/2; at.y=below+14<V.y+V.h?below:guideBox.y-16; }   // pod panelem, a jak brak miejsca — nad nim
     drawSpeedPill(at.x,at.y,fbText,false,fbAlpha,at.left); }
 }
 // 05.10 (user: napisy w trakcie spawania za blisko elektrody, "mega to drazni"): pigulka juz NIE jedzie za lukiem.
@@ -2358,7 +2382,23 @@ function speedPillSpot(){
 // więc tych pasków tam nie ma — zostaje tempo i ciepło. Konkurs i Battle: wymuszone WYŁ (jak egzamin).
 // Nie trafia do nagrania, nie rusza sim.js — wynik bit-w-bit jak bez podpowiedzi.
 let guidesOn=true; try{ if(localStorage.getItem("gorweld_guides")==="0") guidesOn=false; }catch(e){}
-let guidePos=null, guideBox=null, guideForcedShown=null, GUIDE_XR=1e9;
+let guidePos=null, guideBox=null, guideForcedShown=null, GUIDE_XR=1e9, _gp={key:"",pos:null,f:1,t:0};
+// Szukanie miejsca jak lensPlace(): siatka po widocznym polu, przeszkody = karty/panele DOM + lupa przekroju.
+// strict: 1) wolne miejsce pod blachą (blacha też przeszkodą), 2) na dolnej części blachy z dala od pasa szwu.
+// !strict: 3) gdziekolwiek, byle nie na szwie, 4) byle nie na kartach. Wynik trzyma drawGuides() — zero dryfu.
+function guideObst(mob){ const now=performance.now(), v=visGroove(), sr=stage.getBoundingClientRect(), kx=W/Math.max(1,sr.width);
+  const lens=_lensBox&&now-_lensBox.t<200?_lensBox:null, ui=uiBoxes(sr,kx).concat(lens?[lens]:[]), pb=plateBoxOf(v);
+  let sx0=1e9,sy0=1e9,sx1=-1e9,sy1=-1e9; for(const p of seamPts){ sx0=Math.min(sx0,p.x); sx1=Math.max(sx1,p.x); sy0=Math.min(sy0,p.y); sy1=Math.max(sy1,p.y); }
+  const m=grooveHalf+bevelW+(mob?40:24);   // pas szwu + jeziorko + elektroda u dołu
+  return {ui,pb,band:{x:sx0-m,y:sy0-m,w:sx1-sx0+2*m,h:sy1-sy0+2*m},
+    vx0:Math.max(0,-sr.left*kx), vy0:Math.max(0,-sr.top*kx), vx1:Math.min(W,(innerWidth-sr.left)*kx,GUIDE_XR), vy1:Math.min(H,(innerHeight-sr.top)*kx)}; }
+function gHit(B,x,y,bw,bh){ return B.some(b=>x<b.x+b.w&&x+bw>b.x&&y<b.y+b.h&&y+bh>b.y); }
+function guideSearch(O,bw,bh,strict){ const {ui,pb,band}=O, cx=pb.x+pb.w/2;
+  const scan=(B,tx,ty,yMin)=>{ let pos=null,best=1e18;
+    for(let y=Math.max(O.vy0+6,yMin||0);y+bh<=O.vy1-6;y+=8) for(let x=O.vx0+6;x+bw<=O.vx1-6;x+=8){ if(gHit(B,x,y,bw,bh)) continue;
+      const d=(x+bw/2-tx)**2+((y+bh/2-ty)*1.6)**2; if(d<best){ best=d; pos={x,y}; } } return pos; };
+  return strict ? scan(ui.concat([pb]),cx,pb.y+pb.h+10+bh/2,pb.y+pb.h)||scan(ui.concat([band]),cx,band.y+band.h+bh/2,band.y+band.h)
+                : scan(ui.concat([band]),cx,pb.y+pb.h)||scan(ui,cx,pb.y+pb.h); }
 function guidesForcedOff(){ return isChallenge()||battleTaskActive()||!!(battleState&&battleState.serverMode); }
 const GD_G=0.32, GD_Y=0.64;   // pozycja na torze: krawędź zieleni / krawędź żółci (reszta = czerwień)
 function gdSide(d,g,y,s){   // d ≥ 0 od celu w stronę krawędzi; g/y/s = krawędź zieleni / żółci / nasycenie
@@ -2396,22 +2436,25 @@ function drawGuides(now){
   if(!guidesOn||guidesForcedOff()||!(welding&&last)||isCut()||(proc==="MMA"&&replacing)){ guidePos=null; guideBox=null; return; }
   const rows=guideRows(); if(!rows.length) return;
   // 17.10 user: panel 2× większy (telefon 1,5× — inaczej zakrywa pół blachy), ciemne tło, grube paski
-  const mob=isMob(), s=Math.max(1,Math.min(3,W/Math.max(1,stage.clientWidth||W)))*(mob?1.5:2);   // ~stały rozmiar w px ekranu
-  ctx.save(); ctx.font="700 "+(10*s)+"px 'Segoe UI',system-ui,sans-serif";
-  const hintW=Math.max(...["gd_short","gd_long","gd_slower","gd_faster","gd_tilt","gd_cooler","gd_hotter","gd_feed"].map(k=>ctx.measureText("◀ "+t(k)).width))+8*s;
-  const labW=Math.max(...rows.map(r=>ctx.measureText(t(r.k)).width))+8*s;
-  const rowH=15*s, padX=7*s, trW=84*s, bw=padX*2+labW+trW+hintW, bh=rows.length*rowH+8*s;
-  // Miejsce: pod szwem i trochę przed łukiem (user 17.10: „placement under the seam is good”), z dala od
-  // elektrody (stoi w górę). Szew pionowy: z prawej. Telefon: przed łukiem (pod łukiem jest palec).
-  const horiz=Math.abs(ux)>=Math.abs(uy), g0=s/(mob?1.5:2);   // odstęp od szwu jak przed powiększeniem
-  let tx, ty;
-  if(horiz){ const dir=ux>=0?1:-1; tx=mob?(dir>0?last.x+30*g0:last.x-30*g0-bw):last.x+dir*34*g0-bw/2; ty=last.y+32*g0; }
-  else { tx=last.x+48*g0; ty=last.y-bh/2; }
-  const V=VIEW||{x:0,y:0,w:W,h:H};
-  const xr=Math.min(V.x+V.w,GUIDE_XR)-6;
-  if(mob&&horiz&&tx+bw>xr&&ux>=0) tx=last.x-30*g0-bw;   // przed łukiem brak miejsca (koniec szwu) — panel za łuk, nad gotową spoiną
-  tx=Math.max(V.x+6,Math.min(xr-bw,tx)); ty=Math.max(V.y+6,Math.min(V.y+V.h-bh-6,ty));
-  if(!guidePos) guidePos={x:tx,y:ty}; else { guidePos.x+=(tx-guidePos.x)*0.18; guidePos.y+=(ty-guidePos.y)*0.18; }
+  const mob=isMob(); let s=Math.max(1,Math.min(3,W/Math.max(1,stage.clientWidth||W)))*(mob?1.5:2);   // ~stały rozmiar w px ekranu
+  const dims=f=>{ const k=s*f; ctx.font="700 "+(10*k)+"px 'Segoe UI',system-ui,sans-serif";
+    const hintW=Math.max(...["gd_short","gd_long","gd_slower","gd_faster","gd_tilt","gd_cooler","gd_hotter","gd_feed"].map(q=>ctx.measureText("◀ "+t(q)).width))+8*k;
+    const labW=Math.max(...rows.map(r=>ctx.measureText(t(r.k)).width))+8*k, padX=7*k, trW=84*k;
+    return {k,hintW,labW,padX,trW,rowH:15*k,bw:padX*2+labW+trW+hintW,bh:rows.length*15*k+8*k}; };
+  // Miejsce STAŁE (17.10 user: „fixed position that never covers the SECTION card, the left electrode card or
+  // the right control panel… under the plate, centred, no sideways drift”). Liczone raz na układ; jak pod
+  // blachą brak miejsca, panel najpierw się zmniejsza (85%, 72%), dopiero potem idzie gdzie indziej.
+  const now2=performance.now(), lk=[W,H,posKey,thick,joint,proc,innerWidth,innerHeight,lang,rows.length,mob].join("|");
+  ctx.save();
+  let D=_gp.key===lk&&_gp.pos?dims(_gp.f):null;
+  if(D&&now2-_gp.t>=500){ _gp.t=now2; const O=guideObst(mob); if(gHit(O.ui,_gp.pos.x,_gp.pos.y,D.bw,D.bh)) D=null; }   // coś stanęło na panelu
+  if(!D){ const O=guideObst(mob); let pos=null, f=1;
+    for(const ff of [1,0.85,0.72]){ const d=dims(ff); pos=guideSearch(O,d.bw,d.bh,true); if(pos){ f=ff; break; } }
+    if(!pos){ f=1; const d=dims(1); pos=guideSearch(O,d.bw,d.bh,false); }
+    _gp={key:lk,pos,f,t:now2}; D=dims(f); }
+  if(!_gp.pos){ ctx.restore(); return; }
+  guidePos=_gp.pos; ctx.font="700 "+(10*D.k)+"px 'Segoe UI',system-ui,sans-serif";
+  const {hintW,labW,padX,trW,rowH,bw,bh}=D; s=D.k;
   const x0=guidePos.x, y0=guidePos.y, COL=["#5fe08a","#ffd23f","#ff5a4a"]; guideBox={x:x0,y:y0,w:bw,h:bh};
   ctx.fillStyle="rgba(1,3,4,.90)"; ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.roundRect(x0,y0,bw,bh,6*s); ctx.fill(); ctx.stroke();
@@ -2490,16 +2533,22 @@ function drawWeldSection(c,now,noLens){
 
 // Miejsce na lupę: pierwsze wolne z kandydatów (obok czoła → po bokach blachy → rogi), które nie wchodzi
 // na blachę ani pod żaden panel/HUD. DOM czytamy co 400 ms, nie w każdej klatce.
-let _lens={t:0,key:"",pos:null};
-function lensPlace(BW,BH,v,F){ const now=performance.now(), key=W+"|"+H+"|"+posKey+"|"+thick+"|"+joint+"|"+innerWidth+"|"+innerHeight;
-  if(key===_lens.key&&now-_lens.t<400) return _lens.pos;
-  const sr=stage.getBoundingClientRect(), kx=W/Math.max(1,sr.width), ph=POSITIONS[posKey].pipe?v.T+30:plateHalf()+v.T+8;   // rura: chronimy szew, nie cały walec
+let _lens={t:0,key:"",pos:null}, _lensBox=null;   // _lensBox: gdzie lupa stoi w tej klatce (omijają ją podpowiedzi)
+// obrys blachy w polu logicznym (rura: chronimy szew, nie cały walec)
+function plateBoxOf(v){ const ph=POSITIONS[posKey].pipe?v.T+30:plateHalf()+v.T+8;
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const p of seamPts){ x0=Math.min(x0,p.x-ph); x1=Math.max(x1,p.x+ph); y0=Math.min(y0,p.y-ph); y1=Math.max(y1,p.y+ph); }
   if(!POSITIONS[posKey].pipe){ const A=seamPts[0],B=seamPts[seamPts.length-1];   // prosta blacha: obrys = szew ± plateHalf w poprzek
     if(Math.abs(B.y-A.y)<1){ x0=A.x-4; x1=B.x+v.T+4; } else { y0=Math.min(A.y,B.y)-4; y1=Math.max(A.y,B.y)+v.T+4; } }
-  const boxes=[{x:x0,y:y0,w:x1-x0,h:y1-y0}];
-  document.querySelectorAll(".panel,.toolhud,.covbar,.rankbar,.grav,.info-card,#watermark").forEach(el=>{ const r=el.getBoundingClientRect();
-    if(r.width>0&&r.height>0&&getComputedStyle(el).display!=="none") boxes.push({x:(r.left-sr.left)*kx-8,y:(r.top-sr.top)*kx-8,w:r.width*kx+16,h:r.height*kx+16}); });
+  return {x:x0,y:y0,w:x1-x0,h:y1-y0}; }
+// karty i panele DOM nad canvasem, przeliczone na pole logiczne (+8 px oddechu)
+function uiBoxes(sr,kx){ const out=[];
+  document.querySelectorAll(".panel,.toolhud,.covbar,.rankbar,.grav,.info-card,#watermark,.mob-hud").forEach(el=>{ const r=el.getBoundingClientRect();
+    if(r.width>0&&r.height>0&&getComputedStyle(el).display!=="none") out.push({x:(r.left-sr.left)*kx-8,y:(r.top-sr.top)*kx-8,w:r.width*kx+16,h:r.height*kx+16}); });
+  return out; }
+function lensPlace(BW,BH,v,F){ const now=performance.now(), key=W+"|"+H+"|"+posKey+"|"+thick+"|"+joint+"|"+innerWidth+"|"+innerHeight;
+  if(key===_lens.key&&now-_lens.t<400) return _lens.pos;
+  const sr=stage.getBoundingClientRect(), kx=W/Math.max(1,sr.width);
+  const boxes=[plateBoxOf(v)].concat(uiBoxes(sr,kx));
   const vx0=Math.max(0,-sr.left*kx), vy0=Math.max(0,-sr.top*kx), vx1=Math.min(W,(innerWidth-sr.left)*kx), vy1=Math.min(H,(innerHeight-sr.top)*kx);
   // siatka co 16 px po widocznym polu; wygrywa wolne miejsce najbliżej czoła (krótka linia prowadząca)
   const E=F.E, hit=(x,y)=>boxes.some(b=>x<b.x+b.w&&x+BW>b.x&&y<b.y+b.h&&y+BH>b.y);
@@ -2542,7 +2591,7 @@ function drawSectionLens(c,now,v,F,all,st,live,at){
   // ≤3 mm: przy stałej skali z blach zostawały dwa szare paski bez złącza — cienka blacha dostaje większe
   // powiększenie (do 16 px/mm), a pasek „1 mm" w lupie mówi uczciwie, w jakiej skali patrzysz.
   const thinL=thick<=3, S=Math.min((BW-125)/wid,120/depth,(joint==="fillet"?(thinL?14.0:4.0):(thinL?16.0:6.0))/v.k), BH=Math.round(depth*S+58);
-  const lp=at||lensPlace(BW,BH,v,F); if(!lp) return; const bx=lp.x, by=lp.y;
+  const lp=at||lensPlace(BW,BH,v,F); if(!lp) return; const bx=lp.x, by=lp.y; if(!at) _lensBox={x:bx-8,y:by-8,w:BW+16,h:BH+16,t:now};
   if(at){ const d=at.d||1; c.canvas.width=380*d; c.canvas.height=(BH+8)*d; c.canvas.style.width="380px"; c.setTransform(d,0,0,d,0,0); }   // raport: wysokość pod treść, ostro na retinie
   const ox=bx+12-m.xL*S, oz=by+36-m.zT*S, M=(x,z)=>[ox+x*S,oz+z*S];
   const poly=pts=>{ c.beginPath(); pts.forEach(([x,z],i)=>{ const [X,Y]=M(x,z); i?c.lineTo(X,Y):c.moveTo(X,Y); }); c.closePath(); };
@@ -2601,7 +2650,8 @@ function drawSectionLens(c,now,v,F,all,st,live,at){
 // w dół ekranu (brzuch), PE/PD — jeziorko wisi (ciemny pierścień meniskusa). Tylko piksele.
 function puddleGeo(){ const P=POSITIONS[posKey]||{}, r=Math.max(2,beadWidth()), flat=posKey==="PA"||P.pipe==="flat", hang=!!P.flip;
   const gs=flat?0:Math.min(1,(P.g||0)/0.15), sr=Math.max(0.35,Math.min(2.2,vEMA/Math.max(1,targetPx)));
-  return {r,hang,L:r*(1.25+0.75*sr),sag:hang?0:gs*r*0.32,hw:r*1.02*(1+0.06*Math.sin(performance.now()/70)),x:last.x,y:last.y,ang:Math.atan2(uy,ux)}; }
+  const DL=dirLook();
+  return {r,hang,lead:DL.lead,L:r*(1.25+0.75*sr)*DL.tail,sag:hang?0:gs*r*0.32,hw:r*1.02*(1+0.06*Math.sin(performance.now()/70)),x:last.x,y:last.y,ang:Math.atan2(uy,ux)}; }
 function puddlePath(G){ const {r,L,hw}=G; ctx.beginPath(); ctx.moveTo(-L,0);
   ctx.bezierCurveTo(-L*0.55,-hw*0.95, -r*0.1,-hw, r*0.35,-hw*0.92); ctx.arc(r*0.35,0,hw*0.92,-Math.PI/2,Math.PI/2);
   ctx.bezierCurveTo(-r*0.1,hw, -L*0.55,hw*0.95, -L,0); ctx.closePath(); }
@@ -2641,6 +2691,9 @@ function drawPuddle(now){
   // ciemniejsze brzegi (płyn jest wypukły, przy linii wtopienia chłodniejszy)
   const eg=ctx.createRadialGradient(-L*0.2,0,G.hw*0.3,-L*0.2,0,G.hw*1.3); eg.addColorStop(0,"rgba(0,0,0,0)"); eg.addColorStop(1,"rgba(120,30,0,.35)");
   ctx.fillStyle=eg; puddlePath(G); ctx.fill();
+  if(G.lead>0.05){ const lx=r*(1.05+0.35*G.lead), lw=r*(0.35+0.4*G.lead);   // w dół: ciekły metal spływa PRZED łuk (język)
+    const lg=ctx.createRadialGradient(lx,0,0,lx,0,lw); lg.addColorStop(0,"rgba(255,176,60,"+(0.75*G.lead)+")"); lg.addColorStop(1,"rgba(230,90,20,0)");
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.ellipse(lx,0,lw,G.hw*(0.55+0.15*G.lead),0,0,7); ctx.fill(); }
   // krater łuku — jasne wtopienie na przodzie
   ctx.globalCompositeOperation="lighter"; ctx.fillStyle="rgba(255,255,245,0.85)"; ctx.beginPath(); ctx.ellipse(r*0.7,0, r*0.32, r*0.26, 0,0,7); ctx.fill();
   ctx.restore();
@@ -2669,6 +2722,9 @@ function applyEyeBurn(now,eff){
 // ── Live groove-coverage bar (drives the "weld the WHOLE bead" loop) ─
 function updateCovBar(now){
   const bar=document.getElementById("covbar"); if(!bar) return;
+  // 17.10: na PC pasek pokrycia stał na drugim rzędzie nagłówka (POZYCJA · PL/EN/RU) — teraz tuż pod nagłówkiem
+  { const tp=document.querySelector(".panel.top"), r=(!isMob()&&tp)?tp.getBoundingClientRect():null, top=r&&r.height?Math.round(r.bottom+6)+"px":"";
+    if(bar.style.top!==top) bar.style.top=top; }
   if(baked.length<2 && passIndex===0){ bar.classList.remove("show"); return; }
   bar.classList.add("show");
   if(now-lastCovUpd>120){ covSmoothed=coverageNow(); lastCovUpd=now; }
@@ -2684,6 +2740,7 @@ function updateCovBar(now){
 }
 // ── Render ────────────────────────────────────────────────────────
 function frame(now){
+  gUpTick();
   if(vb) vbFlush(false);   // lico: dorysuj odcinki i zamroź to, co zostało za jeziorkiem
   const dtf=lastFrameT?Math.min(0.05,(now-lastFrameT)/1000):0; lastFrameT=now;
   if(welding&&!helmetOn) eyeBurn+=dtf; else eyeBurn=Math.max(0,eyeBurn-dtf*0.6); // eyes recover when you stop / put helmet on
@@ -3774,7 +3831,8 @@ function fitStage(){
   const vx1=Math.min(W,Math.ceil((innerWidth-left)/s)+2), vy1=Math.min(H,Math.ceil((innerHeight-top)/s)+2);
   VIEW=(vx1-vx0)*(vy1-vy0)<W*H*0.95?{x:vx0,y:vy0,w:vx1-vx0,h:vy1-vy0}:null;
   // podpowiedzi: telefon ma z prawej kolumnę przycisków na canvasie — panel ma kończyć się przed nią
-  GUIDE_XR=W; if(isMob()){ let cx=innerWidth; document.querySelectorAll(".mob-actions").forEach(b=>{ const r=b.getBoundingClientRect(); if(r.width&&r.left>innerWidth/2) cx=Math.min(cx,r.left); });
+  GUIDE_XR=W; if(isMob()&&innerWidth>innerHeight){   // pion: przyciski są na dole (to .panel.bottom, już przeszkoda)
+    let cx=innerWidth; document.querySelectorAll(".mob-actions").forEach(b=>{ const r=b.getBoundingClientRect(); if(r.width&&r.left>innerWidth/2) cx=Math.min(cx,r.left); });
     GUIDE_XR=Math.min(W,(cx-8-left)/s); }
   stage.style.inset="auto";
   stage.style.left=Math.round(left)+"px"; stage.style.top=Math.round(top)+"px";
