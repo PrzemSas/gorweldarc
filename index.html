@@ -1985,10 +1985,10 @@ function move(e){ if(isCut())return cutMove(e);
       arcLen += (ARC_RISE + ((btnMask&2)?ARC_LIFT:0) - ((btnMask&1)?ARC_PUSH:0))*dtS;
       if(arcLen<=0){ arcLen=0; contactT+=dtS;                        // elektroda leży na blasze
         if(contactT>=ARC_STICK_T){                                   // za długo w kontakcie → przywarła
-          stickCount++; showToast(t("t_stick"),"#ff5a4a"); end(null); updateToolHud(); e.preventDefault(); return; }
+          stickCount++; arcSnd("stick"); showToast(t("t_stick"),"#ff5a4a"); end(null); updateToolHud(); e.preventDefault(); return; }
       } else contactT=0;
       if(arcLen>=L0*ARC_MAX_MUL){                                    // odciągnięta za daleko — łuk zgasł
-        arcLen=L0*ARC_MAX_MUL; arcBroke++; showToast(t("t_arcbreak"),"#ff9a3c"); end(null); updateToolHud(); e.preventDefault(); return; }
+        arcLen=L0*ARC_MAX_MUL; arcBroke++; arcSnd("break"); showToast(t("t_arcbreak"),"#ff9a3c"); end(null); updateToolHud(); e.preventDefault(); return; }
       const r=arcLen/L0;
       arcPenAcc+=arcPenNow(r)*dtS; arcTime+=dtS; arcRSum+=r*dtS;
       const uNow=recommendedVolts(proc,thick)+ARC_V_SLOPE*(arcLen-L0);
@@ -3210,7 +3210,13 @@ function cardText(){ const r=lastReport;
       r.letter+" ("+r.score+"%)", r.iso ]); }
 
 // ── Audio ─────────────────────────────────────────────────────────
+// Łuk spawalniczy (dźwięk v4 z demo 27.10): barwa idzie za tym samym stanem co pasek ŁUK — długość łuku
+// względem pasma bez kary (arcLo/arcHi) i prąd. Dobry MAG skwierczy równo, za długi syczy i strzela,
+// za krótki się dławi. Trzaski planowane na zegarze audio. Tylko wyjście — ocena i nagranie bez zmian.
+// CIĘCIE/PLAZMA zostają na starym szumie + brzęczeniu.
 let actx,master,noiseSrc,buzzOsc,bpFilter,crackleTimer,soundOn=true;
+let sndBus,sndBuf,sndHissBP,sndHissG,sndBuzzO,sndBuzzG,sndNextT=0;
+const SND_AMPS={MIG:[80,220],MMA:[60,160],TIG:[40,160]};
 function initAudio(){ if(actx)return;
   actx=new (AudioContext||webkitAudioContext)(); master=actx.createGain(); master.gain.value=0; master.connect(actx.destination);
   const buf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate),d=buf.getChannelData(0);
@@ -3220,16 +3226,92 @@ function initAudio(){ if(actx)return;
   buzzOsc=actx.createOscillator(); buzzOsc.type="sawtooth"; const bg=actx.createGain(); bg.gain.value=0.18;
   const lp=actx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=600; buzzOsc.connect(lp); lp.connect(bg); bg.connect(master);
   noiseSrc.start(); buzzOsc.start();
+  sndBuf=buf;
+  const comp=actx.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; comp.connect(actx.destination);
+  sndBus=actx.createGain(); sndBus.gain.value=0; sndBus.connect(comp);
+  const hs=actx.createBufferSource(); hs.buffer=buf; hs.loop=true;
+  sndHissBP=actx.createBiquadFilter(); sndHissBP.type="bandpass"; sndHissBP.Q.value=0.6;
+  sndHissG=actx.createGain(); sndHissG.gain.value=0; hs.connect(sndHissBP); sndHissBP.connect(sndHissG); sndHissG.connect(sndBus);
+  sndBuzzO=actx.createOscillator(); sndBuzzO.type="sawtooth"; sndBuzzO.frequency.value=100;
+  const blp=actx.createBiquadFilter(); blp.type="lowpass"; blp.frequency.value=700;
+  sndBuzzG=actx.createGain(); sndBuzzG.gain.value=0; sndBuzzO.connect(blp); blp.connect(sndBuzzG); sndBuzzG.connect(sndBus);
+  hs.start(); sndBuzzO.start();
 }
+function sndNew(){ return proc==="MIG"||proc==="MMA"||proc==="TIG"; }
+function sndAmps01(){ try{ const A=(elecOn()&&beadAmps)?beadAmps:ampsSetFor(posKey), R=SND_AMPS[proc];
+  return A==null?0.5:Math.min(1,Math.max(0,(A-R[0])/(R[1]-R[0]))); }catch(e){ return 0.5; } }
+function sndParams(){
+  const r=(arcLive&&!tigLive)?arcLen/arcL0():1, a=sndAmps01();
+  const sh=Math.min(1,Math.max(0,(arcLo()-r)/0.416)), lo=Math.min(1,Math.max(0,(r-arcHi())/1.28));
+  if(proc==="MIG") return {rate:(95+a*45)*(1-0.75*lo)*(1+0.3*sh),jit:0.18+0.7*lo+0.35*sh,cLvl:0.95+0.45*a,cLen:0.006,cF:2800+a*1500-900*sh,dbl:0.45,
+    hLvl:0.03+0.03*a+0.16*lo,hF:2600+a*1000,hQ:0.6,bF:125,bLvl:0.002+0.03*lo,pop:0.015+0.22*lo,thump:0.22*sh,gap:0.05*sh};
+  if(proc==="MMA") return {rate:(42+a*22)*(1-0.6*lo)*(1-0.35*sh),jit:0.55+0.4*lo,cLvl:1.0+0.45*a-0.3*sh,cLen:0.014,cF:(1600+a*900)*(1-0.5*sh),dbl:0.35,
+    hLvl:0.04+0.035*a+0.18*lo-0.02*sh,hF:(1900+a*500)*(1-0.45*sh),hQ:0.6,bF:90,bLvl:0.003+0.04*lo,pop:0.04+0.3*lo,thump:0.18*sh,gap:0.04*sh};
+  return {rate:9*lo,jit:0.9,dbl:0,cLvl:0.25,cLen:0.006,cF:3000,hLvl:0.08+0.09*a+0.12*lo,hF:3300+a*1400+900*sh,hQ:Math.max(0.5,2.6-2.0*lo),
+    bF:100,bLvl:0.004+0.07*lo,pop:0.1*lo,thump:0,gap:0};
+}
+function sndBurst(t,f,q,lvl,len,type){
+  const s=actx.createBufferSource(); s.buffer=sndBuf;
+  const fl=actx.createBiquadFilter(); fl.type=type||"bandpass"; fl.frequency.value=f; fl.Q.value=q;
+  const g=actx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(lvl,t+0.0007);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+  s.connect(fl); fl.connect(g); g.connect(sndBus); s.start(t,Math.random()*1.8); s.stop(t+len+0.03);
+}
+function sndClick(t,P){ const r=Math.random(); sndBurst(t,P.cF*(0.7+Math.random()*0.6),0.75,P.cLvl*(r<0.12?1.25:0.4+r*0.6),P.cLen*(0.6+Math.random()*0.8)); }
+function sndPop(t,lvl){ sndBurst(t,900+Math.random()*700,0.9,lvl||0.9,0.03+Math.random()*0.03); }
+function sndThump(t,lvl){
+  const o=actx.createOscillator(),g=actx.createGain(); o.type="sine";
+  o.frequency.setValueAtTime(85,t); o.frequency.exponentialRampToValueAtTime(38,t+0.09);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(lvl||0.55,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
+  o.connect(g); g.connect(sndBus); o.start(t); o.stop(t+0.16);
+  sndBurst(t,280,0.7,0.25,0.05,"lowpass");
+}
+function sndStrike(){
+  const t=actx.currentTime+0.01, s=actx.createBufferSource(); s.buffer=sndBuf;
+  const f=actx.createBiquadFilter(); f.type="bandpass"; f.Q.value=2; f.frequency.setValueAtTime(1500,t); f.frequency.exponentialRampToValueAtTime(5200,t+0.12);
+  const g=actx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.35,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
+  s.connect(f); f.connect(g); g.connect(sndBus); s.start(t,Math.random()); s.stop(t+0.16);
+  sndPop(t+0.12,0.8); sndNextT=t+0.14;
+}
+function sndTick(){ if(!actx||!sndBus)return;
+  const now=actx.currentTime, P=sndParams(), on=!(elecOn()&&replacing);   // wymiana elektrody MMA = cisza
+  sndHissBP.frequency.setTargetAtTime(P.hF,now,0.05); sndHissBP.Q.setTargetAtTime(P.hQ,now,0.05);
+  sndBuzzO.frequency.setTargetAtTime(P.bF*(0.97+Math.random()*0.06),now,0.03);
+  sndHissG.gain.setTargetAtTime(on?P.hLvl*(0.85+Math.random()*0.3):0,now,on?0.03:0.06);
+  sndBuzzG.gain.setTargetAtTime(on?P.bLvl:0,now,0.05);
+  if(!on) return;
+  if(sndNextT<now) sndNextT=now+0.01;
+  while(sndNextT<now+0.12){
+    if(P.rate<0.5){ sndNextT+=0.05; continue; }
+    if(Math.random()<P.gap){ sndNextT+=0.04+Math.random()*0.09; if(Math.random()<P.thump*2) sndThump(sndNextT); continue; }
+    sndClick(sndNextT,P);
+    if(Math.random()<P.dbl){ const n=1+(Math.random()<0.35?Math.floor(Math.random()*3):0);
+      for(let k=1;k<=n;k++) sndBurst(sndNextT+k*(0.0012+Math.random()*0.003),P.cF*(0.8+Math.random()*0.7),0.75,P.cLvl*(0.25+Math.random()*0.35),P.cLen*0.7); }
+    if(Math.random()<P.pop) sndPop(sndNextT+0.002);
+    if(Math.random()<P.thump*0.15) sndThump(sndNextT);
+    sndNextT+=(1/P.rate)*((1-P.jit)+P.jit*(-Math.log(1-Math.random()*0.999)));
+  }
+}
+// Przywarcie / zerwanie łuku — krótki dźwięk zdarzenia; wołane przed end(null)
+function arcSnd(kind){ if(!soundOn||!actx||!sndBus||!sndNew())return; const t=actx.currentTime+0.005;
+  sndBus.gain.cancelScheduledValues(actx.currentTime); sndBus.gain.setValueAtTime(1,actx.currentTime);
+  if(kind==="stick"){ sndThump(t,0.8); sndBurst(t,1800,3,0.3,0.02); }
+  if(kind==="break"){ sndPop(t,1); sndBurst(t,4000,0.8,0.35,0.08,"highpass"); } }
 function arcOn(){ if(!soundOn)return; initAudio(); if(actx.state==="suspended")actx.resume(); if(typeof amDuck==="function")amDuck(true);
+  clearInterval(crackleTimer);
+  if(sndNew()){ master.gain.cancelScheduledValues(actx.currentTime); master.gain.setValueAtTime(0,actx.currentTime);
+    sndBus.gain.cancelScheduledValues(actx.currentTime); sndBus.gain.setTargetAtTime(1,actx.currentTime,0.01);
+    sndStrike(); sndTick(); crackleTimer=setInterval(sndTick,25); return; }
   const P=PROCESS[proc]; bpFilter.frequency.value=P.hiss; buzzOsc.frequency.value=P.buzz;
   master.gain.cancelScheduledValues(actx.currentTime); master.gain.setTargetAtTime(0.22,actx.currentTime,0.02);
-  clearInterval(crackleTimer); crackleTimer=setInterval(()=>{ if(!master)return;
+  crackleTimer=setInterval(()=>{ if(!master)return;
     master.gain.setTargetAtTime(0.11+Math.random()*P.crackDepth,actx.currentTime,0.01);
     buzzOsc.frequency.setTargetAtTime(P.buzz*(0.85+Math.random()*0.3),actx.currentTime,0.02); },P.crackInt);
 }
-function arcIntensity(v){ if(master&&soundOn) master.gain.setTargetAtTime(0.12+v*0.18,actx.currentTime,0.03); }
-function arcOff(){ clearInterval(crackleTimer); if(master) master.gain.setTargetAtTime(0,actx.currentTime,0.05); if(typeof amDuck==="function")amDuck(false); }
+function arcIntensity(v){ if(!soundOn||!master||sndNew())return; master.gain.setTargetAtTime(0.12+v*0.18,actx.currentTime,0.03); }
+function arcOff(){ clearInterval(crackleTimer); if(master) master.gain.setTargetAtTime(0,actx.currentTime,0.05);
+  if(sndBus){ sndHissG.gain.setTargetAtTime(0,actx.currentTime,0.05); sndBuzzG.gain.setTargetAtTime(0,actx.currentTime,0.05); sndBus.gain.setTargetAtTime(0,actx.currentTime+0.15,0.05); }
+  if(typeof amDuck==="function")amDuck(false); }
 
 // ── UI ────────────────────────────────────────────────────────────
 function refreshPositions(){
