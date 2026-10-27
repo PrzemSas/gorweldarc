@@ -702,7 +702,7 @@
     <div class="act"><button class="on" onclick="closeModal('aboutModal')" data-i18n="btn_close">CLOSE</button></div>
   </div></div>
 
-<script src="sim.js?v=3.13.0"></script>
+<script src="sim.js?v=3.14.0"></script>
 <script src="battle.js?v=20261004d"></script>
 <script>
 "use strict";
@@ -771,7 +771,7 @@ let rec=null;
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
-  kb:7,                           // 3.13.0: kierunek PF ↑ / PG ↓ w ocenie. 3.12.0: elektroda zostaje w uchwycie na następny ścieg. 3.11.0: łuk tylko w strefie rowka (onZone). 3.10.0: elektrody MMA — Ø per ścieg (`dia`), prąd z Ø, RĘCZNIE `am` + `amp` między ściegami. 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
+  kb:8,                           // 3.14.0: krótszy łuk MMA (pasmo 0,5–1,1×Ø). 3.13.0: kierunek PF ↑ / PG ↓ w ocenie. 3.12.0: elektroda zostaje w uchwycie na następny ścieg. 3.11.0: łuk tylko w strefie rowka (onZone). 3.10.0: elektrody MMA — Ø per ścieg (`dia`), prąd z Ø, RĘCZNIE `am` + `amp` między ściegami. 3.9.0: fizyczna skala blachy (VIS_K) + plan ściegów 3.8.0. 3.8.0: plan ściegów wg praktyki (kb:1 = plan 3.7.0). 3.7.0 KOMBAJN: realna sekwencja ściegów (tory, lico vs faza, 401, żużel) — bez flagi liczy się jak 3.6.0
   rw:Math.round((()=>{try{return stage.getBoundingClientRect().width;}catch(e){return 0;}})()),  // szerokość renderu → krok kwantyzacji kursora
   events:[]};
   if(proc==="MMA"&&ampMode==="man"&&ampSet!=null) rec.am=1;   // 3.10.0: RĘCZNIE = ampery bezwzględne (AUTO = krotność, jak dotąd)
@@ -1520,6 +1520,12 @@ const FIL_DT=0.15, FIL_LO=0.6, FIL_HI=1.6, FIL_PEN_CAP=20, FIL_MAJOR=17;   // 1:
 function filPenNow(r){ return r<FIL_LO ? Math.min(25,(FIL_LO-r)*40)
                      : r>FIL_HI ? Math.min(25,(r-FIL_HI)*22) : 0; }
 const ARC_LO=0.6, ARC_HI=1.6;   // pasmo bez kary, w krotnościach L0
+// 3.14.0 (kb:8) — MMA: pasmo bez kary 0,5–1,1×Ø, komunikat poniżej 0,4 / powyżej 1,3×Ø (1:1 z sim.js). MAG bez zmian.
+const ARC_LO_MMA=0.5, ARC_HI_MMA=1.1, ARC_FB_LO_MMA=0.4, ARC_FB_HI_MMA=1.3;
+function arcLo(){ return elecOn()?ARC_LO_MMA:ARC_LO; }
+function arcHi(){ return elecOn()?ARC_HI_MMA:ARC_HI; }
+function arcFbLo(){ return elecOn()?ARC_FB_LO_MMA:ARC_LO*0.90; }   // próg komunikatu ZA KRÓTKI ŁUK
+function arcFbHi(){ return elecOn()?ARC_FB_HI_MMA:ARC_HI*1.15; }   // próg komunikatu ZA DŁUGI ŁUK
 // 3.13.0 (kb:7) — kierunek na ścianie pionowej, 1:1 z sim.js: PF z dołu do góry, PG z góry na dół. Ścieg z ≥ DIR_MIN px
 // drogi w pionie, który ponad połowę (DIR_BAD) jedzie w złą stronę = wada niezgodności z WPS → REJECT. Punkty bez zmian.
 const DIR_MIN=40, DIR_BAD=0.5;
@@ -1534,7 +1540,7 @@ function arcL0(){ return elecOn()?curDia()/10:(ELEC_DIA[thick]||2.5); }   // 3.1
 // łuku (dotyk, demo, wszystko sprzed 2.0.0) liczy się bit-w-bit jak dotąd.
 function arcWFac(){ return arcLive ? Math.min(1.6,Math.max(0.62,Math.pow(Math.max(0.15,arcLen/arcL0()),0.35))) : 1; }
 // kara liczona CHWILOWO i całkowana po czasie — inaczej ktoś skaczący 0,2↔3,0 wyszedłby na średniej idealnie
-function arcPenNow(r){ return r<ARC_LO ? Math.min(25,(ARC_LO-r)*70) : r>ARC_HI ? Math.min(25,(r-ARC_HI)*35) : 0; }
+function arcPenNow(r){ const lo=arcLo(), hi=arcHi(); return r<lo ? Math.min(25,(lo-r)*70) : r>hi ? Math.min(25,(r-hi)*35) : 0; }
 // ── KĄT ELEKTRODY (3.0.0) — druga ręka idzie na klawiaturę ─────────────────────
 // Mysz nie ma już wolnej osi: X/Y to pozycja czubka, oba przyciski to długość łuku.
 // Kąt trafia więc na klawiaturę — i to jest zresztą prawdziwa postawa, bo elektrodę
@@ -1847,8 +1853,8 @@ function feedback(){
   // 3.13.0: zły kierunek na ścianie pionowej mówimy NAJPIERW — to odrzut, nie kosmetyka (ten sam próg co ocena)
   if(welding&&dirOnNow()){ const tot=dirUp+dirDn, wr=posKey==="PF"?dirDn:dirUp; if(tot>=DIR_MIN&&wr/tot>DIR_BAD){ fbGood=false; return t(posKey==="PF"?"fb_dir_pf":"fb_dir_pg"); } }
   if(arcLive){ const r=arcLen/arcL0();
-    if(r>ARC_HI*1.15){ fbGood=false; return t("fb_arclong"); }
-    if(r<ARC_LO*0.90){ fbGood=false; return t("fb_arcshort"); } }
+    if(r>arcFbHi()){ fbGood=false; return t("fb_arclong"); }
+    if(r<arcFbLo()){ fbGood=false; return t("fb_arcshort"); } }
   // Wkład ciepła odzywa się PO łuku, bo długi łuk sam podnosi napięcie, a więc i HI — gdyby HI szło
   // pierwsze, gracz dostawałby „jedź szybciej" zamiast „skróć łuk", czyli lekarstwo na objaw.
   // Sufit widać PRZED rundą (karta) i PO niej (raport), ale tempo — drugą połowę wzoru — gracz robi
@@ -1987,7 +1993,7 @@ function move(e){ if(isCut())return cutMove(e);
       arcPenAcc+=arcPenNow(r)*dtS; arcTime+=dtS; arcRSum+=r*dtS;
       const uNow=recommendedVolts(proc,thick)+ARC_V_SLOPE*(arcLen-L0);
       arcVSum+=uNow*dtS; if(elecOn()){ arcVb+=uNow*dtS; arcTb+=dtS; }   // 3.10.0: napięcie per ścieg (HI per ścieg)
-      if(r>ARC_HI) arcPorAcc+=(r-ARC_HI)*dtS;                        // długi łuk gubi osłonę → pęcherze
+      if(r>arcHi()) arcPorAcc+=(r-arcHi())*dtS;                        // długi łuk gubi osłonę → pęcherze
       if(proc==="MMA"&&!replacing){ electrodeLeft-=dtS/ARC_BURN_S;   // łuk zjada elektrodę samym paleniem
         if(electrodeLeft<=ELEC_STUB){ replacing=true; arcIntensity(0.02); showToast(t("t_replace"),"#ff9a3c");
           end(null); updateToolHud(); e.preventDefault(); return; } }
@@ -2060,7 +2066,7 @@ function move(e){ if(isCut())return cutMove(e);
     // to, co faktycznie robisz: 0 przy tempie docelowym, sufit 2× przy odchyłce ≥60%.
     let spatFac=Math.min(2,Math.abs(vEMA/targetPx-1)/0.30);
     const spA=ampF.spatAdd+fitF.spatAdd; if(spA) spatFac=Math.min(2.6,spatFac+spA);   // za duży prąd / za gruba Ø pryska nawet przy idealnym tempie
-    if(arcLive){ const rr=arcLen/arcL0(); if(rr>ARC_HI) spatFac=Math.min(3.2,spatFac+(rr-ARC_HI)*1.2); }
+    if(arcLive){ const rr=arcLen/arcL0(); if(rr>arcHi()) spatFac=Math.min(3.2,spatFac+(rr-arcHi())*1.2); }
     if(angLive){ const so=angOverT(taDeg); if(so>0) spatFac=Math.min(3.2,spatFac+Math.min(0.8,so/45)); }
     spatterCount+=Math.round((3+(thick>>1))*PROCESS[proc].sparks)*spatFac*(dtS*1000/16); passWeldMs+=dtS*1000;
     vSumT+=vEMA*dtS; vTimeS+=dtS;
@@ -2382,7 +2388,7 @@ function speedPillSpot(){
 }
 // ── Podpowiedzi na żywo (jak w symulatorach VR) — CZYSTO WIZUALNE ─────────────────────────
 // Paski przy łuku: ŁUK / SPOIWO (TIG) · KĄT · TEMPO · CIEPŁO. Progi to DOKŁADNIE te liczby, którymi
-// liczy ocena i komunikaty — nic nowego: łuk ARC_LO/ARC_HI (pasmo bez kary) i ×1,15/×0,90 (komunikat),
+// liczy ocena i komunikaty — nic nowego: łuk arcLo()/arcHi() (pasmo bez kary) i arcFbLo()/arcFbHi() (komunikat; MMA od 3.14.0 0,4/1,3×Ø),
 // kąt pasmo waBandFor/TA_BAND i +6° (komunikat), tempo 0,7–1,3 (sim.js beadWidth = idealne lico)
 // i 0,62/1,45 (komunikat), spoiwo FIL_HI i ×1,9 (komunikat), wkład ciepła ±25% od WPS (pasek raportu),
 // czerwony tylko powyżej sufitu HI_MAX_R na stali (= odrzut). Zielony = w paśmie, żółty = poza pasmem,
@@ -2419,7 +2425,7 @@ function gdMap(x,t,gLo,gHi,yLo,yHi,sLo,sHi){
   const r=gdSide(t-x,t-gLo,t-yLo,t-sLo); return {p:-r.p,st:r.st}; }
 function guideRows(){
   const rows=[];
-  if(arcLive&&!tigLive){ const r=arcLen/arcL0(), m=gdMap(r,1,ARC_LO,ARC_HI,ARC_LO*0.90,ARC_HI*1.15,0.2,ARC_MAX_MUL);
+  if(arcLive&&!tigLive){ const r=arcLen/arcL0(), m=gdMap(r,1,arcLo(),arcHi(),arcFbLo(),arcFbHi(),0.2,ARC_MAX_MUL);
     rows.push({k:"gd_arc",...m,h:m.st?t(r>1?"gd_short":"gd_long"):""}); }
   if(tigLive&&lastDabPos){ const p=last||cursor, r=Math.hypot(p.x-lastDabPos.x,p.y-lastDabPos.y)/Math.max(1e-6,targetPx*FIL_DT);
     const m=gdMap(r,0.8,0,FIL_HI,0,1.9,0,3); rows.push({k:"gd_fil",...m,h:m.st?t("gd_feed"):""}); }
