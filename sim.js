@@ -64,6 +64,7 @@
   const ARC_RISE = 1.0, ARC_PUSH = 3.5, ARC_LIFT = 1.5, ARC_STICK_T = 0.80;
   const ELEC_TRAVEL_ARC = 1000, ARC_BURN_S = 55;   // zapas drogi i czas jarzenia na całą elektrodę (1:1 z grą)
   const ARC_MAX_MUL = 3.2, ARC_V_SLOPE = 2.4, ARC_LO = 0.6, ARC_HI = 1.6;
+  const ARC_LO_MMA = 0.5, ARC_HI_MMA = 1.1;   // 3.14.0 (kb:8, MMA): pasmo bez kary ~1×Ø (do 3.13.0 MMA 0,6–1,6 jak MAG)
   const VOLT_TABLES = {
     MMA:[[1,3,20],[3,6,22],[6,10,24],[10,15,26]],
     MIG:[[1,3,18],[3,6,22],[6,12,26]],
@@ -71,7 +72,7 @@
   };
   function recommendedVolts(p, t) { const tbl = VOLT_TABLES[p]; if (!tbl) return null;
     for (const [lo,hi,v] of tbl) if (lo < t && t <= hi) return v; return null; }
-  function arcPenNow(r) { return r < ARC_LO ? Math.min(25, (ARC_LO - r) * 70) : r > ARC_HI ? Math.min(25, (r - ARC_HI) * 35) : 0; }
+  function arcPenNow(r, lo = ARC_LO, hi = ARC_HI) { return r < lo ? Math.min(25, (lo - r) * 70) : r > hi ? Math.min(25, (r - hi) * 35) : 0; }
   // ── KĄT ELEKTRODY (3.0.0) — 1:1 z index.html ──
   // Dwa kąty, tak jak uczą w szkole i jak liczą je symulatory AR:
   //   • ROBOCZY (wa)      — odchyłka od dwusiecznej złącza, mierzona w poprzek jazdy;
@@ -286,6 +287,8 @@
     // 3.13.0: kierunek jazdy na ścianie pionowej (PF z dołu do góry, PG z góry na dół) — kb≤6 bez reguły (bit-w-bit jak 3.12.0)
     const dirOn = round.kb >= 7 && (posKey === "PF" || posKey === "PG");
     let dirUp = 0, dirDn = 0; const dirLog = [];
+    // 3.14.0: węższe pasmo łuku MMA (0,5–1,1×Ø) — kb≤7 i MIG/TIG bit-w-bit jak 3.13.0
+    const arcMma = round.kb >= 8 && proc === "MMA", aLo = arcMma ? ARC_LO_MMA : ARC_LO, aHi = arcMma ? ARC_HI_MMA : ARC_HI;
     const keepDia = round.kb >= 6;  // 3.12.0: elektroda zostaje w uchwycie na następny ścieg (do 3.11.0 wracała do typowej)   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
@@ -467,10 +470,10 @@
         } else contactT = 0;
         if (arcLen >= arcL0 * ARC_MAX_MUL) { arcLen = arcL0 * ARC_MAX_MUL; arcBroke++; last = null; continue; }  // zerwany łuk
         const r = arcLen / arcL0;
-        arcPenAcc += arcPenNow(r) * dtS; arcTime += dtS; arcRSum += r * dtS;
+        arcPenAcc += arcPenNow(r, aLo, aHi) * dtS; arcTime += dtS; arcRSum += r * dtS;
         const uNow = recommendedVolts(proc, thick) + ARC_V_SLOPE * (arcLen - arcL0);
         arcVSum += uNow * dtS; if (dz) { arcVb += uNow * dtS; arcTb += dtS; }
-        if (r > ARC_HI) arcPorAcc += (r - ARC_HI) * dtS;
+        if (r > aHi) arcPorAcc += (r - aHi) * dtS;
         if (proc === "MMA" && !replacing) { electrodeLeft -= dtS / ARC_BURN_S;   // łuk zjada elektrodę w czasie
           if (electrodeLeft <= ELEC_STUB) { replacing = true; last = null; continue; } }
       }
@@ -530,7 +533,7 @@
       // danego proc/thick — idealny przebieg nie płaci za nic, zły płaci do 2×.
       let spatFac = Math.min(2, Math.abs(vEMA / targetPx - 1) / 0.30);
       const spA = ampF.spatAdd + fitF.spatAdd; if (spA) spatFac = Math.min(2.6, spatFac + spA);
-      if (arcLive) { const rr = arcLen / arcL0; if (rr > ARC_HI) spatFac = Math.min(3.2, spatFac + (rr - ARC_HI) * 1.2); }
+      if (arcLive) { const rr = arcLen / arcL0; if (rr > aHi) spatFac = Math.min(3.2, spatFac + (rr - aHi) * 1.2); }
       if (angLive) { const so = angOverT(taDeg); if (so > 0) spatFac = Math.min(3.2, spatFac + Math.min(0.8, so / 45)); }
       spatterCount += Math.round((3 + (thick >> 1)) * PROCESS[proc].sparks) * spatFac * (dtS * 1000 / 16); passWeldMs += dtS * 1000;
       vSumT += vEMA * dtS; vTimeS += dtS;
@@ -664,6 +667,9 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.14.0 — KRÓTSZY ŁUK MMA (flaga `kb: 8`, tylko MMA): pasmo bez kary 0,5–1,1×Ø (do 3.13.0 0,6–1,6×Ø, czyli dla Ø 3,2
+  //         bez kary do ~5,1 mm). Ta sama granica ARC_HI_MMA rusza karę, pęcherze i rozprysk długiego łuku. Zerwanie
+  //         (ARC_MAX_MUL) i przywarcie bez zmian. MIG/TIG i rundy kb≤7 bit-w-bit jak 3.13.0 (sim-3.13.0.js, kb8.js). SCORING 1.9.0.
   // 3.13.0 — KIERUNEK NA ŚCIANIE PIONOWEJ (flaga `kb: 7`): PF spawa się z dołu do góry, PG z góry na dół (ISO 6947).
   //         Ścieg, który ma ≥ DIR_MIN px drogi w pionie, a ponad połowę (DIR_BAD) jedzie w złą stronę, to wada
   //         niezgodności z WPS (PF w dół = brak przetopu / przyklejenie, PG w górę = przegrzanie cienkiej blachy) → REJECT
@@ -730,7 +736,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.13.0", SCORING_VERSION: "1.8.0", DIR_MIN, DIR_BAD, ZONE_BW };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.14.0", SCORING_VERSION: "1.9.0", DIR_MIN, DIR_BAD, ZONE_BW, ARC_LO_MMA, ARC_HI_MMA };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
