@@ -1951,6 +1951,12 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
     if(rec.am&&ampSet!=null&&ampSet!==ampRecd){ rec.events.push({type:"amp",t:t0,x:0,y:0,a:ampSet}); ampRecd=ampSet; }
     if(curDia()!==(diaRec||diaTypNow())){ rec.events.push({type:"dia",t:t0,x:0,y:0,d:curDia()}); diaRec=curDia(); electrodeLeft=1; replacing=false; } }
   if(needChip){ slagCount++; needChip=false; showToast(t("t_slagleft"),"#ff5a4a"); chipUI(); }   // 3.7.0: 1:1 z sim.js (down po bank bez chip)
+  // Fokus zostaje na kontrolce klikniętej ostatnio (start() robi preventDefault, więc klik w planszę
+  // go nie zabiera). Po suwaku prądu RĘCZNIE (#ampRange = INPUT) guard w angKey() odrzucał każde
+  // A/D/W/S i strzałkę przez CAŁĄ spoinę — kąt martwy, a kary za kąt dalej leciały. Ten sam wzór
+  // co błąd spacji z 3.3.0. Zajarzenie łuku = ręka na planszy, więc zdejmujemy fokus z kontrolki.
+  // Nie dotyka nagrania ani oceny — klawisze i tak zmieniają tylko maskę, całkowaną w move().
+  { const aeS=document.activeElement; if(aeS&&aeS!==document.body&&aeS.blur) aeS.blur(); }
   recEv('down',p.x,p.y,t0,btnMask); arcOn(); updateToolHud();
   if(e.pointerId!==undefined) try{ stage.setPointerCapture(e.pointerId); }catch(err){}
   e.preventDefault(); }
@@ -2120,8 +2126,12 @@ function angKey(e,on){
     if(welding) e.preventDefault();                            // spacja nie przewija strony ani nie klika przycisku
     return; }
   const bit=ANG_KEYS[e.code]; if(!bit) return;
+  // PUSZCZENIE klawisza ZAWSZE zdejmuje bit — także gdy fokus przeszedł w międzyczasie do pola
+  // formularza. Wcześniej guard niżej łapał też keyup: D wciśnięte na planszy, fokus do INPUT,
+  // puszczone D → bit zostawał i kąt kręcił się sam (audyt Codex 2026-10-30, #3).
+  if(!on){ keyMask&=~bit; if(welding) e.preventDefault(); updateToolHud(); return; }
   const ae=document.activeElement; if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
-  if(on) keyMask|=bit; else keyMask&=~bit;
+  keyMask|=bit;
   if(welding) e.preventDefault();                              // strzałki nie mają przewijać strony w trakcie ściegu
   updateToolHud(); }
 addEventListener("keydown",e=>angKey(e,true));
