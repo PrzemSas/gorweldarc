@@ -768,6 +768,12 @@ function reseedRound(seed){ roundSeed=(seed!=null?seed:(Math.random()*4294967296
 // ── Rejestrator rundy (krok 2): surowe inputy do serwerowego replay + parity ──
 // To DOKŁADNIE artefakt, który klient wyśle na serwer: nasiono + parametry + ścieżka kursora.
 let rec=null;
+let inputLockRec=null, inputLockLive=null;   // profil sterowania zamknięty dla tej rundy (patrz start())
+// Wskaźnik, który zajarzył łuk. Dopóki łuk się pali, zdarzenia INNEGO wskaźnika (drugi palec, mysz
+// przy dotyku, dotyk przy myszy) nie mogą zmieniać przycisków, ruchu ani gasić ściegu — inaczej
+// blokada profilu działała tylko między zajarzeniami (audyt Codex poprawki 02).
+let weldPid=null;
+function foreignPtr(e){ return welding&&weldPid!=null&&!!e&&e.pointerId!==undefined&&e.pointerId!==weldPid; }
 function recStart(){ rec={seed:roundSeed,W,H,proc,joint,pos:posKey,thick,bead,amps:ampsSetFor(posKey),arc:0,ang:0,tig:0,
   cvn:CVN_BEADS[bead]?1:0,        // „ta runda podlega limitowi HI" — starsze nagrania go nie mają i liczą się jak 3.3.0
   uf:1,                           // „ta runda podlega progowi za szybkiego przejazdu" (3.6.0) — bez flagi liczy się jak 3.5.0
@@ -795,7 +801,7 @@ const I18N={
   grav:"grawitacja<br>jeziorka", vset:"Prędkość zadana:", forA:"za A ≈",
   tool_elec:"🔥 Elektroda: ", tool_used:"ZUŻYTA — klik = nowa", tool_mig:"🔫 <b>Drut z automatu</b> — jedna ręka, ciągłe podawanie", tool_tig:"👐 <b>Palnik + drut</b> — LPM zapala, SPACJA dokłada spoiwo, PPM gasi",
   fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu",fb_dir_pf:"PF SPAWASZ Z DOŁU DO GÓRY — jedziesz w dół",fb_dir_pg:"PG SPAWASZ Z GÓRY NA DÓŁ — jedziesz w górę",def_dir_pf:"Ścieg PF jechany z góry na dół — niezgodny z WPS (PF = z dołu do góry): ryzyko braku przetopu i przyklejenia (ISO 5817: 401) — odrzut niezależnie od wyglądu lica",def_dir_pg:"Ścieg PG jechany z dołu do góry — niezgodny z WPS (PG = z góry na dół): przegrzanie cienkiej blachy i nadmierny nadlew — odrzut niezależnie od wyglądu lica", fb_slow:"ZA WOLNO — przepalenie / przelew", fb_good:"DOBRE TEMPO — pełny przetop",
-  t_replace:"WYMIEŃ ELEKTRODĘ — puść i złap nową", t_eye:"🔆 ŁUK W OCZY! ZAŁÓŻ HEŁM", t_layfirst:"POŁÓŻ NAJPIERW ŚCIEG", t_strikeoff:"PRZYŁÓŻ ELEKTRODĘ DO BLACHY", t_toosmall:"KONKURS: ZA MAŁE STANOWISKO — obróć telefon poziomo albo powiększ okno (min. 400 px), żeby wszyscy mieli równo", t_cfgfail:"KONKURS: nie wczytano oficjalnej konfiguracji — odśwież stronę, inaczej runda nie zostanie uznana",
+  t_replace:"WYMIEŃ ELEKTRODĘ — puść i złap nową", t_eye:"🔆 ŁUK W OCZY! ZAŁÓŻ HEŁM", t_layfirst:"POŁÓŻ NAJPIERW ŚCIEG", t_strikeoff:"PRZYŁÓŻ ELEKTRODĘ DO BLACHY", t_toosmall:"KONKURS: ZA MAŁE STANOWISKO — obróć telefon poziomo albo powiększ okno (min. 400 px), żeby wszyscy mieli równo",t_inputlock:"ZMIANA STEROWANIA (mysz ↔ dotyk) W TRAKCIE PRÓBY — dokończ tym samym albo ✕ WYCZYŚĆ i zacznij od nowa", t_cfgfail:"KONKURS: nie wczytano oficjalnej konfiguracji — odśwież stronę, inaczej runda nie zostanie uznana",
   t_couponOk:"✅ COUPON ZALICZONY +%1 XP", t_couponFail:"COUPON NIEZALICZONY — wymóg %1%", t_copied:"TEKST SKOPIOWANY", t_clipFail:"BRAK DOSTĘPU DO SCHOWKA", t_couponSel:"COUPON: %1",
   rep_title:"Inspekcja wizualna VT", row_cov:"Pokrycie grani", row_spd:"Trzymanie tempa", row_hi:"Wkład ciepła (HI)", row_even:"Równość lica",
   hi_set:"HI zadane:", hi_actual:"HI faktyczne:", hi_params:"%1 A · %2 V · %3 mm/s",
@@ -832,7 +838,7 @@ const I18N={
   grav:"puddle<br>gravity", vset:"Set speed:", forA:"for A ≈",
   tool_elec:"🔥 Electrode: ", tool_used:"SPENT — click for new", tool_mig:"🔫 <b>Auto-fed wire</b> — one hand, continuous", tool_tig:"👐 <b>Torch + rod</b> — LMB lights it, SPACE dabs filler, RMB puts it out",
   fb_fast:"TOO FAST — cold lap, no fusion",fb_dir_pf:"PF IS WELDED UPWARD — you are going down",fb_dir_pg:"PG IS WELDED DOWNWARD — you are going up",def_dir_pf:"PF bead run downhill — not per WPS (PF = vertical up): risk of lack of fusion and cold lap (ISO 5817: 401) — reject regardless of how the face looks",def_dir_pg:"PG bead run uphill — not per WPS (PG = vertical down): overheated thin plate and excess reinforcement — reject regardless of how the face looks", fb_slow:"TOO SLOW — burn-through / overflow", fb_good:"GOOD SPEED — full penetration",
-  t_replace:"CHANGE ELECTRODE — release & grab a new one", t_eye:"🔆 ARC FLASH! PUT THE HELMET ON", t_layfirst:"LAY A BEAD FIRST", t_strikeoff:"STRIKE ON THE PLATE", t_toosmall:"CHALLENGE: BAY TOO SMALL — turn your phone landscape or enlarge the window (400 px min), so everyone gets the same shot", t_cfgfail:"CHALLENGE: official config not loaded — reload the page or your run will not count",
+  t_replace:"CHANGE ELECTRODE — release & grab a new one", t_eye:"🔆 ARC FLASH! PUT THE HELMET ON", t_layfirst:"LAY A BEAD FIRST", t_strikeoff:"STRIKE ON THE PLATE", t_toosmall:"CHALLENGE: BAY TOO SMALL — turn your phone landscape or enlarge the window (400 px min), so everyone gets the same shot",t_inputlock:"INPUT CHANGED (mouse ↔ touch) MID-ATTEMPT — finish with the same one or ✕ CLEAR and start over", t_cfgfail:"CHALLENGE: official config not loaded — reload the page or your run will not count",
   t_couponOk:"✅ COUPON PASSED +%1 XP", t_couponFail:"COUPON FAILED — need %1%", t_copied:"TEXT COPIED", t_clipFail:"CLIPBOARD BLOCKED", t_couponSel:"COUPON: %1",
   rep_title:"Visual inspection (VT)", row_cov:"Groove coverage", row_spd:"Travel speed", row_hi:"Heat input (HI)", row_even:"Bead evenness",
   hi_set:"Set HI:", hi_actual:"Actual HI:", hi_params:"%1 A · %2 V · %3 mm/s",
@@ -869,7 +875,7 @@ const I18N={
   grav:"гравитация<br>ванны", vset:"Задан. скорость:", forA:"за A ≈",
   tool_elec:"🔥 Электрод: ", tool_used:"ИЗРАСХОДОВАН — клик = новый", tool_mig:"🔫 <b>Автоподача</b> — одна рука, непрерывно", tool_tig:"👐 <b>Горелка + пруток</b> — присадка макая, веди медленно",
   fb_fast:"СЛИШКОМ БЫСТРО — непровар",fb_dir_pf:"PF ВАРЯТ СНИЗУ ВВЕРХ — ты ведёшь вниз",fb_dir_pg:"PG ВАРЯТ СВЕРХУ ВНИЗ — ты ведёшь вверх",def_dir_pf:"Валик PF выполнен сверху вниз — не по WPS (PF = снизу вверх): риск несплавления и наплыва без провара (ISO 5817: 401) — брак независимо от вида валика",def_dir_pg:"Валик PG выполнен снизу вверх — не по WPS (PG = сверху вниз): перегрев тонкого листа и избыточное усиление — брак независимо от вида валика", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
-  t_replace:"СМЕНИ ЭЛЕКТРОД — отпусти и возьми новый", t_eye:"🔆 ЗАЙЧИКИ В ГЛАЗА! НАДЕНЬ МАСКУ", t_layfirst:"СНАЧАЛА ПОЛОЖИ ШОВ", t_strikeoff:"ВЕДИ ПО МЕТАЛЛУ", t_toosmall:"КОНКУРС: ПОСТ СЛИШКОМ МАЛ — поверни телефон горизонтально или увеличь окно (мин. 400 px), чтобы условия были равными", t_cfgfail:"КОНКУРС: официальная конфигурация не загружена — обнови страницу, иначе раунд не засчитают",
+  t_replace:"СМЕНИ ЭЛЕКТРОД — отпусти и возьми новый", t_eye:"🔆 ЗАЙЧИКИ В ГЛАЗА! НАДЕНЬ МАСКУ", t_layfirst:"СНАЧАЛА ПОЛОЖИ ШОВ", t_strikeoff:"ВЕДИ ПО МЕТАЛЛУ", t_toosmall:"КОНКУРС: ПОСТ СЛИШКОМ МАЛ — поверни телефон горизонтально или увеличь окно (мин. 400 px), чтобы условия были равными",t_inputlock:"СМЕНА УПРАВЛЕНИЯ (мышь ↔ касание) ВО ВРЕМЯ ПОПЫТКИ — закончи тем же или ✕ ОЧИСТИТЬ и начни заново", t_cfgfail:"КОНКУРС: официальная конфигурация не загружена — обнови страницу, иначе раунд не засчитают",
   t_couponOk:"✅ КУПОН СДАН +%1 XP", t_couponFail:"КУПОН НЕ СДАН — нужно %1%", t_copied:"ТЕКСТ СКОПИРОВАН", t_clipFail:"БУФЕР НЕДОСТУПЕН", t_couponSel:"КУПОН: %1",
   rep_title:"Визуальный контроль (VT)", row_cov:"Заполнение шва", row_spd:"Темп", row_hi:"Тепловложение (HI)", row_even:"Равномерность",
   hi_set:"Задан. HI:", hi_actual:"Факт. HI:", hi_params:"%1 A · %2 V · %3 мм/с",
@@ -1920,6 +1926,7 @@ function snap(p){ p.x=Math.round(p.x*100)/100; p.y=Math.round(p.y*100)/100; retu
 function uiHit(e){ return !!(e.target&&e.target.closest&&e.target.closest(".panel,.modal,.covbar,.toolhud,.mob-hud,button")); }
 function unlockAudio(){ try{ if(actx&&actx.state==="suspended") actx.resume(); }catch(e){} const v=document.getElementById("pagebg"); if(v&&v.paused) v.play&&v.play().catch(()=>{}); }
 function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) return;
+  if(foreignPtr(e)){ e.preventDefault(); return; }               // obcy wskaźnik przy palącym się łuku
   if(uiHit(e)) return;
   unlockAudio();
   // drugi przycisk dociśnięty w trakcie ściegu to NIE nowe zajarzenie — nie płać znowu za płytę
@@ -1932,7 +1939,13 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
   if(!onZone(p.x,p.y)){ showToast(t(onPlate(p.x,p.y)?"t_strikegroove":"t_strikeoff"),"#ff9a3c"); e.preventDefault(); return; } // 3.11.0: zajarzenie tylko w rowku
   if(isChallenge()&&!chalWidthOK()){ showToast(t("t_toosmall"),"#ff5a4a"); e.preventDefault(); return; } // równe warunki albo wcale
   if(isChallenge()&&!chalCfgOK){ showToast(t("t_cfgfail"),"#ff5a4a"); e.preventDefault(); return; }       // nie startuj na nieoficjalnym seedzie
-  welding=true; last=p; const t0=Math.round(performance.now()); lastT=t0; vEMA=targetPx; if(replacing){ electrodeLeft=1; replacing=false; } // grab a fresh electrode
+  // Profil sterowania (mysz = łuk/kąt/spoiwo na żywo, dotyk = demo) jest ZAMKNIĘTY od pierwszego
+  // zajarzenia do ✕ WYCZYŚĆ. Nagranie ma flagi arc/ang/tig dla CAŁEJ rundy, a sim.js czyta je raz —
+  // zmiana dotyk↔mysz w połowie przeliczyłaby wcześniejsze ściegi w innym trybie (audyt Codex #2).
+  // Nie dodajemy pola do `rec` — serwer Battle i sim.js widzą nagranie bez zmian.
+  { const liveNow=(e.pointerType==="mouse")&&!battleForcesTouchInput();
+    if(rec&&rec.events.length&&inputLockRec===rec&&inputLockLive!==liveNow){ showToast(t("t_inputlock"),"#ff5a4a"); e.preventDefault(); return; } }
+  welding=true; weldPid=(e.pointerId!==undefined)?e.pointerId:null; last=p; const t0=Math.round(performance.now()); lastT=t0; vEMA=targetPx; if(replacing){ electrodeLeft=1; replacing=false; } // grab a fresh electrode
   arcLive=(e.pointerType==="mouse")&&!battleForcesTouchInput(); btnMask=e.buttons|0; arcLen=0; contactT=0;   // dotyk blachy = zajarzenie
   if(e.pointerType==="mouse"&&battleForcesTouchInput()&&!battleState.touchMouseHint){battleState.touchMouseHint=true;showToast(bt("touchMouseHint"),"#ffae3c");}
   tigLive=(arcLive&&proc==="TIG"); if(tigLive) arcLen=arcL0();                    // TIG: LPM zapalił łuk, trzyma się na nominale
@@ -1946,6 +1959,7 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
     if(battleTaskActive()){battleAttemptStart();reseedRound(battleState.task.seed);}
     recStart();
   }
+  if(inputLockRec!==rec){ inputLockRec=rec; inputLockLive=arcLive; }   // pierwsze zajarzenie tej rundy zamyka profil
   // 3.10.0: wybrana Ø (i RĘCZNIE prąd) wchodzi do nagrania tuż przed zajarzeniem — tylko przed pierwszą kroplą ściegu (1:1 z sim.js)
   if(elecOn()&&rec&&!bN){
     if(rec.am&&ampSet!=null&&ampSet!==ampRecd){ rec.events.push({type:"amp",t:t0,x:0,y:0,a:ampSet}); ampRecd=ampSet; }
@@ -1960,7 +1974,7 @@ function start(e){ if(e.pointerType==="mouse"&&e.button!==0&&e.button!==2) retur
   recEv('down',p.x,p.y,t0,btnMask); arcOn(); updateToolHud();
   if(e.pointerId!==undefined) try{ stage.setPointerCapture(e.pointerId); }catch(err){}
   e.preventDefault(); }
-function move(e){ if(isCut())return cutMove(e);
+function move(e){ if(foreignPtr(e)) return; if(isCut())return cutMove(e);
   // czas zaokrąglony do ms — DOKŁADNIE ten, który trafia do nagrania rundy,
   // żeby wynik na ekranie był bit-w-bit tym, co policzy weryfikator z sim.js
   if(!welding)return; const p=snap(pos(e)),now=Math.round(performance.now()); cursor.x=p.x; cursor.y=p.y; cursor.seen=true;
@@ -2083,7 +2097,7 @@ function move(e){ if(isCut())return cutMove(e);
   }
   last=p; lastT=now; e.preventDefault();
 }
-function end(e){ if(e&&uiHit(e)) return;
+function end(e){ if(foreignPtr(e)) return; if(e&&uiHit(e)) return;
   // Raz zajarzony łuk pali się niezależnie od przycisków — puszczenie ich znaczy tylko
   // „przestaję dociskać", a nie „koniec ściegu". Łuk kończy się sam: przywarciem albo
   // odciągnięciem za daleko. Bez tego nie da się oderwać elektrody od blachy po zajarzeniu.
@@ -3768,7 +3782,7 @@ function cutStart(e){
   if(modalOpen())return; const p=pos(e); cursor.x=p.x; cursor.y=p.y; cursor.seen=true;
   if(!onPlate(p.x,p.y)){ showToast(t("t_strikeoff"),"#ff9a3c"); e.preventDefault(); return; }
   if(proc==="CUT" && bead!=="steel"){ showToast(t("t_cut_steelonly"),"#ff5a4a"); e.preventDefault(); return; }
-  welding=true; last=p; const t0=performance.now(); lastT=t0; vEMA=targetPx;
+  welding=true; weldPid=(e.pointerId!==undefined)?e.pointerId:null; last=p; const t0=performance.now(); lastT=t0; vEMA=targetPx;   // cięcie: ten sam strażnik wskaźnika
   cutHeat=0; pierced=(proc==="PLASMA");
   if(!rec||!rec.events.length)recStart(); recEv('down',p.x,p.y,t0); arcOn(); arcIntensity(0.3);   // jak przy spawaniu — parametry na żywo, póki runda pusta
   if(e.pointerId!==undefined) try{ stage.setPointerCapture(e.pointerId); }catch(err){}
