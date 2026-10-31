@@ -2964,6 +2964,22 @@ function bankPass(){
 // Odrzut dokładnie jak plakietka ISO: major || score < 50. Dawne 45–49 pkt
 // nie zalicza już treningu. Kupony zachowują próg punktowy i wymagają też 80% pokrycia.
 // Konkurs nadal ma własną regułę score >= minScore; nie korzysta z zaliczenia treningu.
+// PARITY (krok 3) — parytet PODSTAWOWYCH pól werdyktu gry i sim.js: punkty, litera, odrzut, klasa ISO,
+// pokrycie, próg 0,8, wada major. `major` po stronie sim.js = przyczyny odrzutu inne niż samo „score"
+// (rejectReasons z TYCH SAMYCH warunków co Dmajor). Listy przyczyn NIE porównujemy — gra ma teksty wad,
+// nie kody. Pokrycie z dokładnością 1e-6 — oba silniki liczą je tą samą arytmetyką, różnica = rozjazd.
+function parityLive(score,letter,rejected,isoCode,coverage,major){ return {score,letter,rejected:!!rejected,iso:isoCode,
+  cov:coverage,cov80:coverage>=0.8,major:!!major}; }
+function paritySim(sr){ const rr=Array.isArray(sr.rejectReasons)?sr.rejectReasons:[], rej=sr.iso==="REJECT";
+  return {score:sr.score,letter:sr.letter,rejected:rej,iso:rej?"REJECT":sr.iso,cov:sr.coverage,
+    cov80:sr.coverage>=0.8,major:rr.some(r=>r!=="score"),reasons:rr.slice()}; }
+function parityCheck(live,sim){ const diff=[];
+  for(const k of ["score","letter","rejected","iso","cov80","major"]) if(live[k]!==sim[k]) diff.push(k);
+  // Pokrycie musi być liczbą 0..1 PO OBU stronach. NaN/brak pola nie może przejść jako „zgodne"
+  // (|NaN−x|>1e-6 to false, a oba cov80 wychodzą false) — audyt Codex 03.
+  const covOK=v=>typeof v==="number"&&Number.isFinite(v)&&v>=0&&v<=1;
+  if(!covOK(live.cov)||!covOK(sim.cov)||Math.abs(live.cov-sim.cov)>1e-6) diff.push("coverage");
+  return {live,sim,diff}; }
 function inspectionVerdict(score,coverage,major,minScore=50){
   const rejected=major||score<50;
   const reason=major?"accept_major":score<50?"accept_score":coverage<0.8?"accept_coverage":score<minScore?"accept_coupon":null;
@@ -3025,8 +3041,9 @@ function inspect(){
   score=Math.max(0,Math.min(100,Math.round(score)));
 
   // PARITY (krok 2): odtwórz tę samą rundę headless i porównaj z wynikiem live.
+  let parSr=null;                                           // wynik powtórki do porównania CAŁEGO werdyktu niżej
   if(rec){ rec.liveScore=score; window.__round=rec;
-    if(window.ArcSim){ try{ const sr=window.ArcSim.simulate(rec);
+    if(window.ArcSim){ try{ const sr=window.ArcSim.simulate(rec); parSr=sr;
       console.log('%c[PARITY]','color:#3cb9ff;font-weight:700','live',score,'· sim',sr.score,'· Δ',score-sr.score, sr);
     }catch(err){ console.warn('[PARITY] sim error',err); } } }
 
@@ -3083,10 +3100,19 @@ function inspect(){
   const major=D.some(d=>d.s==="major");
   const coupon=!isChallenge()&&COUPONS.find(c=>c.id===activeCoupon);
   const verdict=inspectionVerdict(score,coverage,major,coupon?coupon.req:50);
-  let iso,isoCol; if(verdict.rejected){iso=t("iso_reject");isoCol="#ff5a4a";} else if(score>=88){iso=t("iso_B");isoCol="#5fe08a";} else if(score>=72){iso=t("iso_C");isoCol="#ffd23f";} else {iso=t("iso_D");isoCol="#ff9a3c";}
+  // Jeden nietłumaczony kod klasy — ten sam idzie na ekran i do parytetu (audyt Codex 03: parytet nie może
+  // liczyć klasy własną kopią progów, bo przegapiłby błąd w samej klasie pokazywanej graczowi).
+  const isoCode=verdict.rejected?"REJECT":score>=88?"B":score>=72?"C":"D";
+  const isoView={REJECT:["iso_reject","#ff5a4a"],B:["iso_B","#5fe08a"],C:["iso_C","#ffd23f"],D:["iso_D","#ff9a3c"]}[isoCode];
+  let iso=t(isoView[0]),isoCol=isoView[1];
   const letter=score>=90?"A":score>=78?"B":score>=62?"C":score>=45?"D":"F";
   const col=score>=78?"#5fe08a":score>=62?"#ffd23f":score>=45?"#ff9a3c":"#ff5a4a";
 
+  // PARITY (krok 3): porównanie CAŁEGO werdyktu gra ↔ powtórka (sim.js), nie tylko punktów.
+  // Ten sam wynik punktowy przy innym odrzucie / klasie ISO / pokryciu / wadzie major to też rozjazd —
+  // BattleWeld i konkurs liczą z powtórki. Tylko odczyt: nic tu nie zmienia oceny ani nagrania.
+  window.__parity=parSr?parityCheck(parityLive(score,letter,verdict.rejected,isoCode,coverage,major),paritySim(parSr)):null;
+  if(window.__parity&&window.__parity.diff.length) console.warn('[PARITY] ROZJAZD WERDYKTU',window.__parity.diff.join(", "),window.__parity);
   const diff=jobDiff();
   const passed=isChallenge()?coverage>=0.8&&score>=45:verdict.passed; // konkurs: zachowaj dotychczasowy stan karty
   if(isChallenge()){ if(score>=(CHALLENGE.minScore||90)) burstConfetti(); }
