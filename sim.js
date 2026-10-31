@@ -62,6 +62,12 @@
   // przechodzi z łukiem wyłączonym i liczy się bit-w-bit jak 1.5.0.
   const ELEC_DIA = {2:2.0,3:2.5,5:3.25,8:4.0,12:4.0};
   const ARC_RISE = 1.0, ARC_PUSH = 3.5, ARC_LIFT = 1.5, ARC_STICK_T = 0.80;
+  // 3.15.0 (kb=9): czas liczony także przy stojącej ręce. Krok fizyki 50 ms od czasu OSTATNIEGO zdarzenia,
+  // ostatni krok krótszy do czasu następnego zdarzenia (1:1 z grą). Łuk gaśnie po IDLE_MS bez ruchu wskaźnika.
+  // GRACE_MS: przerwa między zdarzeniami do 150 ms to JESZCZE ruch (wolny / obciążony sprzęt daje odstępy > 50 ms przy
+  // płynnej ręce) — liczy się jednym krokiem z ręką w nowym miejscu, jak dawniej. Dopiero dłuższa przerwa = postój:
+  // najpierw jeden krok 150 ms w miejscu, potem kroki 50 ms. Tak samo w grze (timer) i w powtórce.
+  const STEP_MS = 50, GRACE_MS = 150, IDLE_MS = 2500, ZERO_PATH_MM = 0.5;
   const ELEC_TRAVEL_ARC = 1000, ARC_BURN_S = 55;   // zapas drogi i czas jarzenia na całą elektrodę (1:1 z grą)
   const ARC_MAX_MUL = 3.2, ARC_V_SLOPE = 2.4, ARC_LO = 0.6, ARC_HI = 1.6;
   const ARC_LO_MMA = 0.5, ARC_HI_MMA = 1.1;   // 3.14.0 (kb:8, MMA): pasmo bez kary ~1×Ø (do 3.13.0 MMA 0,6–1,6 jak MAG)
@@ -289,6 +295,7 @@
     let dirUp = 0, dirDn = 0; const dirLog = [];
     // 3.14.0: węższe pasmo łuku MMA (0,5–1,1×Ø) — kb≤7 i MIG/TIG bit-w-bit jak 3.13.0
     const arcMma = round.kb >= 8 && proc === "MMA", aLo = arcMma ? ARC_LO_MMA : ARC_LO, aHi = arcMma ? ARC_HI_MMA : ARC_HI;
+    const kb9 = round.kb >= 9;     // 3.15.0: krok czasu przy postoju + zdarzenia `inp` (zmiana przycisków/klawiszy/spoiwa bez ruchu)
     const keepDia = round.kb >= 6;  // 3.12.0: elektroda zostaje w uchwycie na następny ścieg (do 3.11.0 wracała do typowej)   // 3.11.0: łuk tylko w strefie rowka (rowek + faza ×ZONE_BW) — kb≤4 bit-w-bit jak 3.10.0   // 3.10.0: Ø elektrody per ścieg, prąd z Ø — kb≤3 i MIG/TIG bit-w-bit jak 3.9.0
     let waDeg = 0, taDeg = 0, keyMask = 0;
     let angPenAcc = 0, angTime = 0, angPorAcc = 0, angWSum = 0, angTSum = 0;
@@ -342,7 +349,7 @@
       beadBase = diaAmps(diaSel, posKey); beadAmps = (ampMan && manA) ? manA : Math.round(beadBase * ampK);
       ampF = ampFOf(beadAmps / beadBase); fitF = diaFit(diaSel, diaTyp, joint === "fillet" ? -1 : b.lay); arcL0 = diaSel / 10; }
     function elecEntry(m) { return { d: diaSel, typ: diaTyp, amps: beadAmps, ref: diaAmps(diaTyp, posKey), pen: ampF.pen, sev: ampF.sev, ar: ampF.ar,
-      fit: fitF, avgV: m.avgV, u: arcTb ? arcVb / arcTb : null }; }
+      fit: fitF, avgV: m.avgV, u: arcTb ? arcVb / arcTb : null, zero: !!m.zeroTravel }; }
     beadElec();
     const EDGE = bevelEdgePx(thick, grooveHalf);
     const capMin = kb ? seamPts.map(() => 1e9) : null, capMax = kb ? seamPts.map(() => -1e9) : null;
@@ -373,6 +380,7 @@
     let vSumT = 0, vTimeS = 0, depCarry = 0, passWeldMs = 0;
     let electrodeLeft = 1, replacing = false, vEMA = targetPx;
     let last = null, lastT = 0, lastDab = 0, ux = 1, uy = 0;
+    let lastPtrT = 0, passPathPx = 0, chunked = false, lastSpeedT = 0;   // lastSpeedT: czas ostatniej próbki tempa (ruchu)   // chunked: pierwszy krok postoju (GRACE_MS) już policzony w tej przerwie   // 3.15.0: czas ostatniego zdarzenia wskaźnika (strażnik IDLE_MS), droga ściegu [px]
     let filPenAcc = 0, filCount = 0, lastDabPos = null;
     let trail = [];                 // {t,x,y} z ostatnich V_WIN sekund — baza pomiaru prędkości
     let tickAcc = 0, vTickRef = targetPx;   // `instab` próbkowana na stałym takcie, nie na zdarzeniu
@@ -424,7 +432,9 @@
       const weldSec = Math.max(0.5, passWeldMs / 1000);
       const spatter = Math.round((spatterCount / weldSec) * PROCESS[proc].sparks / 40);
       let endGap = 0; for (const e of [lanePts[0], lanePts[K - 1]]) { let d = 1e18; for (const b of baked) { const dd = (b.x - e.x) ** 2 + (b.y - e.y) ** 2; if (dd < d) d = dd; } if (Math.sqrt(d) > grooveHalf * 1.7) endGap++; }
-      return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen };
+      // 3.15.0: „łuk działał, a ręka nie przejechała" — rzeczywista droga i czas spawania ściegu (mysz i dotyk)
+      const zeroTravel = kb9 && passWeldMs > 0 && passPathPx / PX_PER_MM < ZERO_PATH_MM;
+      return { coverage, overflow, evenness, spdAcc, porosity, spatter, narrow, wide, out, gaps, avgV, endGap, offPen, zeroTravel };
     }
     function bankReset() { const pm = passMetrics(); passLog.push(pm);
       if (dirOn) { dirLog.push([dirUp, dirDn]); dirUp = 0; dirDn = 0; }
@@ -432,14 +442,145 @@
       if (kb) { const b = beadPlan[passIndex]; if (b) beadStats.push({ lay: b.lay, lane: b.lane, so: bN ? bSo / bN : 0, r: bN ? bR / bN : 0, n: bN });
         bSo = 0; bR = 0; bN = 0; if (proc === "MMA") needChip = true; }
       baked = []; speedSum = 0; speedN = 0; vVarSum = 0; spatterCount = 0; distAcc = 0;
-      vSumT = 0; vTimeS = 0; passWeldMs = 0; depCarry = 0; tickAcc = 0; vTickRef = vEMA;
+      vSumT = 0; vTimeS = 0; passWeldMs = 0; depCarry = 0; tickAcc = 0; vTickRef = vEMA; passPathPx = 0;
       passIndex++; passMul = (PASS_W[passPlanArr[passIndex]] || 1) * (kb && beadPlan[passIndex] ? beadPlan[passIndex].wm : 1); recalc(); setLane(); beadElec(); }
+
+    // ── 3.15.0 (kb=9): CZAS NIEZALEŻNY OD RUCHU MYSZY ──
+    // Krok CZASU (timeStep): łuk (długość, przywarcie, zerwanie, napięcie, pęcherze, wypalanie), kąt z klawiszy, czas ściegu.
+    // Liczony także na postoju. Krok TEMPA (speedStep): tylko przy RZECZYWISTYM ruchu, za cały czas od poprzedniego ruchu
+    // (droga/czas) — dzięki temu płynna ręka przy rzadkich zdarzeniach (wolny sprzęt) ma prawidłowe tempo, a prawdziwy postój
+    // i tak je obniża (mała droga w długim czasie). Bez progu, na którym tempo skacze (audyt Codex 04: 150 vs 151 ms).
+    function timeStep(dtS) {
+      if (arcLive && !tigLive) {
+        arcLen += (ARC_RISE + ((btnMask & 2) ? ARC_LIFT : 0) - ((btnMask & 1) ? ARC_PUSH : 0)) * dtS;
+        if (arcLen <= 0) { arcLen = 0; contactT += dtS;
+          if (contactT >= ARC_STICK_T) { stickCount++; return false; }
+        } else contactT = 0;
+        if (arcLen >= arcL0 * ARC_MAX_MUL) { arcLen = arcL0 * ARC_MAX_MUL; arcBroke++; return false; }
+        const r = arcLen / arcL0;
+        arcPenAcc += arcPenNow(r, aLo, aHi) * dtS; arcTime += dtS; arcRSum += r * dtS;
+        const uNow = recommendedVolts(proc, thick) + ARC_V_SLOPE * (arcLen - arcL0);
+        arcVSum += uNow * dtS; if (dz) { arcVb += uNow * dtS; arcTb += dtS; }
+        if (r > aHi) arcPorAcc += (r - aHi) * dtS;
+        if (proc === "MMA" && !replacing) { electrodeLeft -= dtS / ARC_BURN_S;
+          if (electrodeLeft <= ELEC_STUB) { replacing = true; return false; } }
+      } else if (tigLive) arcLen = arcL0;
+      if (angLive) {
+        const kd = ((keyMask & 2) ? 1 : 0) - ((keyMask & 1) ? 1 : 0);
+        const ks = ((keyMask & 8) ? 1 : 0) - ((keyMask & 4) ? 1 : 0);
+        if (kd) waDeg = Math.max(-WA_MAX, Math.min(WA_MAX, waDeg + kd * ANG_RATE * dtS));
+        if (ks) taDeg = Math.max(-TA_MAX, Math.min(TA_MAX, taDeg + ks * ANG_RATE * dtS));
+        angPenAcc += angPenNow(waDeg, taDeg, posKey) * dtS; angTime += dtS;
+        angWSum += Math.abs(waDeg) * dtS; angTSum += taDeg * dtS;
+        const tOv = angOverT(taDeg); if (tOv > 0) angPorAcc += tOv / 120 * dtS;
+      }
+      passWeldMs += dtS * 1000;
+      return true;
+    }
+    function speedStep(dtS, tEnd, pos) {
+      trail.push({ t: tEnd, x: pos.x, y: pos.y });
+      while (trail.length > 2 && (tEnd - trail[0].t) / 1000 > V_WIN) trail.shift();
+      const ref = trail[0], span = Math.max(0.001, (tEnd - ref.t) / 1000);
+      let inst;
+      if (trail.length >= 3) {
+        let st = 0, sx = 0, sy = 0; const n = trail.length;
+        for (const q of trail) { st += q.t; sx += q.x; sy += q.y; }
+        const mt = st / n, mx = sx / n, my = sy / n;
+        let stt = 0, stx = 0, sty = 0;
+        for (const q of trail) { const d = q.t - mt; stt += d * d; stx += d * (q.x - mx); sty += d * (q.y - my); }
+        inst = stt > 0 ? Math.hypot(stx / stt, sty / stt) * 1000 : Math.hypot(pos.x - ref.x, pos.y - ref.y) / span;
+      } else inst = Math.hypot(pos.x - ref.x, pos.y - ref.y) / span;
+      vEMA = vEMA + (inst - vEMA) * (1 - Math.exp(-dtS / V_TAU));
+      tickAcc += dtS;
+      while (tickAcc >= V_TICK) { tickAcc -= V_TICK; vVarSum += Math.abs(vEMA - vTickRef); vTickRef = vEMA; }
+      let spatFac = Math.min(2, Math.abs(vEMA / targetPx - 1) / 0.30);
+      const spA = ampF.spatAdd + fitF.spatAdd; if (spA) spatFac = Math.min(2.6, spatFac + spA);
+      if (arcLive) { const rr = arcLen / arcL0; if (rr > aHi) spatFac = Math.min(3.2, spatFac + (rr - aHi) * 1.2); }
+      if (angLive) { const so = angOverT(taDeg); if (so > 0) spatFac = Math.min(3.2, spatFac + Math.min(0.8, so / 45)); }
+      spatterCount += Math.round((3 + (thick >> 1)) * PROCESS[proc].sparks) * spatFac * (dtS * 1000 / 16);
+      vSumT += vEMA * dtS; vTimeS += dtS;
+      speedSum += vEMA; speedN++;
+    }
+    // Koniec łuku bez ruchu od ostatniej próbki tempa: ręka w miejscu (tempo 0) — do średniej liczy się NADWYŻKA ponad
+    // GRACE_MS (krótsza przerwa to jeszcze ruch, jak w advanceTo). Nadwyżka, nie całość — bez skoku na granicy 150 ms.
+    function zeroSpeedTo(tEnd) { const d = tEnd - lastSpeedT - GRACE_MS; if (d > 0) vTimeS += d / 1000; lastSpeedT = tEnd; }
+    // Rozlicz czas od `lastT` do `t`: przerwa ≤ GRACE_MS = jeden krok; dłuższa = krok 150 ms + kroki 50 ms (1:1 z timerem gry).
+    // Ruch (`pFinal`) dostaje potem JEDEN krok tempa za cały czas od poprzedniego ruchu. Strażnik: łuk gaśnie w lastPtrT+IDLE_MS.
+    function advanceTo(t, pFinal) {
+      if (!last) return;
+      const cap = lastPtrT + IDLE_MS, tt = Math.min(t, cap);
+      const endAt = te => { zeroSpeedTo(te); last = null; lastT = te; chunked = false; };
+      if (!chunked && tt - lastT > GRACE_MS) { const te = lastT + GRACE_MS; chunked = true;
+        if (!timeStep(GRACE_MS / 1000)) { endAt(te); return; } lastT = te; }
+      if (chunked) while (lastT + STEP_MS < tt) { const te = lastT + STEP_MS;
+        if (!timeStep(STEP_MS / 1000)) { endAt(te); return; } lastT = te; }
+      if (tt > lastT) { if (!timeStep((tt - lastT) / 1000)) { endAt(tt); return; } lastT = tt; }
+      chunked = false;
+      if (tt === t && pFinal) { speedStep((t - lastSpeedT) / 1000, t, pFinal); lastSpeedT = t; }
+      if (t >= cap) endAt(cap);   // strażnik: ręka nie ruszyła się od IDLE_MS — łuk zgasł (bez kary)
+    }
+    function applyInputs(ev) {
+      if (arcLive) btnMask = ev.b | 0;
+      if (angLive) keyMask = (ev.k | 0) & 15;
+      if (tigLive && (btnMask & 2)) { zeroSpeedTo(ev.t); last = null; return; }                     // PPM gasi łuk TIG
+      if (arcLive && !tigLive && (btnMask & 3) === 3) { zeroSpeedTo(ev.t); last = null; return; }    // LPM+PPM = świadome zgaszenie
+    }
+    function tigDab(px, py, now) {   // jedno podanie spoiwa (bit 16), także na postoju
+      const w = beadWidth(), ao = angOff(), aox = -uy * ao, aoy = ux * ao;
+      if (!onWeld(px + aox, py + aoy)) return;
+      const dw = Math.max(idealHalf, w * 0.95), pl = depositBead(px + aox, py + aoy, dw); lastDab = now;
+      if (lastDabPos) { const gap = Math.hypot(pl.x - lastDabPos.x, pl.y - lastDabPos.y);
+        filPenAcc += filPenNow(gap / Math.max(1e-6, targetPx * FIL_DT)); filCount++; }
+      lastDabPos = { x: pl.x, y: pl.y };
+    }
+    function kb9Event(ev) {
+      if (ev.type === "down") { if (zoneOn && !onZone(ev.x, ev.y)) return;
+        if (needChip) { slagCount++; needChip = false; }
+        last = { x: ev.x, y: ev.y }; lastT = ev.t; lastPtrT = ev.t; lastSpeedT = ev.t; chunked = false; vEMA = targetPx; lastDab = ev.t;
+        btnMask = arcLive ? (ev.b | 0) : 0; keyMask = angLive ? ((ev.k | 0) & 15) : 0; arcLen = tigLive ? arcL0 : 0; contactT = 0;
+        trail = [{ t: ev.t, x: ev.x, y: ev.y }];
+        if (replacing) { electrodeLeft = 1; replacing = false; } return; }
+      if (ev.type === "up") { advanceTo(ev.t); if (last) zeroSpeedTo(ev.t); last = null; return; }
+      if (ev.type === "bank") { advanceTo(ev.t); if (last) zeroSpeedTo(ev.t); last = null; bankReset(); return; }
+      if (!last) return;
+      if (ev.type === "inp") {
+        advanceTo(ev.t); if (!last) return;
+        applyInputs(ev); if (!last) return;
+        if (tigLive && ((ev.k | 0) & 16)) tigDab(last.x, last.y, ev.t);
+        return; }
+      if (ev.type !== "move") return;
+      const p = { x: ev.x, y: ev.y }, now = ev.t;
+      advanceTo(now, p); if (!last) return;
+      lastPtrT = now;
+      if (arcLive && !onWeld(p.x, p.y)) { last = null; return; }
+      const ddx = p.x - last.x, ddy = p.y - last.y, dist = Math.hypot(ddx, ddy);
+      passPathPx += dist;
+      const w = beadWidth(); if (dist) { ux = ddx / dist; uy = ddy / dist; }
+      const ao = angOff(), aox = -uy * ao, aoy = ux * ao;
+      if (proc === "TIG") {
+        if (tigLive) { if ((ev.k | 0) & 16) tigDab(p.x, p.y, now); }
+        else if (now - lastDab > 150 && onWeld(p.x + aox, p.y + aoy)) { depositBead(p.x + aox, p.y + aoy, Math.max(idealHalf, w * 0.95)); lastDab = now; }
+      } else {
+        const step = Math.max(2, w * 0.35); depCarry += dist;
+        const n = Math.floor(depCarry / step); if (n > 0) depCarry -= n * step;
+        for (let i = 1; i <= n; i++) { const x = last.x + ddx * (i / n) + aox, y = last.y + ddy * (i / n) + aoy;
+          if (!onWeld(x, y)) continue;
+          if (proc === "MMA") { if (replacing) break; electrodeLeft -= step / (arcLive ? ELEC_TRAVEL_ARC : 650);
+            if (electrodeLeft <= ELEC_STUB) { replacing = true; break; } }
+          depositBead(x, y, w); distAcc += step; }
+      }
+      if (dirOn) { if (ddy < 0) dirUp -= ddy; else dirDn += ddy; }
+      last = p;
+      if (proc === "MMA" && replacing && arcLive) { last = null; return; }   // ogarek gasi łuk (1:1 z grą)
+      applyInputs(ev);
+    }
 
     // ── replay zdarzeń ──
     for (const ev of events) {
       if (ev.type === "chip") { if (kb) needChip = false; continue; }   // 3.7.0: żużel zebrany młotkiem
       if (ev.type === "amp") { if (dz && ampMan && !bN && !last && Number.isInteger(ev.a) && ev.a > 0 && ev.a <= 400) { manA = ev.a; beadElec(); } continue; }   // 3.10.0: RĘCZNIE — prąd przestawiony przed ściegiem
       if (ev.type === "dia") { if (dz && !bN && !last && DIAS.includes(ev.d)) { diaSel = ev.d; beadElec(); electrodeLeft = 1; replacing = false; } continue; }   // 3.10.0: nowa elektroda wybranej Ø
+      if (kb9) { kb9Event(ev); continue; }
       if (ev.type === "down") { if (zoneOn && !onZone(ev.x, ev.y)) continue;   // 3.11.0: poza rowkiem łuk nie zajarzy (gra tego nie nagrywa)
         if (kb && needChip) { slagCount++; needChip = false; }   // następny ścieg na niezebranym żużlu
         last = { x: ev.x, y: ev.y }; lastT = ev.t; vEMA = targetPx; lastDab = ev.t;
@@ -576,9 +717,12 @@
     const ampsUse = (ampRec && amps) ? amps : ampRec;
     const uAct = arcTime ? arcVSum / arcTime : vWps;
     const hiWps = (vWps != null && ampRec != null) ? heatInputKJmm(vWps, ampRec, targetPx / PX_PER_MM, effP) : null;
-    const hiAct = (uAct != null && ampsUse != null) ? heatInputKJmm(uAct, ampsUse, cur.avgV / PX_PER_MM, effP) : null;
+    // 3.15.0: łuk działał, a ręka nie przejechała (rzeczywista droga < 0,5 mm) — HI bez liczby ("brak przejazdu"),
+    // a na stali badanej udarnościowo to przekroczenie KAŻDEGO skończonego limitu WPS (ta sama reguła hi > hiMax).
+    const zeroCur = kb9 && cur.zeroTravel;
+    const hiAct = (!zeroCur && uAct != null && ampsUse != null) ? heatInputKJmm(uAct, ampsUse, cur.avgV / PX_PER_MM, effP) : null;
     const hiMax = hiWps != null ? Math.round(hiWps * HI_MAX_R * 1000) / 1000 : null;
-    let hiOver = !!(cvn && hiMax != null && hiAct != null && hiAct > hiMax);
+    let hiOver = !!(cvn && hiMax != null && ((hiAct != null && hiAct > hiMax) || zeroCur));
     // 3.10.0: każdy ścieg ma własną Ø, prąd i tempo → HI liczony PER ŚCIEG, referencja = prąd TYPOWEJ Ø z WPS.
     // Do raportu idzie ścieg najbliżej sufitu (najgorszy). Kary prądu i Ø = średnia po ściegach, wada = najgorsza.
     let ampPenT = ampF.pen, ampMajor = ampF.sev === "major", diaPen = 0, diaMajor = false, elec = null;
@@ -589,7 +733,8 @@
       for (const e of E) { ampPenT += e.pen; diaPen += e.fit.pen; if (e.sev === "major") ampMajor = true; if (e.fit.sev === "major") diaMajor = true;
         e.hiW = vWps != null ? heatInputKJmm(vWps, e.ref, tr, effP) : null;
         e.hiM = e.hiW != null ? Math.round(e.hiW * HI_MAX_R * 1000) / 1000 : null;
-        e.hi = vWps != null ? heatInputKJmm(e.u != null ? e.u : vWps, e.amps, e.avgV / PX_PER_MM, effP) : null;
+        e.hi = (vWps != null && !(kb9 && e.zero)) ? heatInputKJmm(e.u != null ? e.u : vWps, e.amps, e.avgV / PX_PER_MM, effP) : null;
+        if (kb9 && e.zero && cvn && e.hiM != null) hiOver = true;   // 3.15.0: ścieg bez przejazdu na stali
         if (e.hi != null && e.hiM != null) { const r = e.hi / e.hiM; if (r > worst) { worst = r; hiR = e.hi; hiRW = e.hiW; hiRM = e.hiM; ampsR = e.amps; }
           if (cvn && e.hi > e.hiM) hiOver = true; } }
       ampPenT /= E.length; diaPen /= E.length;
@@ -667,6 +812,10 @@
              ...(kb ? { kb: true, beads: beadPlan.length, edgeCov: +edgeCov.toFixed(3), edgePen: +edgePen.toFixed(2), ibGaps, ibMax: +ibMax.toFixed(3), slag: slagCount } : {}) };
   }
 
+  // 3.15.0 — CZAS PRZY POSTOJU (flaga `kb: 9`): fizyka (łuk, kąt, tempo, odpryski, czas ściegu) liczona krokami 50 ms
+  //         także wtedy, gdy ręka stoi; zmiany przycisków/klawiszy/spoiwa bez ruchu jako zdarzenia `inp`; łuk gaśnie po
+  //         2,5 s bez ruchu wskaźnika; ścieg bez przejazdu (droga < 0,5 mm) na stali cvn = REJECT heatInput. Nagrania kb≤8
+  //         bit-w-bit jak 3.14.0 (zamrożony sim-3.14.0.js, test kb9.js). SCORING 1.10.0.
   // 3.14.0 — KRÓTSZY ŁUK MMA (flaga `kb: 8`, tylko MMA): pasmo bez kary 0,5–1,1×Ø (do 3.13.0 0,6–1,6×Ø, czyli dla Ø 3,2
   //         bez kary do ~5,1 mm). Ta sama granica ARC_HI_MMA rusza karę, pęcherze i rozprysk długiego łuku. Zerwanie
   //         (ARC_MAX_MUL) i przywarcie bez zmian. MIG/TIG i rundy kb≤7 bit-w-bit jak 3.13.0 (sim-3.13.0.js, kb8.js). SCORING 1.9.0.
@@ -736,7 +885,7 @@
   // 1.1.0 — spatter jako tempo z sufitem kary, metryki niezależne od Hz, parytet z index.html.
   // Rundy nagrane silnikiem 1.2.0 i starszym liczą się inaczej i NIE są porównywalne z challengem.
   // Bump SCORING_VERSION when score, grade thresholds, or inspection rejection rules change.
-  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.14.0", SCORING_VERSION: "1.9.0", DIR_MIN, DIR_BAD, ZONE_BW, ARC_LO_MMA, ARC_HI_MMA };
+  const API = { simulate, mulberry32, recommendedAmps, recommendedVolts, heatInputKJmm, weldPlan, bevelEdgePx, grooveGeom, capHalfMm, VIS_K, elecTyp, diaAmps, diaFit, AMP_DIA, DIAS, VERSION: "3.15.0", SCORING_VERSION: "1.10.0", STEP_MS, GRACE_MS, IDLE_MS, ZERO_PATH_MM, DIR_MIN, DIR_BAD, ZONE_BW, ARC_LO_MMA, ARC_HI_MMA };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.ArcSim = API;
 })(typeof self !== "undefined" ? self : this);
