@@ -380,6 +380,19 @@
     body.is-mobile .bottom{ gap:3px; padding-top:max(4px,env(safe-area-inset-top)); padding-bottom:max(4px,env(safe-area-inset-bottom)); }
     body.is-mobile .mob-actions{ min-height:44px; padding:4px; font-size:17px; }
   }
+
+/* 06: historia prób w KARIERZE */
+.hist{margin:14px 0 4px;text-align:left}
+.hist h3{font-size:13px;letter-spacing:.12em;color:#ffb648;margin:0 0 8px}
+.hist .hsum{font-size:12.5px;color:#e9eef2;margin:4px 0;line-height:1.45}
+.hist .hmeta{font-size:11.5px;color:#8a96a0;margin:6px 0}
+.hist .hlist{max-height:220px;overflow:auto;border:1px solid #2a3540;border-radius:6px;margin:8px 0}
+.hist .hrow{display:grid;grid-template-columns:78px 1fr 62px 1.2fr;gap:6px;padding:5px 8px;font-size:11.5px;color:#cfd8de;border-bottom:1px solid #1d262e}
+.hist .hrow.old{opacity:.45}
+.hist .hrow .hsc{font-weight:700;color:#e9eef2}
+.hist .hbtn{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hist .hbtn button{font-size:11px;padding:6px 10px}
+@media (max-width:520px){ .hist .hrow{grid-template-columns:62px 1fr 52px;} .hist .hrow span:nth-child(4){grid-column:1/-1;color:#8a96a0} }
 </style>
 <link rel="stylesheet" href="battle-ui.css?v=20261010b">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
@@ -574,6 +587,7 @@
     <h2 data-i18n="car_title">Welder path</h2>
     <div class="xpwrap" id="xpwrap"></div>
     <div class="cgrid" id="cgrid"></div>
+    <div class="hist" id="histBox"></div>
     <div class="act"><button id="carClose" class="on" data-i18n="car_close">CLOSE</button></div>
     <div class="car-danger"><button id="carReset" type="button" data-i18n="car_reset">RESET PROGRESS</button></div>
   </div></div>
@@ -800,7 +814,7 @@ const I18N={
   btn_helmet:"🥽 HEŁM", btn_music:"🎵 MUZYKA",btn_arc:"🔊 ŁUK", btn_mute:"🔇 CISZA", btn_inspect:"🔎 INSPEKCJA", btn_career:"🎓 KARIERA", btn_clear:"✕ WYCZYŚĆ",
   grav:"grawitacja<br>jeziorka", vset:"Prędkość zadana:", forA:"za A ≈",
   tool_elec:"🔥 Elektroda: ", tool_used:"ZUŻYTA — klik = nowa", tool_mig:"🔫 <b>Drut z automatu</b> — jedna ręka, ciągłe podawanie", tool_tig:"👐 <b>Palnik + drut</b> — LPM zapala, SPACJA dokłada spoiwo, PPM gasi",
-  fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu",fb_dir_pf:"PF SPAWASZ Z DOŁU DO GÓRY — jedziesz w dół",fb_dir_pg:"PG SPAWASZ Z GÓRY NA DÓŁ — jedziesz w górę",def_dir_pf:"Ścieg PF jechany z góry na dół — niezgodny z WPS (PF = z dołu do góry): ryzyko braku przetopu i przyklejenia (ISO 5817: 401) — odrzut niezależnie od wyglądu lica",def_dir_pg:"Ścieg PG jechany z dołu do góry — niezgodny z WPS (PG = z góry na dół): przegrzanie cienkiej blachy i nadmierny nadlew — odrzut niezależnie od wyglądu lica", fb_slow:"ZA WOLNO — przepalenie / przelew",fb_stop:"RĘKA STOI %1 s — jedź dalej",hint_lbl:"Wskazówka", fb_good:"DOBRE TEMPO — pełny przetop",
+  fb_fast:"ZA SZYBKO — zimny zakład, brak wtopu",fb_dir_pf:"PF SPAWASZ Z DOŁU DO GÓRY — jedziesz w dół",fb_dir_pg:"PG SPAWASZ Z GÓRY NA DÓŁ — jedziesz w górę",def_dir_pf:"Ścieg PF jechany z góry na dół — niezgodny z WPS (PF = z dołu do góry): ryzyko braku przetopu i przyklejenia (ISO 5817: 401) — odrzut niezależnie od wyglądu lica",def_dir_pg:"Ścieg PG jechany z dołu do góry — niezgodny z WPS (PG = z góry na dół): przegrzanie cienkiej blachy i nadmierny nadlew — odrzut niezależnie od wyglądu lica", fb_slow:"ZA WOLNO — przepalenie / przelew",fb_stop:"RĘKA STOI %1 s — jedź dalej",hint_lbl:"Wskazówka",h_lbl:"Ćwicz",h_title:"Historia prób",h_empty:"Brak prób — po pierwszej inspekcji pojawią się tutaj.",h_top:"Najczęstszy błąd: %1 (%2 z %3 ostatnich prób)",h_trend:"%1: średnio %2 → %3 pkt (5 wcześniejszych → 5 ostatnich)",h_oldver:"Szare wpisy: starsza wersja silnika — nie liczą się do porad.",h_exp_json:"ZAPISZ (JSON)",h_exp_csv:"EXCEL (CSV)",h_imp:"WCZYTAJ",h_imp_ok:"Wczytano nowych prób: %1",h_imp_bad:"To nie jest plik historii ARC — nic nie zmieniono",h_imp_cut:"starszych niż %2 ostatnich pominięto: %1",h_imp_save:"Przeglądarka nie zapisała historii (brak miejsca lub zablokowana pamięć) — nic nie zmieniono",hc_ok:"czysto",ht_ok:"—",hc_hi:"wkład ciepła",ht_hi:"jedź szybciej albo zmniejsz prąd, nie stój w miejscu",hc_fast:"za szybko",ht_fast:"zwolnij do tempa z WPS",hc_dir:"zły kierunek",ht_dir:"PF z dołu do góry, PG z góry na dół",hc_pen:"brak przetopu",ht_pen:"zwolnij i prowadź łuk w osi rowka",hc_narrow:"ścieg za wąski",ht_narrow:"trochę wolniej",hc_wide:"ścieg za szeroki",ht_wide:"trochę szybciej",hc_undercut:"podtopienia",ht_undercut:"krótszy łuk, mniej przy brzegach",hc_porosity:"pęcherze",ht_porosity:"krótki łuk i kąt do 15°",hc_arc_short:"łuk za krótki",ht_arc_short:"mniej dosuwaj (LPM)",hc_arc_long:"łuk za długi",ht_arc_long:"dosuwaj elektrodę (LPM)",hc_stick:"przywieranie",ht_stick:"nie stój z wciśniętym LPM",hc_ang_work:"kąt roboczy",ht_ang_work:"palnik w osi rowka (A/D do zera)",hc_ang_drag:"kąt ciągnięty",ht_ang_drag:"wróć do ok. 10–15° (W/S)",hc_ang_push:"kąt pchany",ht_ang_push:"wróć do ok. 10–15° (W/S)",hc_offaxis:"ścieg obok osi",ht_offaxis:"patrz na rowek, nie na jeziorko",hc_filler:"rytm spoiwa TIG",ht_filler:"równy rytm spacji, co pół jeziorka",hc_amp_low:"prąd za niski",ht_amp_low:"podnieś prąd do zakresu WPS",hc_amp_high:"prąd za wysoki",ht_amp_high:"zmniejsz prąd do zakresu WPS",hc_dia:"średnica elektrody",ht_dia:"grań cieńszą, wypełnienie grubszą",hc_spatter:"odpryski",ht_spatter:"równe tempo i krótki łuk",hc_uneven:"nierówne lico",ht_uneven:"stałe tempo, bez szarpania",hc_crater:"krater",ht_crater:"na końcu chwila postoju, wypełnij koniec",hc_rootlack:"słaba grań",ht_rootlack:"pierwszy ścieg wolniej, pełny przetop",hc_edges:"niewypełnione brzegi",ht_edges:"rozłóż ściegi na całą szerokość",hc_interbead:"szczeliny między ściegami",ht_interbead:"każdy ścieg na połowę poprzedniego",hc_slag:"żużel",ht_slag:"skuj (C) przed następnym ściegiem",hc_stop:"postój ręki",ht_stop:"prowadź bez zatrzymań", fb_good:"DOBRE TEMPO — pełny przetop",
   t_replace:"WYMIEŃ ELEKTRODĘ — puść i złap nową", t_eye:"🔆 ŁUK W OCZY! ZAŁÓŻ HEŁM", t_layfirst:"POŁÓŻ NAJPIERW ŚCIEG", t_strikeoff:"PRZYŁÓŻ ELEKTRODĘ DO BLACHY", t_toosmall:"KONKURS: ZA MAŁE STANOWISKO — obróć telefon poziomo albo powiększ okno (min. 400 px), żeby wszyscy mieli równo",t_inputlock:"ZMIANA STEROWANIA (mysz ↔ dotyk) W TRAKCIE PRÓBY — dokończ tym samym albo ✕ WYCZYŚĆ i zacznij od nowa", t_cfgfail:"KONKURS: nie wczytano oficjalnej konfiguracji — odśwież stronę, inaczej runda nie zostanie uznana",
   t_couponOk:"✅ COUPON ZALICZONY +%1 XP", t_couponFail:"COUPON NIEZALICZONY — wymóg %1%", t_copied:"TEKST SKOPIOWANY", t_clipFail:"BRAK DOSTĘPU DO SCHOWKA", t_couponSel:"COUPON: %1",
   rep_title:"Inspekcja wizualna VT", row_cov:"Pokrycie grani", row_spd:"Trzymanie tempa", row_hi:"Wkład ciepła (HI)", row_even:"Równość lica",
@@ -837,7 +851,7 @@ const I18N={
   btn_helmet:"🥽 HELMET", btn_music:"🎵 MUSIC",btn_arc:"🔊 ARC", btn_mute:"🔇 MUTE", btn_inspect:"🔎 INSPECT", btn_career:"🎓 CAREER", btn_clear:"✕ CLEAR",
   grav:"puddle<br>gravity", vset:"Set speed:", forA:"for A ≈",
   tool_elec:"🔥 Electrode: ", tool_used:"SPENT — click for new", tool_mig:"🔫 <b>Auto-fed wire</b> — one hand, continuous", tool_tig:"👐 <b>Torch + rod</b> — LMB lights it, SPACE dabs filler, RMB puts it out",
-  fb_fast:"TOO FAST — cold lap, no fusion",fb_dir_pf:"PF IS WELDED UPWARD — you are going down",fb_dir_pg:"PG IS WELDED DOWNWARD — you are going up",def_dir_pf:"PF bead run downhill — not per WPS (PF = vertical up): risk of lack of fusion and cold lap (ISO 5817: 401) — reject regardless of how the face looks",def_dir_pg:"PG bead run uphill — not per WPS (PG = vertical down): overheated thin plate and excess reinforcement — reject regardless of how the face looks", fb_slow:"TOO SLOW — burn-through / overflow",fb_stop:"HAND STOPPED %1 s — keep moving",hint_lbl:"Tip", fb_good:"GOOD SPEED — full penetration",
+  fb_fast:"TOO FAST — cold lap, no fusion",fb_dir_pf:"PF IS WELDED UPWARD — you are going down",fb_dir_pg:"PG IS WELDED DOWNWARD — you are going up",def_dir_pf:"PF bead run downhill — not per WPS (PF = vertical up): risk of lack of fusion and cold lap (ISO 5817: 401) — reject regardless of how the face looks",def_dir_pg:"PG bead run uphill — not per WPS (PG = vertical down): overheated thin plate and excess reinforcement — reject regardless of how the face looks", fb_slow:"TOO SLOW — burn-through / overflow",fb_stop:"HAND STOPPED %1 s — keep moving",hint_lbl:"Tip",h_lbl:"Practice",h_title:"Attempt history",h_empty:"No attempts yet — they show up here after your first inspection.",h_top:"Most common fault: %1 (%2 of the last %3 attempts)",h_trend:"%1: average %2 → %3 pts (5 earlier → 5 latest)",h_oldver:"Grey rows: older engine version — not used for tips.",h_exp_json:"SAVE (JSON)",h_exp_csv:"EXCEL (CSV)",h_imp:"LOAD",h_imp_ok:"New attempts loaded: %1",h_imp_bad:"Not an ARC history file — nothing changed",h_imp_cut:"older than the last %2 skipped: %1",h_imp_save:"The browser did not save the history (no space or storage blocked) — nothing changed",hc_ok:"clean",ht_ok:"—",hc_hi:"heat input",ht_hi:"travel faster or lower the current, don't stand still",hc_fast:"too fast",ht_fast:"slow down to the WPS speed",hc_dir:"wrong direction",ht_dir:"PF bottom to top, PG top to bottom",hc_pen:"lack of fusion",ht_pen:"slow down and keep the arc on the groove axis",hc_narrow:"bead too narrow",ht_narrow:"a bit slower",hc_wide:"bead too wide",ht_wide:"a bit faster",hc_undercut:"undercut",ht_undercut:"shorter arc, less at the edges",hc_porosity:"porosity",ht_porosity:"short arc and angle up to 15°",hc_arc_short:"arc too short",ht_arc_short:"feed in less (LMB)",hc_arc_long:"arc too long",ht_arc_long:"feed the electrode in (LMB)",hc_stick:"sticking",ht_stick:"don't hold LMB while standing still",hc_ang_work:"work angle",ht_ang_work:"torch on the groove axis (A/D back to zero)",hc_ang_drag:"drag angle",ht_ang_drag:"back to about 10–15° (W/S)",hc_ang_push:"push angle",ht_ang_push:"back to about 10–15° (W/S)",hc_offaxis:"bead off axis",ht_offaxis:"watch the groove, not the puddle",hc_filler:"TIG filler rhythm",ht_filler:"even Space rhythm, every half puddle",hc_amp_low:"current too low",ht_amp_low:"raise the current to the WPS range",hc_amp_high:"current too high",ht_amp_high:"lower the current to the WPS range",hc_dia:"electrode size",ht_dia:"thinner for the root, thicker for fill",hc_spatter:"spatter",ht_spatter:"steady speed and a short arc",hc_uneven:"uneven face",ht_uneven:"constant speed, no jerks",hc_crater:"crater",ht_crater:"pause briefly at the end and fill it",hc_rootlack:"weak root",ht_rootlack:"first bead slower, full penetration",hc_edges:"unfilled edges",ht_edges:"spread the beads across the full width",hc_interbead:"gaps between beads",ht_interbead:"each bead over half of the previous one",hc_slag:"slag",ht_slag:"chip it (C) before the next bead",hc_stop:"hand stopped",ht_stop:"keep moving, no stops", fb_good:"GOOD SPEED — full penetration",
   t_replace:"CHANGE ELECTRODE — release & grab a new one", t_eye:"🔆 ARC FLASH! PUT THE HELMET ON", t_layfirst:"LAY A BEAD FIRST", t_strikeoff:"STRIKE ON THE PLATE", t_toosmall:"CHALLENGE: BAY TOO SMALL — turn your phone landscape or enlarge the window (400 px min), so everyone gets the same shot",t_inputlock:"INPUT CHANGED (mouse ↔ touch) MID-ATTEMPT — finish with the same one or ✕ CLEAR and start over", t_cfgfail:"CHALLENGE: official config not loaded — reload the page or your run will not count",
   t_couponOk:"✅ COUPON PASSED +%1 XP", t_couponFail:"COUPON FAILED — need %1%", t_copied:"TEXT COPIED", t_clipFail:"CLIPBOARD BLOCKED", t_couponSel:"COUPON: %1",
   rep_title:"Visual inspection (VT)", row_cov:"Groove coverage", row_spd:"Travel speed", row_hi:"Heat input (HI)", row_even:"Bead evenness",
@@ -874,7 +888,7 @@ const I18N={
   btn_helmet:"🥽 МАСКА", btn_music:"🎵 МУЗЫКА",btn_arc:"🔊 ДУГА", btn_mute:"🔇 ТИШИНА", btn_inspect:"🔎 КОНТРОЛЬ", btn_career:"🎓 КАРЬЕРА", btn_clear:"✕ СТЕРЕТЬ",
   grav:"гравитация<br>ванны", vset:"Задан. скорость:", forA:"за A ≈",
   tool_elec:"🔥 Электрод: ", tool_used:"ИЗРАСХОДОВАН — клик = новый", tool_mig:"🔫 <b>Автоподача</b> — одна рука, непрерывно", tool_tig:"👐 <b>Горелка + пруток</b> — присадка макая, веди медленно",
-  fb_fast:"СЛИШКОМ БЫСТРО — непровар",fb_dir_pf:"PF ВАРЯТ СНИЗУ ВВЕРХ — ты ведёшь вниз",fb_dir_pg:"PG ВАРЯТ СВЕРХУ ВНИЗ — ты ведёшь вверх",def_dir_pf:"Валик PF выполнен сверху вниз — не по WPS (PF = снизу вверх): риск несплавления и наплыва без провара (ISO 5817: 401) — брак независимо от вида валика",def_dir_pg:"Валик PG выполнен снизу вверх — не по WPS (PG = сверху вниз): перегрев тонкого листа и избыточное усиление — брак независимо от вида валика", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк",fb_stop:"РУКА СТОИТ %1 с — веди дальше",hint_lbl:"Совет", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
+  fb_fast:"СЛИШКОМ БЫСТРО — непровар",fb_dir_pf:"PF ВАРЯТ СНИЗУ ВВЕРХ — ты ведёшь вниз",fb_dir_pg:"PG ВАРЯТ СВЕРХУ ВНИЗ — ты ведёшь вверх",def_dir_pf:"Валик PF выполнен сверху вниз — не по WPS (PF = снизу вверх): риск несплавления и наплыва без провара (ISO 5817: 401) — брак независимо от вида валика",def_dir_pg:"Валик PG выполнен снизу вверх — не по WPS (PG = сверху вниз): перегрев тонкого листа и избыточное усиление — брак независимо от вида валика", fb_slow:"СЛИШКОМ МЕДЛЕННО — прожог / натёк",fb_stop:"РУКА СТОИТ %1 с — веди дальше",hint_lbl:"Совет",h_lbl:"Тренируй",h_title:"История попыток",h_empty:"Попыток нет — появятся после первой проверки.",h_top:"Частая ошибка: %1 (%2 из последних %3 попыток)",h_trend:"%1: в среднем %2 → %3 очк. (5 ранних → 5 последних)",h_oldver:"Серые строки: старая версия движка — не учитываются в советах.",h_exp_json:"СОХРАНИТЬ (JSON)",h_exp_csv:"EXCEL (CSV)",h_imp:"ЗАГРУЗИТЬ",h_imp_ok:"Загружено новых попыток: %1",h_imp_bad:"Это не файл истории ARC — ничего не изменено",h_imp_cut:"старше последних %2 пропущено: %1",h_imp_save:"Браузер не сохранил историю (нет места или память заблокирована) — ничего не изменено",hc_ok:"чисто",ht_ok:"—",hc_hi:"тепловложение",ht_hi:"веди быстрее или убавь ток, не стой на месте",hc_fast:"слишком быстро",ht_fast:"сбавь до скорости из WPS",hc_dir:"не то направление",ht_dir:"PF снизу вверх, PG сверху вниз",hc_pen:"непровар",ht_pen:"сбавь и веди дугу по оси разделки",hc_narrow:"узкий валик",ht_narrow:"чуть медленнее",hc_wide:"широкий валик",ht_wide:"чуть быстрее",hc_undercut:"подрезы",ht_undercut:"дуга короче, меньше у кромок",hc_porosity:"поры",ht_porosity:"короткая дуга и угол до 15°",hc_arc_short:"дуга коротка",ht_arc_short:"меньше подавай (ЛКМ)",hc_arc_long:"дуга длинна",ht_arc_long:"подавай электрод (ЛКМ)",hc_stick:"прилипание",ht_stick:"не стой с зажатой ЛКМ",hc_ang_work:"рабочий угол",ht_ang_work:"горелка по оси (A/D к нулю)",hc_ang_drag:"угол «углом назад»",ht_ang_drag:"вернись к 10–15° (W/S)",hc_ang_push:"угол «углом вперёд»",ht_ang_push:"вернись к 10–15° (W/S)",hc_offaxis:"валик в стороне",ht_offaxis:"смотри на разделку, не на ванну",hc_filler:"ритм присадки TIG",ht_filler:"ровный ритм пробела, каждые полванны",hc_amp_low:"ток мал",ht_amp_low:"подними ток до диапазона WPS",hc_amp_high:"ток велик",ht_amp_high:"убавь ток до диапазона WPS",hc_dia:"диаметр электрода",ht_dia:"корень тоньше, заполнение толще",hc_spatter:"брызги",ht_spatter:"ровная скорость и короткая дуга",hc_uneven:"неровный валик",ht_uneven:"постоянная скорость, без рывков",hc_crater:"кратер",ht_crater:"в конце короткая пауза, заполни",hc_rootlack:"слабый корень",ht_rootlack:"первый проход медленнее, полный провар",hc_edges:"незаполненные кромки",ht_edges:"раскладывай валики на всю ширину",hc_interbead:"щели между валиками",ht_interbead:"каждый валик на половину предыдущего",hc_slag:"шлак",ht_slag:"отбей (C) перед следующим проходом",hc_stop:"остановка руки",ht_stop:"веди без остановок", fb_good:"ХОРОШИЙ ТЕМП — полный провар",
   t_replace:"СМЕНИ ЭЛЕКТРОД — отпусти и возьми новый", t_eye:"🔆 ЗАЙЧИКИ В ГЛАЗА! НАДЕНЬ МАСКУ", t_layfirst:"СНАЧАЛА ПОЛОЖИ ШОВ", t_strikeoff:"ВЕДИ ПО МЕТАЛЛУ", t_toosmall:"КОНКУРС: ПОСТ СЛИШКОМ МАЛ — поверни телефон горизонтально или увеличь окно (мин. 400 px), чтобы условия были равными",t_inputlock:"СМЕНА УПРАВЛЕНИЯ (мышь ↔ касание) ВО ВРЕМЯ ПОПЫТКИ — закончи тем же или ✕ ОЧИСТИТЬ и начни заново", t_cfgfail:"КОНКУРС: официальная конфигурация не загружена — обнови страницу, иначе раунд не засчитают",
   t_couponOk:"✅ КУПОН СДАН +%1 XP", t_couponFail:"КУПОН НЕ СДАН — нужно %1%", t_copied:"ТЕКСТ СКОПИРОВАН", t_clipFail:"БУФЕР НЕДОСТУПЕН", t_couponSel:"КУПОН: %1",
   rep_title:"Визуальный контроль (VT)", row_cov:"Заполнение шва", row_spd:"Темп", row_hi:"Тепловложение (HI)", row_even:"Равномерность",
@@ -3128,39 +3142,39 @@ function inspect(){
   const fastV=Math.max.apply(null,all.map(m=>m.avgV)), tooFast=fastV/targetPx>1+FAST_TOL*MATERIAL[bead].tol;
 
   const D=[];
-  if(hiOver) D.push({s:"major",reason:"accept_hi",t:(hiZero&&hiAct==null)?fmt("def_hi_zero",[hiMax]):fmt("def_hi_over",[hiAct,hiMax])});   // poza zakresem kwalifikacji — lico tego nie ratuje
-  if(tooFast) D.push({s:"major",t:fmt("def_fast",[(fastV/PX_PER_MM).toFixed(1),(targetPx/PX_PER_MM).toFixed(1)])});
+  if(hiOver) D.push({s:"major",c:"hi",reason:"accept_hi",t:(hiZero&&hiAct==null)?fmt("def_hi_zero",[hiMax]):fmt("def_hi_over",[hiAct,hiMax])});   // poza zakresem kwalifikacji — lico tego nie ratuje
+  if(tooFast) D.push({s:"major",c:"fast",t:fmt("def_fast",[(fastV/PX_PER_MM).toFixed(1),(targetPx/PX_PER_MM).toFixed(1)])});
   { const dB=dirOnNow()?dirLog.concat([[dirUp,dirDn]]):[], dW=dB.map(([u,d])=>(u+d>=DIR_MIN)?+((posKey==="PF"?d:u)/(u+d)).toFixed(3):0);   // 3.13.0: 1:1 z sim.js
-    if(dW.some(w=>w>DIR_BAD)) D.push({s:"major",t:t(posKey==="PF"?"def_dir_pf":"def_dir_pg")}); }
-  if(coverage<0.85) D.push({s:coverage<0.6?"major":"minor",t:fmt("def_pen",[Math.round((1-coverage)*100)])});
-  if(narrow/baked.length>0.25) D.push({s:"minor",t:t("def_narrow")});
-  if(wide/baked.length>0.2) D.push({s:"minor",t:t("def_wide")});
-  if(overflow>0.12) D.push({s:overflow>0.3?"major":"minor",t:fmt("def_undercut",[Math.round(overflow*100)])});
-  if(porosity>0) D.push({s:porosity>3?"major":"minor",t:fmt("def_porosity",[porosity])});
-  if(arcPen>0) D.push({s:arcPen>=12?"major":"minor",t:t(arcR<1?"def_arc_short":"def_arc_long")});
-  if(arcFails>0) D.push({s:arcFails>2?"major":"minor",t:fmt("def_stick",[arcFails])});
+    if(dW.some(w=>w>DIR_BAD)) D.push({s:"major",c:"dir",t:t(posKey==="PF"?"def_dir_pf":"def_dir_pg")}); }
+  if(coverage<0.85) D.push({s:coverage<0.6?"major":"minor",c:"pen",t:fmt("def_pen",[Math.round((1-coverage)*100)])});
+  if(narrow/baked.length>0.25) D.push({s:"minor",c:"narrow",t:t("def_narrow")});
+  if(wide/baked.length>0.2) D.push({s:"minor",c:"wide",t:t("def_wide")});
+  if(overflow>0.12) D.push({s:overflow>0.3?"major":"minor",c:"undercut",t:fmt("def_undercut",[Math.round(overflow*100)])});
+  if(porosity>0) D.push({s:porosity>3?"major":"minor",c:"porosity",t:fmt("def_porosity",[porosity])});
+  if(arcPen>0) D.push({s:arcPen>=12?"major":"minor",c:arcR<1?"arc_short":"arc_long",t:t(arcR<1?"def_arc_short":"def_arc_long")});
+  if(arcFails>0) D.push({s:arcFails>2?"major":"minor",c:"stick",t:fmt("def_stick",[arcFails])});
   if(angPen>0){ const sev=angPen>=10?"major":"minor";               // pokazujemy TEN kąt, który kosztował więcej
     const wo=angOverW(angW,posKey)*1.1, to=angOverT(Math.abs(angT))*0.9;
-    D.push({s:sev, t: wo>=to ? t("def_ang_work") : t(angT>0?"def_ang_drag":"def_ang_push")}); }
-  if(offPen>0) D.push({s:offPen>=OFF_MAJOR?"major":"minor",t:t("def_offaxis")});
-  if(filPen>0) D.push({s:filPen>=FIL_MAJOR?"major":"minor",t:t("def_filler")});
+    D.push({s:sev, c: wo>=to ? "ang_work" : (angT>0?"ang_drag":"ang_push"), t: wo>=to ? t("def_ang_work") : t(angT>0?"def_ang_drag":"def_ang_push")}); }
+  if(offPen>0) D.push({s:offPen>=OFF_MAJOR?"major":"minor",c:"offaxis",t:t("def_offaxis")});
+  if(filPen>0) D.push({s:filPen>=FIL_MAJOR?"major":"minor",c:"filler",t:t("def_filler")});
   if(E){ // 3.10.0: najgorszy ścieg — prąd względem SWOJEJ Ø, Ø względem typowej
     const sv=x=>x==="major"?2:x?1:0;
     const ea=E.filter(e=>e.sev).sort((p,q)=>sv(q.sev)-sv(p.sev)||Math.abs(q.ar-1)-Math.abs(p.ar-1))[0];
-    if(ea) D.push({s:ampSevT,t:fmt(ea.ar<1?"def_amp_low":"def_amp_high",[ea.amps,diaAmps(ea.d,posKey)])});
+    if(ea) D.push({s:ampSevT,c:ea.ar<1?"amp_low":"amp_high",t:fmt(ea.ar<1?"def_amp_low":"def_amp_high",[ea.amps,diaAmps(ea.d,posKey)])});
     const ed=E.filter(e=>e.fit.s).sort((p,q)=>sv(q.fit.sev)-sv(p.fit.sev)||Math.abs(q.fit.s)-Math.abs(p.fit.s))[0];
     if(ed){ const bl=beadPlan&&beadPlan[ed.bi]; const key=ed.fit.s<0?"def_dia_small":(joint!=="fillet"&&bl&&bl.lay===0?"def_dia_root":"def_dia_big");
-      D.push({s:ed.fit.sev,t:fmt(key,[fmtDia(ed.d),fmtDia(ed.typ),beadLabel(ed.bi)])}); } }
+      D.push({s:ed.fit.sev,c:"dia",t:fmt(key,[fmtDia(ed.d),fmtDia(ed.typ),beadLabel(ed.bi)])}); } }
   else if(ampF.sev){ const wA=weldElectrics(posKey);
-    if(wA) D.push({s:ampF.sev,t:fmt(ampF.ar<1?"def_amp_low":"def_amp_high",[wA.ampsUse,wA.amps])}); }
-  if(spatter>4&&proc!=="TIG") D.push({s:"minor",t:fmt("def_spatter",[spatter])});
-  if(evenness<0.6) D.push({s:"minor",t:t("def_uneven")});
-  if(endGap>0) D.push({s:endGap>1?"major":"minor",t:t("def_crater")});                                   // unfilled stop/start
-  if(passPlanArr[0]==="root"&&rootCov<0.8) D.push({s:"major",t:fmt("def_rootlack",[Math.round(rootCov*100)])}); // weak root layer
-  if(beadPlan&&edgeCov<EDGE_OK) D.push({s:edgeCov<EDGE_MAJOR?"major":"minor",t:fmt("def_edges",[Math.round((1-edgeCov)*100)])});
-  if(ibGaps>0) D.push({s:ibMax>=IB_MAJOR?"major":"minor",t:t("def_interbead")});
-  if(slagCount>0) D.push({s:"major",t:fmt("def_slag",[slagCount])});
-  if(D.length===0) D.push({s:"ok",t:t("def_clean")});
+    if(wA) D.push({s:ampF.sev,c:ampF.ar<1?"amp_low":"amp_high",t:fmt(ampF.ar<1?"def_amp_low":"def_amp_high",[wA.ampsUse,wA.amps])}); }
+  if(spatter>4&&proc!=="TIG") D.push({s:"minor",c:"spatter",t:fmt("def_spatter",[spatter])});
+  if(evenness<0.6) D.push({s:"minor",c:"uneven",t:t("def_uneven")});
+  if(endGap>0) D.push({s:endGap>1?"major":"minor",c:"crater",t:t("def_crater")});                                   // unfilled stop/start
+  if(passPlanArr[0]==="root"&&rootCov<0.8) D.push({s:"major",c:"rootlack",t:fmt("def_rootlack",[Math.round(rootCov*100)])}); // weak root layer
+  if(beadPlan&&edgeCov<EDGE_OK) D.push({s:edgeCov<EDGE_MAJOR?"major":"minor",c:"edges",t:fmt("def_edges",[Math.round((1-edgeCov)*100)])});
+  if(ibGaps>0) D.push({s:ibMax>=IB_MAJOR?"major":"minor",c:"interbead",t:t("def_interbead")});
+  if(slagCount>0) D.push({s:"major",c:"slag",t:fmt("def_slag",[slagCount])});
+  if(D.length===0) D.push({s:"ok",c:"ok",t:t("def_clean")});
 
   const major=D.some(d=>d.s==="major");
   const coupon=!isChallenge()&&COUPONS.find(c=>c.id===activeCoupon);
@@ -3184,6 +3198,11 @@ function inspect(){
   else if(!jobSettled){ jobSettled=true; if(passed && score>=90 && diff>=7) burstConfetti(); }   // MISTRZOWSKA na A
   lastReport={score,letter,iso,std:"ISO 5817",procLbl:proc,cut:false,proc,posKey,thick,coverage,spdAcc,evenness,avgV,diff,passed,material:MATERIAL[bead].name[lang]};
   if(battleTaskActive()) battleFinishInspection(lastReport,verdict);
+  // 3.15.x (poprawka 06): historia prób — tylko zapis w przeglądarce, ocena bez zmian
+  try{ histRecord({at:Date.now(),ver:(window.ArcSim&&ArcSim.VERSION)||"",proc,pos:posKey,thick,mat:bead,joint,sc:score,L:letter,iso:isoCode,ok:!!passed,
+    prof:arcLive?"m":"t",mode:battleTaskActive()?"battle":isChallenge()?"kon":"tr",
+    d:D.filter(x=>x.c&&x.c!=="ok").sort((p,q)=>(q.s==="major")-(p.s==="major")).slice(0,3).map(x=>({c:x.c,s:x.s==="major"?2:1})),
+    stop:pauseNote&&pauseNote.s>=0.5?Math.round(pauseNote.s*10)/10:null}, rec); }catch(e){}
 
   const letEl=document.getElementById("rLetter"); letEl.textContent=letter; letEl.style.color=col;
   letEl.classList.remove("pop"); void letEl.offsetWidth; letEl.classList.add("pop");
@@ -3215,6 +3234,9 @@ function inspect(){
   // 3.15.0: jedna wskazówka o postoju — tylko tekst, ocena bez zmian; przyczyna z TEGO SAMEGO odcinka łuku
   { const ht=typeof pauseHintText==="function"?pauseHintText():null; if(ht){ const li=document.createElement("li"); li.id="rPauseHint";
       li.innerHTML='<span class="sev minor">'+t("hint_lbl")+'</span><span>'+ht+'</span>'; ul.appendChild(li); } }
+  // 06: najczęstszy błąd z ostatnich prób tą samą metodą, tym samym sterowaniem i wersją silnika
+  { const hh=typeof histHintText==="function"?histHintText(proc,arcLive?"m":"t"):null; if(hh){ const li=document.createElement("li"); li.id="rHistHint";
+      li.innerHTML='<span class="sev minor">'+t("h_lbl")+'</span><span>'+hh+'</span>'; ul.appendChild(li); } }
 
   // annotated zoom on worst region
   const worst = gaps.length?gaps[Math.floor(gaps.length/2)] : (out?baked.find(b=>b.off>grooveHalf+bevelW*0.7):seamPts[Math.floor(K/2)]);
@@ -3250,6 +3272,83 @@ function maybeCompleteCoupon(score,coverage,major,defects){
     setTimeout(()=>showToast(fmt("t_couponOk",[fresh?c.xp:0]),"#5fe08a"),300);
   } else if(!verdict.passed){ setTimeout(()=>showToast(acceptanceText(score,verdict,defects),"#ff9a3c"),300); }
 }
+// ── 06: HISTORIA PRÓB (localStorage "gorweld_history") ──
+// Tylko wygoda gracza w jego przeglądarce: może zniknąć (prywatne okno, czyszczenie) — gra działa bez niej.
+// Wpis: data, metoda, pozycja, grubość, materiał, ocena, litera, klasa ISO, zaliczona, 3 główne wady (kod + waga), postój,
+// sterowanie (m=mysz, t=dotyk), wersja silnika. Porównania tylko w obrębie tej samej wersji i sterowania (audyt Codex #5).
+const HIST_KEY="gorweld_history", HIST_MAX=50, HIST_CODES=["hi","fast","dir","pen","narrow","wide","undercut","porosity","arc_short","arc_long","stick",
+  "ang_work","ang_drag","ang_push","offaxis","filler","amp_low","amp_high","dia","spatter","uneven","crater","rootlack","edges","interbead","slag","stop"];
+let histLastRec=null, histLastId=null;
+// v2 (audyt Codex 06): pola o stałym zbiorze wartości tylko z listy; data w zakresie (do 2100 r.); trwały identyfikator próby.
+// v3 (audyt Codex 06 v2 #1): pozycja i materiał = klucze katalogów gry (POSITIONS, MATERIAL) — nowa pozycja (np. HL045 = rura 6G) nie wypada z historii.
+const HIST_KEYOK=(cat,k)=>typeof k==="string"&&/^[A-Za-z0-9_]{1,8}$/.test(k)&&!!cat&&Object.prototype.hasOwnProperty.call(cat,k);
+const HIST_JOINT=/^(butt|fillet|pipe)$/, HIST_MODE=/^(tr|kon|battle)$/;
+const HIST_VER=/^\d{1,2}\.\d{1,3}\.\d{1,3}$/, HIST_L=/^[ABCDF]$/, HIST_ID=/^[a-z0-9]{4,24}$/, HIST_AT_MAX=4102444800000;
+function histValid(e){ return !!e&&typeof e==="object"&&Number.isInteger(e.at)&&e.at>0&&e.at<=HIST_AT_MAX&&typeof e.proc==="string"&&/^(MMA|MIG|TIG)$/.test(e.proc)&&
+  HIST_KEYOK(typeof POSITIONS==="object"?POSITIONS:null,e.pos)&&Number.isFinite(e.thick)&&e.thick>0&&e.thick<=50&&Number.isFinite(e.sc)&&e.sc>=0&&e.sc<=100&&
+  typeof e.L==="string"&&HIST_L.test(e.L)&&typeof e.iso==="string"&&/^(B|C|D|REJECT)$/.test(e.iso)&&(e.prof==="m"||e.prof==="t")&&
+  typeof e.ver==="string"&&HIST_VER.test(e.ver)&&HIST_KEYOK(typeof MATERIAL==="object"?MATERIAL:null,e.mat)&&typeof e.joint==="string"&&HIST_JOINT.test(e.joint)&&
+  (e.mode==null||(typeof e.mode==="string"&&HIST_MODE.test(e.mode)))&&(e.id==null||(typeof e.id==="string"&&HIST_ID.test(e.id)))&&
+  Array.isArray(e.d)&&e.d.length<=3&&e.d.every(x=>x&&HIST_CODES.includes(x.c)&&(x.s===1||x.s===2))&&(e.stop==null||(Number.isFinite(e.stop)&&e.stop>=0&&e.stop<3600)); }
+function histKeyId(e){ return ("k"+e.at.toString(36)+e.proc+String(e.sc)).toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,24); }   // wpis bez id = id z czasu+metody+oceny
+function histNewId(){ return (Date.now().toString(36)+Math.random().toString(36).slice(2,10)).slice(0,24); }
+function histClean(e){ return {id:e.id!=null?e.id:histKeyId(e),at:e.at,ver:e.ver,proc:e.proc,pos:e.pos,thick:e.thick,mat:e.mat,joint:e.joint,
+  sc:e.sc,L:e.L,iso:e.iso,ok:!!e.ok,prof:e.prof,mode:e.mode==null?"tr":e.mode,d:e.d.map(x=>({c:x.c,s:x.s})),stop:e.stop==null?null:e.stop}; }
+function histLoad(){ try{ const a=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); return Array.isArray(a)?a.filter(histValid).map(histClean):[]; }catch(e){ return []; } }
+function histSave(a){ try{ localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(-HIST_MAX))); return true; }catch(e){ return false; } }   // false = przeglądarka nie zapisała
+// Ta sama runda drugi raz (ponowne otwarcie raportu) = aktualizacja WŁAŚCIWEGO wpisu po id, z pierwotnym czasem — nie „ostatniego w tablicy".
+function histRecord(e,recRef){ if(e.stop!=null) e.d=e.d.concat(e.d.length<3?[{c:"stop",s:e.stop>=1.5?2:1}]:[]);
+  const same=!!(recRef&&histLastRec===recRef&&histLastId); e.id=same?histLastId:histNewId();
+  if(!histValid(e)) return false; const a=histLoad(), i=same?a.findIndex(x=>x.id===e.id):-1;
+  if(i>=0){ e.at=a[i].at; a[i]=histClean(e); } else a.push(histClean(e));
+  a.sort((p,q)=>p.at-q.at); histLastRec=recRef||null; histLastId=e.id; return histSave(a); }
+// Najczęstszy błąd: ostatnie 10 prób tą metodą, sterowaniem i wersją; waga: poważna 2, drobna 1. Od 3 prób i 2 wystąpień.
+function histTop(procK,prof,ver){ const a=histLoad().filter(e=>e.proc===procK&&e.prof===prof&&e.ver===ver).slice(-10);
+  if(a.length<3) return null; const w={},n={};
+  a.forEach(e=>e.d.forEach(x=>{ w[x.c]=(w[x.c]||0)+x.s; n[x.c]=(n[x.c]||0)+1; }));
+  const c=Object.keys(w).sort((p,q)=>w[q]-w[p]||n[q]-n[p]||p.localeCompare(q))[0];
+  return c&&n[c]>=2?{c,k:n[c],of:a.length}:null; }
+function histHintText(procK,prof){ const v=(window.ArcSim&&ArcSim.VERSION)||""; const top=histTop(procK,prof,v); if(!top) return null;
+  return fmt("h_top",[t("hc_"+top.c),top.k,top.of])+" — "+t("ht_"+top.c); }
+// Trend: średnia 5 ostatnich vs 5 wcześniejszych prób — ta sama metoda, pozycja, sterowanie i wersja.
+function histTrend(procK,pos,prof,ver){ const a=histLoad().filter(e=>e.proc===procK&&e.pos===pos&&e.prof===prof&&e.ver===ver);
+  if(a.length<10) return null; const last=a.slice(-5), prev=a.slice(-10,-5), avg=x=>x.reduce((s,e)=>s+e.sc,0)/x.length;   // od 10 prób: pełne 5 vs 5
+  return {now:Math.round(avg(last)),before:Math.round(avg(prev)),n:prev.length}; }
+// CSV: tekst zaczynający się od = + - @ (lub tab/CR) dostaje apostrof — arkusz nie potraktuje go jako formuły (audyt Codex 06 #3).
+function histCSV(a){ const q=v=>{ let s=String(v==null?"":v); if(typeof v==="string"&&/^[=+\-@\t\r]/.test(s)) s="'"+s; return '"'+s.replace(/"/g,'""')+'"'; },
+  day=x=>{ try{ return new Date(x).toISOString(); }catch(e){ return ""; } };
+  return ["data,metoda,pozycja,grubosc,material,ocena,litera,iso,zaliczona,sterowanie,tryb,wady,postoj_s,silnik"].concat(a.map(e=>[day(e.at),e.proc,e.pos,e.thick,e.mat,e.sc,e.L,e.iso,e.ok?1:0,e.prof==="m"?"mysz":"dotyk",e.mode,e.d.map(x=>x.c+(x.s===2?"!":"")).join(" "),e.stop==null?"":e.stop,e.ver].map(q).join(","))).join("\n"); }
+function histDownload(name,type,text){ const b=new Blob([text],{type}), u=URL.createObjectURL(b), l=document.createElement("a"); l.href=u; l.download=name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
+// Import: zły plik NIE rusza obecnej historii; wpisy łączone bez duplikatów (to samo id), sortowane po czasie.
+// Sukces tylko gdy przeglądarka faktycznie zapisała (audyt Codex 06 #4).
+// v3: liczymy tylko wpisy, które ZOSTAŁY po limicie 50 (audyt Codex 06 v2 #2); starsze niż 50 ostatnich = „pominięte"; daty z przyszłości (> teraz + 1 doba) odrzucone,
+// żeby obcy plik nie wypychał z listy nowych prób gracza.
+function histImport(text){ let arr; try{ const j=JSON.parse(text); arr=Array.isArray(j)?j:(j&&Array.isArray(j.history)?j.history:null); }catch(e){ arr=null; }
+  if(!arr) return {ok:false,added:0}; const lim=Date.now()+864e5, good=arr.filter(e=>histValid(e)&&e.at<=lim).map(histClean); if(!good.length) return {ok:false,added:0};
+  const a=histLoad(), have=new Set(a.map(e=>e.id)), fresh=new Set();
+  good.forEach(e=>{ if(!have.has(e.id)){ a.push(e); have.add(e.id); fresh.add(e.id); } });
+  if(!fresh.size) return {ok:true,added:0,cut:0};
+  a.sort((p,q)=>p.at-q.at); const kept=a.slice(-HIST_MAX), added=kept.filter(e=>fresh.has(e.id)).length, cut=fresh.size-added;
+  if(!added) return {ok:true,added:0,cut};
+  return histSave(kept)?{ok:true,added,cut}:{ok:false,added:0,err:"save"}; }
+function renderHist(){ const box=document.getElementById("histBox"); if(!box) return; const a=histLoad(), v=(window.ArcSim&&ArcSim.VERSION)||"";
+  if(!a.length){ box.innerHTML='<h3>'+t("h_title")+'</h3><div class="hmeta">'+t("h_empty")+'</div>'+histButtons(); histWire(); return; }
+  const last=a[a.length-1], prof=last.prof, top=histTop(last.proc,prof,v), tr=histTrend(last.proc,last.pos,prof,v);
+  let h='<h3>'+t("h_title")+'</h3>';
+  if(top) h+='<div class="hsum">'+fmt("h_top",[t("hc_"+top.c),top.k,top.of])+' — '+t("ht_"+top.c)+'</div>';
+  if(tr) h+='<div class="hsum">'+fmt("h_trend",[last.proc+" "+last.pos,tr.before,tr.now])+'</div>';
+  h+='<div class="hlist">'+a.slice(-20).reverse().map(e=>{ const d=new Date(e.at), dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    return '<div class="hrow'+(e.ver!==v?' old':'')+'"><span>'+dd+'</span><span>'+e.proc+' '+e.pos+' '+e.thick+'mm'+(e.prof==="t"?' 📱':'')+'</span><span class="hsc">'+e.sc+' '+e.L+(e.iso==="REJECT"?' ✗':'')+'</span><span>'+(e.d[0]?t("hc_"+e.d[0].c):t("hc_ok"))+'</span></div>'; }).join("")+'</div>';
+  if(a.some(e=>e.ver!==v)) h+='<div class="hmeta">'+t("h_oldver")+'</div>';
+  box.innerHTML=h+histButtons(); histWire(); }
+function histButtons(){ return '<div class="hbtn"><button type="button" id="hExpJ">'+t("h_exp_json")+'</button><button type="button" id="hExpC">'+t("h_exp_csv")+'</button><button type="button" id="hImp">'+t("h_imp")+'</button><input type="file" id="hFile" accept="application/json,.json" hidden></div>'; }
+function histWire(){ const g=id=>document.getElementById(id); if(!g("hExpJ")) return;
+  g("hExpJ").onclick=()=>histDownload("gorweld-arc-historia.json","application/json",JSON.stringify({app:"GORWELD ARC",kind:"history",v:1,history:histLoad()},null,1));
+  g("hExpC").onclick=()=>histDownload("gorweld-arc-historia.csv","text/csv;charset=utf-8","\ufeff"+histCSV(histLoad()));
+  g("hImp").onclick=()=>g("hFile").click();
+  g("hFile").onchange=ev=>{ const f=ev.target.files&&ev.target.files[0]; if(!f) return; if(f.size>2e6){ showToast(t("h_imp_bad"),"#ff5a4a"); return; }
+    const r=new FileReader(); r.onload=()=>{ const res=histImport(String(r.result||"")); showToast(res.ok?fmt("h_imp_ok",[res.added])+(res.cut?" · "+fmt("h_imp_cut",[res.cut,HIST_MAX]):""):t(res.err==="save"?"h_imp_save":"h_imp_bad"),res.ok?"#5fe08a":"#ff5a4a",res.cut?3200:0); renderHist(); }; r.readAsText(f); }; }
+
 function openCareer(){
   const grid=document.getElementById("cgrid"); grid.innerHTML="";
   COUPONS.forEach((c,i)=>{
@@ -3263,6 +3362,7 @@ function openCareer(){
   const r=rankFor(progress.xp), next=RANKS.find(x=>x[0]>progress.xp);
   const prog=next?(progress.xp-r[0])/(next[0]-r[0]):1;
   document.getElementById("xpwrap").innerHTML='<b style="color:#e9eef2">'+t(r[1])+'</b> · '+progress.xp+' XP'+(next?' → '+t(next[1])+' ('+next[0]+')':' · '+t("car_max"))+'<div class="xpbar"><div style="width:'+Math.round(prog*100)+'%"></div></div>';
+  renderHist();
   openModal("carModal");
 }
 function loadCoupon(c){
