@@ -1780,8 +1780,12 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   pctx.restore();
   const sl=Math.max(0.5,segLen), sp=i>0?vb.S[i]-vb.S[i-1]:sl, sn=i<N-1?vb.S[i+1]-vb.S[i]:sl;
   const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
-  const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7, mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
+  const s0=has(i-1)?-sp/2-0.7:-(hi-lo)/2-0.7, s1=has(i+1)?sn/2+0.7:(hi-lo)/2+0.7; let mat=   // na końcu ściegu łatka obejmuje cały okrągły krater
     (VB_MAT[bead]||VB_MAT.steel)[proc]||VB_MAT.steel.MIG, P=PROCESS[proc];
+  // 08: ciepło tego kawałka (lico szersze niż wzorcowe = goręcej; zmierzone: dobre tempo ~0,88, bardzo wolno ~1,33) — ta sama skala co naloty na blasze.
+  // Nierdzewka TIG: przy dobrym tempie lico srebrne z lekką słomką, złote dopiero przy przegrzaniu (uwaga Groka: „jak mosiądz”). Tylko rysunek.
+  const tHeat=Math.max(0,Math.min(1,((hi-lo)/2/Math.max(1,idealHalf)-0.92)/0.45)), ssT=bead==="ss"&&proc==="TIG";
+  if(ssT){ const SV=[188,183,170], GD=[200,162,98]; mat=[SV[0]+(GD[0]-SV[0])*tHeat, SV[1]+(GD[1]-SV[1])*tHeat, SV[2]+(GD[2]-SV[2])*tHeat, mat[3], mat[4]]; }
   const k=-vb.dir, half0=(hi-lo)/2, bowK=(proc==="TIG"?0.62:proc==="MIG"?0.72:0.85)*dirLook().bow, rough=proc==="MMA"?0.09:proc==="MIG"?0.08:0.05;
   const DL=dirLook(), ripA=(proc==="TIG"?0.5:proc==="MIG"?0.3:0.16)*DL.rip, Hc=(proc==="TIG"?0.62:proc==="MIG"?0.5:0.44)*DL.hc, Hp=proc==="TIG"?0.65:0.9, envK=bead==="alu"?0.32:proc==="TIG"?0.55:proc==="MIG"?0.08:0.06;   /* MAG/MMA: płaskie lico (wypukłość ~13–18% szer.), łagodna stopka (wzorce Grok) */
   // granice lica w punkcie s (lokalnie wzdłuż szwu): interpolacja do sąsiada, a przy końcu ściegu — okrągły krater
@@ -1799,7 +1803,7 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     let L=e[0], H=e[1];
     if(proc==="TIG"&&rl.length>1&&vb.ge){   // 07: falisty brzeg TIG — przewężenie na granicy monet (każda kropla spoiwa)
       const sg0=vb.S[i]+s; let a0=0,b0=rl.length; while(a0<b0){ const m=(a0+b0)>>1; if(rl[m]<=sg0) a0=m+1; else b0=m; }
-      const dn=Math.min(a0>0?sg0-rl[a0-1]:1e9, a0<rl.length?rl[a0]-sg0:1e9); if(dn<vb.ge){ const f=Math.min(1,dn/(vb.ge*0.5)), pin=(1-f)*(1-f)*(H-L)*0.06; L+=pin; H-=pin; } }
+      const dn=Math.min(a0>0?sg0-rl[a0-1]:1e9, a0<rl.length?rl[a0]-sg0:1e9); if(dn<vb.ge){ const f=Math.min(1,dn/(vb.ge*0.5)), pin=(1-f)*(1-f)*(H-L)*0.04;   /* 08: łagodniej (uwaga Groka) */ L+=pin; H-=pin; } }
     const w=Math.max(0.5,H-L), u=(t-L)/w; if(u<-0.08||u>1.08) return null;
     const uc=Math.min(1,Math.max(0,u)), c=1-(2*uc-1)**2, half=w/2;
     let h=half*Hc*Math.pow(c,Hp);
@@ -1842,7 +1846,7 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     if(tp>0){ r+=(140-r)*tp; g+=(82-g)*tp; b+=(130-b)*tp; }   // pas fioletowy przed niebieskim
     if(proc==="MIG"&&bead!=="alu"){ const hue=vbNoise(px*0.12+7,py*0.12), f=(bead==="ss"?0.38:0.03)*(0.4+0.6*vbNoise(px*0.25,py*0.25+3));   // opalizujący nalot MAG
       const tc=hue<0.4?[196,150,70]:hue<0.62?[150,80,140]:[80,100,170]; r+=(tc[0]-r)*f; g+=(tc[1]-g)*f; b+=(tc[2]-b)*f; }
-    if(bead==="ss"&&proc==="TIG"){ const cu=1-Math.abs(2*c0.u-1); r+=(222-r)*cu*0.25; g+=(186-g)*cu*0.25; b+=(118-b)*cu*0.2; }   // środek złoty, słomkowy
+    if(ssT){ const cu=(1-Math.abs(2*c0.u-1))*(0.45+0.55*tHeat); r+=(222-r)*cu*0.25; g+=(186-g)*cu*0.25; b+=(118-b)*cu*0.2; }   // środek słomkowy; złotszy dopiero przy przegrzaniu (08)
     if(mma){ const dv=Math.pow(c0.ph,3)*0.22*(0.7+0.6*vbNoise(px*1.7,py*1.7)); r*=1-dv; g*=1-dv; b*=1-dv; }   /* MMA: dolinka łuski ciemniejsza i chropowata */
     if(mma){ const sr=vbNoise(px*0.9,py*0.9); let f=0; if(eu<0.05&&sr>0.6) f=0.6; else if(c0.ph>0.85&&sr>0.88) f=0.4;   // resztki żużla przy stopkach i w zagłębieniach łuski
       if(f){ r+=(46-r)*f; g+=(35-g)*f; b+=(26-b)*f; } }
