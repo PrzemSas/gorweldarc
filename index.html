@@ -1767,6 +1767,16 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
     if(Math.random()<(proc==="MMA"?0.12:0.09)){ const side=Math.random()<0.5?lo-2-Math.random()*(hi-lo)*0.9:hi+2+Math.random()*(hi-lo)*0.9, sx=A.x+n.x*side+tx*(Math.random()-0.5)*3, sy=A.y+n.y*side+ty*(Math.random()-0.5)*3, rr=0.6+Math.random()*1.1;
       const gg=pctx.createRadialGradient(sx-rr*0.35,sy-rr*0.4,rr*0.1,sx,sy,rr); gg.addColorStop(0,"#9aa0a4"); gg.addColorStop(0.5,"#4a4e52"); gg.addColorStop(1,"#1a1c1e");   // kulka odprysku
       pctx.fillStyle="rgba(0,0,0,0.25)"; pctx.beginPath(); pctx.arc(sx+0.5,sy+0.6,rr,0,7); pctx.fill(); pctx.fillStyle=gg; pctx.beginPath(); pctx.arc(sx,sy,rr,0,7); pctx.fill(); } }
+  // 07: TIG — barwy nalotowe na blasze obok ściegu (tylko rysunek). Kolor od CIEPŁA: lico szersze niż wzorcowe (wolno / za dużo prądu)
+  // = więcej ciepła → szerszy pas, czerwień, fiolet, niebieski; ścieg wzorcowy → wąska słomka (zmierzone: dobre tempo ~0,88 szer. wzorcowej, bardzo wolno ~1,33). Pas nierówny wzdłuż szwu (szum), łagodnie
+  // zanika w blachę. Stal słabiej niż nierdzewka. Aluminium bez nalotu (czyszczenia katodowego gra nie modeluje).
+  if(proc==="TIG"&&bead!=="alu"){ const hw=Math.max(2,(hi-lo)/2), m=(lo+hi)/2, cx=A.x+n.x*m, cy=A.y+n.y*m;
+    const heat=Math.max(0,Math.min(1,(hw/Math.max(1,idealHalf)-0.92)/0.45)), wob=0.65+0.7*vbNoise(vb.S[i]*0.09,bead==="ss"?1.3:7.1);
+    const R=hw*(1.5+0.9*heat)*(0.85+0.3*wob), kk=Math.min(1,Math.max(0.5,segLen)*1.6/R)*(bead==="ss"?1:0.55)*wob;
+    const gr=pctx.createRadialGradient(cx,cy,hw*0.9,cx,cy,R), f=hw*0.9/R, st=(x)=>f+(1-f)*x, cs=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${Math.min(0.5,a*kk).toFixed(3)})`;
+    gr.addColorStop(0,cs([206,176,104],0.4)); gr.addColorStop(st(0.35),cs([186,128,84],0.22*(0.3+0.7*heat)));
+    gr.addColorStop(st(0.6),cs([140,80,120],0.18*heat)); gr.addColorStop(st(0.8),cs([70,90,150],0.14*heat*heat)); gr.addColorStop(1,"rgba(0,0,0,0)");
+    pctx.fillStyle=gr; pctx.beginPath(); pctx.arc(cx,cy,R,0,7); pctx.fill(); }
   pctx.restore();
   const sl=Math.max(0.5,segLen), sp=i>0?vb.S[i]-vb.S[i-1]:sl, sn=i<N-1?vb.S[i+1]-vb.S[i]:sl;
   const has=k=>k>=0&&k<N&&vb.hi[k]>=vb.lo[k];
@@ -1786,11 +1796,15 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
   const rl=vb.rl;
   let phO=0;
   function height(px,py){ phO=0; const dx=px-A.x, dy=py-A.y, s=dx*tx+dy*ty, t=dx*n.x+dy*n.y; const e=edges(s); if(!e) return null;
-    const L=e[0], H=e[1], w=Math.max(0.5,H-L), u=(t-L)/w; if(u<-0.08||u>1.08) return null;
+    let L=e[0], H=e[1];
+    if(proc==="TIG"&&rl.length>1&&vb.ge){   // 07: falisty brzeg TIG — przewężenie na granicy monet (każda kropla spoiwa)
+      const sg0=vb.S[i]+s; let a0=0,b0=rl.length; while(a0<b0){ const m=(a0+b0)>>1; if(rl[m]<=sg0) a0=m+1; else b0=m; }
+      const dn=Math.min(a0>0?sg0-rl[a0-1]:1e9, a0<rl.length?rl[a0]-sg0:1e9); if(dn<vb.ge){ const f=Math.min(1,dn/(vb.ge*0.5)), pin=(1-f)*(1-f)*(H-L)*0.06; L+=pin; H-=pin; } }
+    const w=Math.max(0.5,H-L), u=(t-L)/w; if(u<-0.08||u>1.08) return null;
     const uc=Math.min(1,Math.max(0,u)), c=1-(2*uc-1)**2, half=w/2;
     let h=half*Hc*Math.pow(c,Hp);
     // łuska: przesunięcie frontu krzepnięcia (wypukły do tyłu) i faza między frontami
-    if(rl.length){ const sg=vb.S[i]+s, shp=c, sv=sg-k*half*bowK*shp*1.15; /* MMA: łuska w jodełkę (V) */ let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
+    if(rl.length){ const sg=vb.S[i]+s, tg=proc==="TIG", shp=tg?Math.sqrt(c):c, sv=sg-k*half*(tg?0.95:bowK)*shp*1.15;   /* 07: TIG — granica monety półokrągła (√), nie parabola */ /* MMA: łuska w jodełkę (V) */ let lo2=0, hi2=rl.length; while(lo2<hi2){ const m=(lo2+hi2)>>1; if(rl[m]<=sv) lo2=m+1; else hi2=m; }
       const prev=rl[lo2-1], next=rl[lo2]; let a,b;
       if(vb.dir>0){ a=prev; b=next; } else { a=next; b=prev; }
       const ge=vb.ge||half*0.6;   // brak sąsiedniego frontu (krater, zgaszenie) albo za duża przerwa → rytm z typowego odstępu
@@ -1798,8 +1812,10 @@ function vbFreeze(i){ const N=seamPts.length, A=seamPts[i], n=seamNrm[i], lo=vb.
       if(a===undefined&&b!==undefined) a=b-vb.dir*ge*Math.max(1,Math.ceil(Math.abs(b-sv)/ge));
       if(a!==undefined&&b!==undefined&&Math.abs(b-a)>ge*1.5){ const m=Math.floor(Math.abs(sv-a)/ge); a=a+vb.dir*ge*m; b=a+vb.dir*ge; }
       if(a!==undefined&&b!==undefined){ const ph=Math.min(1,Math.abs(sv-a)/Math.abs(b-a)), e2=Math.min(0.5,(proc==="MIG"?2.0:0.9)/Math.abs(b-a)), vr=proc==="TIG"?1:0.6+0.8*vbNoise(a*0.21,3.7);
-        const st=ph<e2?ph/e2:1; h+=vr*half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:proc==="MMA"?4.0:1.5)*st*(proc==="MIG"?(0.55+0.3*(1-c))*Math.min(1,Math.min(uc,1-uc)/0.16):0.35+0.65*c); phO=ph;
-        if(proc==="TIG") h+=half*0.025*Math.sin(ph*Math.PI*7)*c; }   // drobne prążki krzepnięcia w „monecie”
+        const st=ph<e2?ph/e2:1;
+        if(tg){ const q=ph*(1.4-0.4*ph), dome=1-Math.pow(Math.abs(2*q-1),2.0);   // 07: TIG „stack of dimes” — każda kropla = gładka, błyszcząca kopułka, rowek na granicy (bez drobnych prążków jak w MIG)
+          h+=half*0.42*(0.4+0.6*dome)*(0.3+0.7*c); phO=ph; }   // rowek płytszy (nie „łańcuszek”) — uwaga Groka
+        else { h+=vr*half*ripA*Math.pow(1-ph,proc==="MIG"?3.2:proc==="MMA"?4.0:1.5)*st*(proc==="MIG"?(0.55+0.3*(1-c))*Math.min(1,Math.min(uc,1-uc)/0.16):0.35+0.65*c); phO=ph; } }
       else h+=half*ripA*0.35*c; }
     h+=(vbNoise(px*0.7,py*0.7)-0.5)*rough+(vbNoise(px*2.2,py*2.2)-0.5)*rough*0.25;
     if(proc==="MIG") h+=(vbNoise(px*0.18,py*0.18)-0.5)*half*0.12;   // MAG: lekko faliste lico
